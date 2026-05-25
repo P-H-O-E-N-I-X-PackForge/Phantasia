@@ -1,36 +1,113 @@
-# GregTech Addon Template
-## Template for GregTech Modern addons on 1.20.1
+# Phantasia
 
- Original template by [screret](https://github.com/screret), maintained by [JuiceyBeans](https://github.com/JuiceyBeans)
+**Phantasia** is a Ponder-inspired multiblock visualization and teaching tool built for modern GregTech-based modpacks.
 
-<hr>
+It is designed to help players understand complex multiblocks through interactive scenes, layered visualization, and scripted camera/control systems.
 
-## How do I make an addon for GregTech Modern?
-Well for one, you WILL need to know Java to make an addon. There's no getting around this. A good starting point would be [MOOC](https://java-programming.mooc.fi/) or [W3Schools](https://www.w3schools.com/java/
-)
+---
 
-Unfortunately, there isn't any official documentation so far for making GregTech Modern addons. There are a couple of mods you can look at to reference though!
+##  Features
 
-Repositories for other addons:
+###  Multiblock Visualization
+- Full multiblock scene rendering
+- Footprint and structure overlay view
+- Layer-by-layer inspection
+- Block group filtering (casings, coils, controllers, etc.)
 
-- [GT Community Additions](https://github.com/mordgren/GTCA)
-- [MoniLabs](https://github.com/NegaNote/MoniLabs)
+###  Camera Controls
+- Rotation
+- Zooming
+- Panning
+- Focus targeting on structure parts
+- Expand/collapse multiblock visualization
 
-Additionally, you may be able to find help on the [GregTech CEu Discord](https://discord.gg/bWSWuYvURP)!
+###  Dynamic Multiblock Support
+- Coil variant switching (e.g. GTM coil tiers)
+- Expandable multiblock definitions
+- Layer selection and toggling
+- Controller-focused views
 
-<hr>
+###  Script System
+Phantasia includes an in-game scripting system that allows scene authors to:
+- Move and animate the camera
+- Show/hide layers, blocks, or groups
+- Highlight specific components
+- Display instructional text overlays
+- Control multiblock expansion stages
+- Build guided tutorial sequences
 
-## This template comes packaged with [Spotless](https://github.com/diffplug/spotless)!
+An in-game editor is included so scenes can be created without coding knowledge.
 
-### 1. What is Spotless?
-- Spotless keeps your code neatly formatted. It's essentially a grammar check for your code!
-### 2. Can I choose not to use Spotless?
-- Yes! Spotless is completely optional and will not affect your project by default
-### 3. How do I run Spotless?
-- You can run Spotless anytime by:
-  - Running the `spotlessApply` task from the Gradle tab in IntelliJ
-  - Installing the [Spotless Gradle plugin for IntelliJ](https://plugins.jetbrains.com/plugin/18321-spotless-gradle)
-  - Typing in `gradlew.bat :spotlessApply` if you're on Windows
-  - Typing in `bash gradlew :spotlessApply` if you're on Linux
-### 4. So how do I check if Spotless has been applied to my code?
-- Running `spotlessApply` will format all files for you automatically! If you want GitHub to check each commit for if Spotless has been run, you can add [this](https://github.com/Frontiers-PackForge/CosmicCore/blob/main-1.20.1-forge/.github/workflows/spotless.yml) and [this](https://github.com/Frontiers-PackForge/CosmicCore/blob/main-1.20.1-forge/.github/actions/build_setup/action.yml) to your project
+---
+
+##  Player Controls
+
+### Command Access
+
+
+Opens the Phantasia scene browser and script search interface.
+
+### Contextual Access (Jade Integration)
+When viewing a multiblock through Jade (or compatible tooltip providers), a Phantasia keybind will appear.
+
+- Press the assigned keybind to open the relevant multiblock scene directly.
+
+---
+
+##  Design Philosophy
+
+Phantasia is built as a **visual learning layer** for complex tech modpacks, especially those based around GregTech.
+
+It aims to:
+- Reduce reliance on external wikis
+- Improve onboarding for multiblock systems
+- Provide intuitive in-game explanations of machine structure and behavior
+- Integrate directly into existing inspection workflows (e.g. Jade tooltips)
+
+---
+
+##  Compatibility
+
+Phantasia is designed primarily for:
+- GregTech Modern (GTM)-based modpacks
+- Expert progression packs (e.g. TerraFirmaGreg-style environments)
+
+It is compatible with:
+- Jade (tooltip integration)
+- GregTech Modern multiblocks.
+- Json users.
+
+---
+
+##  Notes
+
+- Phantasia does not alter progression systems or recipes.
+- It is a visualization and educational layer only.
+- Performance may vary in heavily modded environments with dense multiblock usage.
+
+---
+
+## 🛠️\ For Modpack Developers
+
+Phantasia is intended to be embedded into expert modpacks as a teaching tool.
+
+Recommended integration:
+- Provide structured multiblock definitions
+- Expose coil/multiblock variants via data-driven formats
+
+---
+
+##  Planned Features
+
+- Scene bookmarking system
+- Multiplayer-safe synchronized tutorials
+- Advanced comparison mode (multiblock variants side-by-side)
+- Quest system integration hooks
+- Expanded scripting API
+---
+
+
+## 👤 Credits
+
+Designed as a multiblock visualization and teaching system for advanced tech modpacks.
+Inspired by Ponder-style tutorial systems and GregTech multiblock complexity.
