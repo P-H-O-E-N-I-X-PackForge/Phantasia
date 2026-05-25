@@ -87,7 +87,7 @@ It is compatible with:
 
 ---
 
-## 🛠️\ For Modpack Developers
+##  For Modpack Developers
 
 Phantasia is intended to be embedded into expert modpacks as a teaching tool.
 
@@ -107,7 +107,7 @@ Recommended integration:
 ---
 
 
-## 👤 Credits
+##  Credits
 
 Designed as a multiblock visualization and teaching system for advanced tech modpacks.
 Inspired by Ponder-style tutorial systems and GregTech multiblock complexity.
