@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package net.phoenixvine.phantasia;
 
 import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.data.chemical.material.event.MaterialEvent;
@@ -9,6 +9,8 @@ import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
 import com.gregtechceu.gtceu.api.registry.registrate.GTRegistrate;
 import com.gregtechceu.gtceu.api.sound.SoundEntry;
 
+import com.lowdragmc.lowdraglib.Platform;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
@@ -18,22 +20,34 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.phoenixvine.phantasia.client.PhantasiaClient;
+import net.phoenixvine.phantasia.client.keybind.PhoenixKeybinds;
+import net.phoenixvine.phantasia.configs.PhantasiaConfigs;
+import net.phoenixvine.phantasia.datagen.PhantasiaDatagen;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Mod(ExampleMod.MOD_ID)
+@Mod(Phantasia.MOD_ID)
 @SuppressWarnings("removal")
-public class ExampleMod {
+public class Phantasia {
 
-    public static final String MOD_ID = "examplemod";
+    public static final String MOD_ID = "phantasia";
     public static final Logger LOGGER = LogManager.getLogger();
-    public static GTRegistrate EXAMPLE_REGISTRATE = GTRegistrate.create(ExampleMod.MOD_ID);
+    public static GTRegistrate PHANTASIA_REGISTRATE = GTRegistrate.create(Phantasia.MOD_ID);
 
-    public ExampleMod() {
+    public Phantasia() {
+        PhantasiaConfigs.init();
+        PhantasiaDatagen.init();
+        PHANTASIA_REGISTRATE.registerRegistrate();
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         modEventBus.addListener(this::commonSetup);
+
+        if (Platform.isClient()) {
+            modEventBus.addListener(PhoenixKeybinds::register);
+            PhantasiaClient.init(modEventBus);
+        }
         modEventBus.addListener(this::clientSetup);
 
         modEventBus.addListener(this::addMaterialRegistries);
@@ -48,8 +62,6 @@ public class ExampleMod {
         // If we want to use annotations to register event listeners,
         // we need to register our object like this!
         MinecraftForge.EVENT_BUS.register(this);
-
-        EXAMPLE_REGISTRATE.registerRegistrate();
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
@@ -66,7 +78,6 @@ public class ExampleMod {
     /**
      * Create a ResourceLocation in the format "modid:path"
      *
-     * @param path
      * @return ResourceLocation with the namespace of your mod
      */
     public static ResourceLocation id(String path) {
@@ -81,7 +92,7 @@ public class ExampleMod {
      * @param event
      */
     private void addMaterialRegistries(MaterialRegistryEvent event) {
-        GTCEuAPI.materialManager.createRegistry(ExampleMod.MOD_ID);
+        GTCEuAPI.materialManager.createRegistry(Phantasia.MOD_ID);
     }
 
     /**
