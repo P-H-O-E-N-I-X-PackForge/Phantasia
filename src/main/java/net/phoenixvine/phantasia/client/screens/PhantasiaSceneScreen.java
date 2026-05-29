@@ -10,7 +10,6 @@ import com.gregtechceu.gtceu.api.pattern.BlockPattern;
 import com.gregtechceu.gtceu.api.pattern.MultiblockShapeInfo;
 
 import com.lowdragmc.lowdraglib.utils.BlockInfo;
-import com.lowdragmc.lowdraglib.utils.TrackedDummyWorld;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -30,6 +29,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.phoenixvine.phantasia.client.camera.CameraView;
 import net.phoenixvine.phantasia.client.camera.LerpType;
 import net.phoenixvine.phantasia.client.camera.PhantasiaCamera;
+import net.phoenixvine.phantasia.client.render.PhantasiaTrackedDummyWorld;
 import net.phoenixvine.phantasia.client.render.PhantasiaWorldRenderer;
 import net.phoenixvine.phantasia.common.PhantasiaLoadedPattern;
 import net.phoenixvine.phantasia.common.PhantasiaScript;
@@ -52,7 +52,7 @@ public class PhantasiaSceneScreen extends Screen {
     // Shared dummy world
     // ─────────────────────────────────────────────────────────────────────────
 
-    public static TrackedDummyWorld SHARED_LEVEL;
+    public static PhantasiaTrackedDummyWorld SHARED_LEVEL;
     private static int NEXT_REGION = 0;
     private static final int REGION_SIZE = 512;
 
@@ -190,6 +190,7 @@ public class PhantasiaSceneScreen extends Screen {
     private final List<PhantasiaUIUtils.ButtonAction> activeButtons = new ArrayList<>();
     private boolean sidePanelCollapsed = false;
     private BlockPos hoveredPos = null;
+    private Component pendingTooltip = null;
 
     public boolean showMistakes = false;
     public int selectedTierIndex = -1;
@@ -234,7 +235,7 @@ public class PhantasiaSceneScreen extends Screen {
                 onClose();
                 return;
             }
-            SHARED_LEVEL = new TrackedDummyWorld();
+            SHARED_LEVEL = new PhantasiaTrackedDummyWorld();
 
             // Fix: Instantiate with no arguments
             SHARED_LEVEL.setParticleManager(new com.lowdragmc.lowdraglib.client.scene.ParticleManager());
@@ -254,6 +255,10 @@ public class PhantasiaSceneScreen extends Screen {
                 renderer.setBaseplatePositions(pattern.baseplatePositions);
                 renderer.setControllerWorldPos(pattern.controllerWorldPos);
             }
+            // GT's DynamicRenderManager is just a type registry — it has no
+            // render hook. GT dynamic renders (fusion rings, etc.) are driven
+            // by the machine's MetaMachineBlockEntity BER, which is already
+            // handled by drawTileEntities once the BEs are registered.
         }
 
         // ── Camera ────────────────────────────────────────────────────────────
@@ -412,7 +417,7 @@ public class PhantasiaSceneScreen extends Screen {
         BlockPos controllerWP = null;
         MultiblockControllerMachine controller = null;
 
-        BlockInfo floor = BlockInfo.fromBlockState(Blocks.DEEPSLATE_BRICKS.defaultBlockState());
+        BlockInfo floor = getBaseplateBlockFromConfig();
         BlockInfo[][][] raw = shape.getBlocks();
         int sxLen = raw.length;
         int szLen = sxLen > 0 && raw[0].length > 0 ? raw[0][0].length : 0;
@@ -451,15 +456,48 @@ public class PhantasiaSceneScreen extends Screen {
 
         SHARED_LEVEL.addBlocks(blockMap);
 
+        // Register every MetaMachineBlockEntity with the dummy world so that
+        // TrackedDummyWorld.getBlockEntity(pos) returns them. Without this,
+        // the bake thread's BE scan finds nothing and frontTileEntities stays
+        // empty — meaning drawTileEntities never renders any machine overlays.
+        // We must do this BEFORE onStructureFormed so the controller's own BE
+        // is already in the world when formation logic queries it.
+        for (BlockPos bp : bePos) {
+            try {
+                BlockInfo info = blockMap.get(bp);
+                if (info == null) continue;
+                var be = info.getBlockEntity(bp);
+                if (be != null) {
+                    be.setLevel(SHARED_LEVEL); // ensure hasLevel() returns true
+                    SHARED_LEVEL.setInnerBlockEntity(be);
+                }
+            } catch (Exception ignored) {}
+        }
+        net.phoenixvine.phantasia.Phantasia.LOGGER.info(
+                "[Phantasia] Registered {} block entities with SHARED_LEVEL", bePos.size());
         if (controller != null) {
             try {
-                var holder = controller.getHolder();
-                if (holder instanceof net.minecraft.world.level.block.entity.BlockEntity vanillaBe)
-                    SHARED_LEVEL.setInnerBlockEntity(vanillaBe);
                 BlockPattern pat = controller.getPattern();
-                if (pat != null && pat.checkPatternAt(controller.getMultiblockState(), true))
-                    controller.onStructureFormed();
-            } catch (Exception ignored) {}
+                net.phoenixvine.phantasia.Phantasia.LOGGER.info(
+                        "[Phantasia] loadPattern: controller={}, pattern={}, multiblockState={}",
+                        controller.getClass().getSimpleName(),
+                        pat != null ? "present" : "null",
+                        controller.getMultiblockState());
+                if (pat != null) {
+                    boolean matched = pat.checkPatternAt(controller.getMultiblockState(), true);
+                    net.phoenixvine.phantasia.Phantasia.LOGGER.info(
+                            "[Phantasia] checkPatternAt result: {}", matched);
+                    if (matched) {
+                        controller.onStructureFormed();
+                        net.phoenixvine.phantasia.Phantasia.LOGGER.info(
+                                "[Phantasia] onStructureFormed completed, entities in world: {}",
+                                SHARED_LEVEL.getAllEntities().spliterator().estimateSize());
+                    }
+                }
+            } catch (Exception e) {
+                net.phoenixvine.phantasia.Phantasia.LOGGER.error(
+                        "[Phantasia] onStructureFormed failed: {}", e.getMessage(), e);
+            }
         }
 
         int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
@@ -474,6 +512,22 @@ public class PhantasiaSceneScreen extends Screen {
 
         return new PhantasiaLoadedPattern(blockMap, localToWorld, baseplatePos,
                 controllerWP, bePos, origin, minY, maxY, controller, script);
+    }
+
+
+    private BlockInfo getBaseplateBlockFromConfig() {
+        try {
+            String blockId = net.phoenixvine.phantasia.configs.PhantasiaConfigs.INSTANCE.phantasiaUI.baseplateBlock;
+            var rl = new ResourceLocation(blockId);
+            var block = net.minecraftforge.registries.ForgeRegistries.BLOCKS.getValue(rl);
+
+            if (block != null && block != Blocks.AIR) {
+                return BlockInfo.fromBlockState(block.defaultBlockState());
+            }
+        } catch (Exception ignored) {
+            // Fallback if ResourceLocation parsing fails
+        }
+        return BlockInfo.fromBlockState(Blocks.DEEPSLATE_BRICKS.defaultBlockState());
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -618,13 +672,9 @@ public class PhantasiaSceneScreen extends Screen {
         }
 
         // Inside PhantasiaSceneScreen.java -> tick()
-        // Inside PhantasiaSceneScreen.java -> tick()
         if (playing && !scrubbing && SHARED_LEVEL != null && renderer != null) {
             net.minecraft.util.RandomSource random = SHARED_LEVEL.getRandom();
-
-            if (net.minecraftforge.fml.loading.LoadingModList.get().getModFileById("tfgcore") != null) {
-                tickAmbientEffects(random);
-            }
+            tickAmbientEffects(random);
         }
 
         if (!playing || scrubbing || buildOrderMode || script == null || viewFilter != ViewFilter.ALL) return;
@@ -686,17 +736,10 @@ public class PhantasiaSceneScreen extends Screen {
     private final java.util.List<BlockPos> ambientTickingPositions = new java.util.ArrayList<>();
 
     private void tickAmbientEffects(net.minecraft.util.RandomSource random) {
-        if (random.nextInt(2) == 0) return;
-
         for (BlockPos wp : ambientTickingPositions) {
             if (renderer.isVisible(wp)) {
-                BlockState state = SHARED_LEVEL.getBlockState(wp);
-                state.getBlock().animateTick(state, SHARED_LEVEL, wp, random);
+                SHARED_LEVEL.tickAnimateForPos(wp, random);
             }
-        }
-
-        if (Minecraft.getInstance().level.getGameTime() % 2 == 0) {
-            renderer.invalidate();
         }
     }
 
@@ -776,8 +819,22 @@ public class PhantasiaSceneScreen extends Screen {
                     SHARED_LEVEL.setBlock(e.getKey(), newCoil.getBlockState(), 3);
             }
         }
-        if (renderer != null) renderer.invalidate();
+
+        // Order matters here:
+        // 1. applyVisibility() first — updates targetVisible so setVisible() knows the
+        // correct set. Because no block *positions* changed (only their states),
+        // setVisible sees zero appearing/disappearing blocks and does NOT call
+        // scheduleBake() — it only calls scheduleBake when hasTransitions is false,
+        // which it is, but the call path is: no transitions → scheduleBake(). So we
+        // call invalidate() AFTER to cancel that bake and replace it with a fresh one
+        // that will read the already-written new block states safely.
+        // 2. invalidate() cancels any in-flight bake (avoiding a race where the bake
+        // thread's save/restore pass reads renderedBlocks while we're still writing
+        // new coil states above), clears transition state, and sets rebakeNeeded.
+        // The renderer fires the fresh bake on the NEXT render frame — after this
+        // method returns and the main thread is done mutating world state.
         applyVisibility();
+        if (renderer != null) renderer.invalidate();
     }
     // ─────────────────────────────────────────────────────────────────────────
     // render()
@@ -786,20 +843,29 @@ public class PhantasiaSceneScreen extends Screen {
     @Override
     public void render(@NotNull GuiGraphics g, int mx, int my, float partial) {
         activeButtons.clear();
+        pendingTooltip = null;
 
         int pw = getCurrentPanelWidth();
         int sw = this.width - pw;
-        int sh = this.height - TIMELINE_H - CAPTION_STRIP_H;
+
+        // Dynamically compute layout boundaries instead of using hardcoded limits
+        int totalTextLines = 1;
+        if (captionCurrent != null) {
+            int maximumAvailableWidth = sw - 20;
+            totalTextLines = Math.min(font.split(Component.literal(captionCurrent), maximumAvailableWidth).size(), 3);
+        }
+
+        // Increase padding per line to utilize more vertical screen area
+        int dynamicCaptionH = Math.max(22, (totalTextLines * (font.lineHeight + 3)) + 12);
+        int sh = this.height - TIMELINE_H - dynamicCaptionH;
 
         g.fill(0, 0, this.width, this.height, C_BG());
 
         if (renderer != null && camera != null) {
             CameraView view = camera.getView(partial);
             renderer.setMousePos(mx, my);
-            renderer.render(view, 0, CAPTION_STRIP_H, sw, sh);
+            renderer.render(view, 0, dynamicCaptionH, sw, sh);
             BlockHitResult hit = renderer.getLastHitResult();
-            // Only accept hits on blocks that are actually visible (in targetVisible set).
-            // Hidden blocks must not show hover info — their faces are transparent.
             if (hit != null && hit.getType() == HitResult.Type.BLOCK) {
                 BlockPos hp = hit.getBlockPos();
                 hoveredPos = renderer.isVisible(hp) ? hp : null;
@@ -808,16 +874,22 @@ public class PhantasiaSceneScreen extends Screen {
             }
         }
 
-        renderCaption(g);
+        // Render caption background and text layout
+        renderCaption(g, dynamicCaptionH);
+
         if (buildOrderMode && pattern != null) renderBuildPulseBanner(g);
         if (showMistakes && script != null && script.hasCommonMistakes())
             renderMistakesOverlay(g);
 
         renderTimeline(g, mx, my);
         renderSidePanel(g, mx, my);
-        regBtn(g, mx, my, 10, 10, 50, 18, "Back", this::onClose);
+        regBtn(g, mx, my, 10, 10, 50, 18, "Back", Component.literal("Return to previous screen"), this::onClose);
 
         super.render(g, mx, my, partial);
+
+        if (pendingTooltip != null) {
+            g.renderTooltip(font, pendingTooltip, mx, my);
+        }
 
         int px = this.width - pw;
         if (hoveredPos != null && SHARED_LEVEL != null) {
@@ -840,11 +912,12 @@ public class PhantasiaSceneScreen extends Screen {
         int px = this.width - getCurrentPanelWidth();
         int barY = this.height - TIMELINE_H;
 
+        // Draws the timeline tracking layer behind buttons
         g.fill(0, barY, px, this.height, C_TL_BG());
         g.fill(0, barY, px, barY + 1, C_ACCENT());
 
         int x = 6;
-        regBtn(g, mx, my, x, barY + 4, 18, 17, playing ? "⏸" : "▶", () -> {
+        regBtn(g, mx, my, x, barY + 4, 18, 17, playing ? "⏸" : "▶", Component.literal("Play / Pause"), () -> {
             if (!playing && playbackTick >= script.getTotalTicks()) {
                 playbackTick = 0;
                 tickAccum = 0f;
@@ -856,21 +929,23 @@ public class PhantasiaSceneScreen extends Screen {
         x += 22;
         regBtn(g, mx, my, x, barY + 4, 18, 17,
                 camera != null && camera.isLocked() ? "🔒" : "🔓",
+                Component.literal("Toggle Camera Lock"),
                 () -> {
                     if (camera != null) camera.toggleLocked();
                 });
         x += 22;
         String spd = playbackSpeed == 0.5f ? "½x" : playbackSpeed == 2f ? "2x" : "1x";
-        regBtn(g, mx, my, x, barY + 4, 24, 17, spd,
+        regBtn(g, mx, my, x, barY + 4, 24, 17, spd, Component.literal("Cycle Playback Speed"),
                 () -> playbackSpeed = playbackSpeed == 1f ? 2f : playbackSpeed == 2f ? 0.5f : 1f);
 
         int tx = 80, tw = px - tx - 65, midY = barY + TIMELINE_H / 2;
-        g.fill(tx, midY - 1, tx + tw, midY + 1, 0xFF1A2C3C);
+
+        g.fill(tx, midY - 1, tx + tw, midY + 1, C_BTN());
 
         float total = script.getTotalTicks();
         for (PhantasiaScript.Step s : script.getSteps()) {
             int mx2 = tx + (int) (tw * s.tickOffset() / total);
-            g.fill(mx2 - 1, midY - 4, mx2 + 1, midY + 4, 0xAAFFFFFF);
+            g.fill(mx2 - 1, midY - 4, mx2 + 1, midY + 4, C_DIM() | 0xAA000000);
         }
         float prog = total > 0 ? playbackTick / total : 0f;
         g.fill(tx, midY - 1, tx + (int) (tw * prog), midY + 1, C_PROG());
@@ -880,29 +955,70 @@ public class PhantasiaSceneScreen extends Screen {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Caption strip
+    // Caption Strip (Dynamic Vertical Space + Full Background Block Layering)
     // ─────────────────────────────────────────────────────────────────────────
 
-    private void renderCaption(GuiGraphics g) {
+    private void renderCaption(GuiGraphics g, int dynamicCaptionH) {
         if (captionCurrent == null && captionOutgoing == null) return;
         g.pose().pushPose();
         g.pose().translate(0, 0, 500);
 
         int sw = this.width - getCurrentPanelWidth();
-        int stripY = this.height - TIMELINE_H - CAPTION_STRIP_H;
-        g.fill(0, stripY, sw, stripY + CAPTION_STRIP_H, 0xDD08080F);
-        g.fill(0, stripY, sw, stripY + 1, 0xFF4FC3F7);
-        int ty = stripY + (CAPTION_STRIP_H - 8) / 2;
+        int stripY = this.height - TIMELINE_H - dynamicCaptionH;
+
+        // Thicker plate that frames all text behind the layout cleanly
+        g.fill(0, stripY, sw, this.height - TIMELINE_H, C_TL_BG());
+        g.fill(0, stripY, sw, stripY + 1, C_ACCENT());
 
         if (captionOutgoing != null && captionOutAlpha > 0.05f) {
-            int col = ((int) (captionOutAlpha * 160) << 24) | 0xBBBBBB;
-            g.drawCenteredString(font, trunc(captionOutgoing, sw - 20), sw / 2, ty, col);
+            int alphaBits = ((int) (captionOutAlpha * 255) << 24);
+            int blendOutColor = (alphaBits | (C_DIM() & 0x00FFFFFF));
+            drawWrappedCaptionText(g, captionOutgoing, sw, stripY, dynamicCaptionH, blendOutColor);
         }
         if (captionCurrent != null && captionAlpha > 0.05f) {
-            int col = ((int) (captionAlpha * 255) << 24) | 0xDDDDDD;
-            g.drawCenteredString(font, trunc(captionCurrent, sw - 20), sw / 2, ty, col);
+            int alphaBits = ((int) (captionAlpha * 255) << 24);
+            int blendInColor = (alphaBits | (C_TEXT() & 0x00FFFFFF));
+            drawWrappedCaptionText(g, captionCurrent, sw, stripY, dynamicCaptionH, blendInColor);
         }
         g.pose().popPose();
+    }
+
+    private void drawWrappedCaptionText(GuiGraphics g, String rawText, int totalWidth, int baseStripY,
+                                        int dynamicCaptionH, int mixedColor) {
+        int maximumAvailableWidth = totalWidth - 20;
+        Component textComp = Component.literal(rawText);
+        List<net.minecraft.util.FormattedCharSequence> textLines = font.split(textComp, maximumAvailableWidth);
+
+        int maxRenderLines = 3;
+        boolean demandsEllipsis = textLines.size() > maxRenderLines;
+        int activeLineCount = Math.min(textLines.size(), maxRenderLines);
+
+        int lineSpacing = 3; // Added extra line spacing breathing room
+        int totalBlockHeight = (activeLineCount * font.lineHeight) + ((activeLineCount - 1) * lineSpacing);
+        int renderingStartY = baseStripY + (dynamicCaptionH - totalBlockHeight) / 2;
+
+        for (int i = 0; i < activeLineCount; i++) {
+            int lineY = renderingStartY + (i * (font.lineHeight + lineSpacing));
+
+            if (i == 2 && demandsEllipsis) {
+                int safetyLimitWidth = maximumAvailableWidth - font.width("...");
+                List<net.minecraft.util.FormattedCharSequence> dynamicTrimmed = font.split(textComp, safetyLimitWidth);
+
+                if (dynamicTrimmed.size() >= 3) {
+                    int lineLeftX = (totalWidth - font.width(dynamicTrimmed.get(2)) - font.width("...")) / 2;
+                    g.drawString(font, dynamicTrimmed.get(2), lineLeftX, lineY, mixedColor, false);
+
+                    int dimAlphaOnly = (mixedColor & 0xFF000000);
+                    int customDimmedDot = dimAlphaOnly | (C_DIM() & 0x00FFFFFF);
+                    g.drawString(font, "...", lineLeftX + font.width(dynamicTrimmed.get(2)), lineY, customDimmedDot,
+                            false);
+                } else {
+                    g.drawCenteredString(font, textLines.get(i), totalWidth / 2, lineY, mixedColor);
+                }
+            } else {
+                g.drawCenteredString(font, textLines.get(i), totalWidth / 2, lineY, mixedColor);
+            }
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -913,14 +1029,17 @@ public class PhantasiaSceneScreen extends Screen {
         if (buildOrderGroup >= pattern.buildOrder.size()) return;
         int sceneW = this.width - getCurrentPanelWidth();
         int alpha = (int) (buildPulse * 0xBB);
-        int col = (alpha << 24) | (C_TL_BG() & 0x00FFFFFF);
+        int col = (alpha << 24) | (C_ACCENT() & 0x00FFFFFF);
         int by = TIMELINE_H;
-        g.fill(0, by, sceneW, by + 18, ((alpha / 3) << 24) | 0x1A1400);
+
+        g.fill(0, by, sceneW, by + 18, ((alpha / 4) << 24) | (C_PANEL() & 0x00FFFFFF));
         g.fill(0, by + 17, sceneW, by + 18, col);
         List<BlockPos> grp = pattern.buildOrder.get(buildOrderGroup);
+
+        int textWithAlpha = (alpha << 24) | (C_TEXT() & 0x00FFFFFF);
         g.drawCenteredString(font,
                 "Next: Layer Y=" + grp.get(0).getY() + " — " + grp.size() + " block(s)",
-                sceneW / 2, by + 5, col);
+                sceneW / 2, by + 5, textWithAlpha);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -932,8 +1051,10 @@ public class PhantasiaSceneScreen extends Screen {
         List<String> global = script.getGlobalMistakes();
         int x = 8, y = TIMELINE_H + 26;
         int ph = (local.size() + global.size()) * 12 + 10;
-        g.fill(x - 2, y - 2, x + 240, y + ph, 0xCC06060E);
-        g.fill(x - 2, y - 2, x + 240, y - 1, 0xFFFF5252);
+
+        g.fill(x - 2, y - 2, x + 240, y + ph, C_PANEL() | 0xEA000000);
+        g.fill(x - 2, y - 2, x + 240, y - 1, PhantasiaThemeUtils.C_WARN());
+
         for (var w : local) {
             g.drawString(font, "⚠ " + w.label(), x, y, w.color(), false);
             BlockPos lp = w.localPos();
@@ -943,7 +1064,7 @@ public class PhantasiaSceneScreen extends Screen {
             y += 12;
         }
         for (String m : global) {
-            g.drawString(font, "• " + m, x, y, 0xFFFFFFFF, false);
+            g.drawString(font, "• " + m, x, y, C_TEXT(), false);
             y += 12;
         }
     }
@@ -963,12 +1084,12 @@ public class PhantasiaSceneScreen extends Screen {
         // Collapse/Expand button
         int collapseBtnX = this.width - COLLAPSED_PANEL_W;
         String collapseBtnLabel = sidePanelCollapsed ? "▶" : "◀";
-        regBtn(g, mx, my, collapseBtnX, 0, COLLAPSED_PANEL_W, 18, collapseBtnLabel, () -> {
+        regBtn(g, mx, my, collapseBtnX, 0, COLLAPSED_PANEL_W, 18, collapseBtnLabel, Component.literal("Toggle Side Panel"), () -> {
             sidePanelCollapsed = !sidePanelCollapsed;
         });
 
         int y = 10;
-        if (sidePanelCollapsed) return; // Only show title if not collapsed
+        if (sidePanelCollapsed) return; // Only show context data if expanded
 
         g.drawString(font, trunc(definition.getLangValue(), pw - 20),
                 px + 10, y, C_ACCENT(), false);
@@ -982,7 +1103,7 @@ public class PhantasiaSceneScreen extends Screen {
         if (isCoilTierMachine) {
             String cn = COIL_TIERS.get(coilIndex).getBlockState().getBlock()
                     .getName().getString();
-            regBtn(g, mx, my, px + 10, y, pw - 20, 16, "Coil: " + cn, () -> {
+            regBtn(g, mx, my, px + 10, y, pw - 20, 16, "Coil: " + cn, Component.literal("Change heating coil material"), () -> {
                 coilIndex = (coilIndex + 1) % COIL_TIERS.size();
                 updateCoilType();
             });
@@ -990,9 +1111,8 @@ public class PhantasiaSceneScreen extends Screen {
         }
 
         if (hasRealSizeVariants) {
-            regBtn(g, mx, my, px + 10, y, pw - 20, 16,
-                    "Structure Size: " + (shapeIndex + 1), () -> {
-                        // Advance to the next shape and rebuild the renderer + pattern.
+            regBtn(g, mx, my, px + 10, y, pw - 20, 16, "Structure Size: " + (shapeIndex + 1),
+                    Component.literal("Switch between available structure variants"), () -> {
                         shapeIndex = (shapeIndex + 1) % availableShapes.size();
                         if (renderer != null) {
                             renderer.close();
@@ -1018,6 +1138,7 @@ public class PhantasiaSceneScreen extends Screen {
             final ViewFilter vf = vfs[i];
             int bx = (i % 2 == 0) ? px + 10 : px + 15 + fw;
             regBtn(g, mx, my, bx, y, fw, 14, vf.name(), viewFilter == vf,
+                    Component.literal("Filter view to: " + vf.name()),
                     () -> toggleViewFilter(vf));
             if (i % 2 != 0 || i == vfs.length - 1) y += 17;
         }
@@ -1025,7 +1146,8 @@ public class PhantasiaSceneScreen extends Screen {
         y += 8;
         if (script != null && script.hasCommonMistakes()) {
             regIconBtn(g, mx, my, px + 10, y, pw - 20, 16, "⚠", "Common Mistakes",
-                    showMistakes, () -> showMistakes = !showMistakes);
+                    showMistakes, Component.literal("Show or hide potential build errors"),
+                    () -> showMistakes = !showMistakes);
             y += 20;
         }
 
@@ -1033,17 +1155,13 @@ public class PhantasiaSceneScreen extends Screen {
         if (!buildOrderMode && pattern != null) {
             g.drawString(font, "Layer:", px + 10, y + 4, C_DIM(), false);
             String layerLabel = manualLayer >= 0 ? "Y=" + manualLayer : "All";
-            // ◀ button
-            regBtn(g, mx, my, px + 10, y + 14, bW, 14, "◀",
+            regBtn(g, mx, my, px + 10, y + 14, bW, 14, "◀", Component.literal("Previous Layer"),
                     () -> nudgeLayer(-1));
-            // Layer display (centered)
             g.drawCenteredString(font, layerLabel, lX + lW / 2, y + 17, C_ACCENT());
-            // ▶ button
-            regBtn(g, mx, my, lX + lW + 2, y + 14, bW, 14, "▶",
+            regBtn(g, mx, my, lX + lW + 2, y + 14, bW, 14, "▶", Component.literal("Next Layer"),
                     () -> nudgeLayer(1));
-            // Reset to "All" button
             if (manualLayer >= 0) {
-                regBtn(g, mx, my, px + 10, y + 31, pw - 20, 12, "Show All Layers",
+                regBtn(g, mx, my, px + 10, y + 31, pw - 20, 12, "Show All Layers", Component.literal("Reset layer filter"),
                         () -> {
                             manualLayer = -1;
                             applyVisibility();
@@ -1059,45 +1177,45 @@ public class PhantasiaSceneScreen extends Screen {
             int totalGroups = pattern.buildOrder.size();
             g.drawString(font, "Build Step:", px + 10, y + 4, C_DIM(), false);
             String stepLabel = (buildOrderGroup + 1) + " / " + totalGroups;
-            regBtn(g, mx, my, px + 10, y + 14, bW, 14, "◀",
+            regBtn(g, mx, my, px + 10, y + 14, bW, 14, "◀", Component.literal("Previous Build Step"),
                     () -> buildOrderStep(-1));
             g.drawCenteredString(font, stepLabel, lX + lW / 2, y + 17, C_ACCENT());
-            regBtn(g, mx, my, lX + lW + 2, y + 14, bW, 14, "▶",
+            regBtn(g, mx, my, lX + lW + 2, y + 14, bW, 14, "▶", Component.literal("Next Build Step"),
                     () -> buildOrderStep(1));
             y += 32;
         }
-        regIconBtn(g, mx, my, px + 10, y, pw - 20, 16, "🧱", "Build Mode",
-                buildOrderMode, () -> {
+        regIconBtn(g, mx, my, px + 10, y, pw - 20, 16, "🧱", "Build Mode", buildOrderMode,
+                Component.literal("Toggle build-order visualization"),
+                () -> {
                     buildOrderMode = !buildOrderMode;
                     if (buildOrderMode) {
-                        // Entering build mode: save and clear any active layer filter
-                        // so build mode always starts from group 0 with a clean slate.
                         savedManualLayer = manualLayer;
                         manualLayer = -1;
                         buildOrderGroup = 0;
                     } else {
-                        // Leaving build mode: restore the layer selection (or -1 = all).
                         manualLayer = savedManualLayer;
                     }
                     applyVisibility();
                 });
         y += 20;
-        regIconBtn(g, mx, my, px + 10, y, pw - 20, 16, "🗺", "Footprint",
-                false, this::openFootprintScreen);
+        regIconBtn(g, mx, my, px + 10, y, pw - 20, 16, "🗺", "Footprint", false,
+                Component.literal("View structure footprint on the ground"),
+                this::openFootprintScreen);
         y += 20;
-        regIconBtn(g, mx, my, px + 10, y, pw - 20, 16, "⊕", "Center Camera",
-                false, this::centerCamera);
+        regIconBtn(g, mx, my, px + 10, y, pw - 20, 16, "⊕", "Center Camera", false,
+                Component.literal("Reset camera to center of structure"),
+                this::centerCamera);
         y += 20;
-        regIconBtn(g, mx, my, px + 10, y, pw - 20, 16, "🔍", "Block List",
-                false, this::openBlockFilterScreen);
+        regIconBtn(g, mx, my, px + 10, y, pw - 20, 16, "🔍", "Block List", false,
+                Component.literal("View and filter required blocks"),
+                this::openBlockFilterScreen);
         y += 20;
 
         var mc = Minecraft.getInstance();
-        boolean canEdit = mc.player != null && (mc.player.getAbilities().instabuild ||          // creative
-                mc.player.hasPermissions(2));                   // op level 2+
-        if (canEdit) {
-            regIconBtn(g, mx, my, px + 10, y, pw - 20, 16, "✏", "Edit Script",
-                    false, this::openScriptEditor);
+        if (mc.player != null && mc.player.getAbilities().instabuild) {
+            regIconBtn(g, mx, my, px + 10, y, pw - 20, 16, "✏", "Edit Script", false,
+                    Component.literal("Open the visual script editor"),
+                    this::openScriptEditor);
         }
     }
 
@@ -1330,27 +1448,47 @@ public class PhantasiaSceneScreen extends Screen {
 
     private void regBtn(GuiGraphics g, int mx, int my,
                         int x, int y, int w, int h, String label, Runnable action) {
+        regBtn(g, mx, my, x, y, w, h, label, null, action);
+    }
+
+    private void regBtn(GuiGraphics g, int mx, int my,
+                        int x, int y, int w, int h, String label, Component tooltip, Runnable action) {
         boolean hov = isOver(mx, my, x, y, w, h);
         PhantasiaThemeUtils.drawThemedBtn(g, font, x, y, w, h, label, hov, C_BTN());
         activeButtons.add(new PhantasiaUIUtils.ButtonAction(x, y, w, h, action));
+        if (hov && tooltip != null) pendingTooltip = tooltip;
     }
 
     private void regBtn(GuiGraphics g, int mx, int my,
                         int x, int y, int w, int h,
                         String label, boolean active, Runnable action) {
+        regBtn(g, mx, my, x, y, w, h, label, active, null, action);
+    }
+
+    private void regBtn(GuiGraphics g, int mx, int my,
+                        int x, int y, int w, int h,
+                        String label, boolean active, Component tooltip, Runnable action) {
         boolean hov = isOver(mx, my, x, y, w, h);
         PhantasiaThemeUtils.drawThemedBtn(g, font, x, y, w, h, label, hov,
                 active ? C_BTN_ACT() : C_BTN());
         activeButtons.add(new PhantasiaUIUtils.ButtonAction(x, y, w, h, action));
+        if (hov && tooltip != null) pendingTooltip = tooltip;
     }
 
     private void regIconBtn(GuiGraphics g, int mx, int my,
                             int x, int y, int w, int h,
                             String icon, String label, boolean active, Runnable action) {
+        regIconBtn(g, mx, my, x, y, w, h, icon, label, active, null, action);
+    }
+
+    private void regIconBtn(GuiGraphics g, int mx, int my,
+                            int x, int y, int w, int h,
+                            String icon, String label, boolean active, Component tooltip, Runnable action) {
         boolean hov = isOver(mx, my, x, y, w, h);
         PhantasiaThemeUtils.drawIconBtn(g, font, x, y, w, h, icon, label, hov,
                 active ? C_BTN_ACT() : C_BTN());
         activeButtons.add(new PhantasiaUIUtils.ButtonAction(x, y, w, h, action));
+        if (hov && tooltip != null) pendingTooltip = tooltip;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -1378,7 +1516,7 @@ public class PhantasiaSceneScreen extends Screen {
 
     // ─────────────────────────────────────────────────────────────────────────
     // Lifecycle
-    // ────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
 
     @Override
     public void onClose() {

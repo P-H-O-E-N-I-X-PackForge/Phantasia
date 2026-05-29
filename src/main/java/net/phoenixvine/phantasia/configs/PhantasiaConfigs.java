@@ -39,12 +39,21 @@ public class PhantasiaConfigs {
         @Configurable
         @Configurable.Comment({
                 "Visual theme for the Phantasia scene viewer.",
-                "COBALT   - Default. Deep navy with sky-blue accents.",
-                "RAINBOW  - Hue-cycling accent on a neutral dark base.",
+                "COBALT - Default. Deep navy with sky-blue accents.",
+                "RAINBOW - Hue-cycling accent on a neutral dark base.",
                 "AMETHYST - Soft purple with gold progress bars.",
-                "MINECRAFT - Classic vanilla inventory look (stone grey, gold accent)."
+                "MINECRAFT - Classic vanilla inventory look (stone grey, gold accent).",
+                "CRIMSON - Dark netherite base with striking blood-red accents.",
+                "EMERALD - Terminal style deep dark paneling with vivid green lines.",
+                "VOID - Absolute pitch black layout with contrasting starlight text.",
+                "CYBERPUNK - Synthwave high-contrast neon-pink and cyan combo.",
+                "QUARTZ - Light Mode alternative. Clean grey-white panes with clear text."
         })
         public String theme = "COBALT";
+
+        @Configurable
+        @Configurable.Comment("The block ID used for the baseplate/floor in the scene preview.")
+        public String baseplateBlock = "minecraft:deepslate_bricks";
 
         public enum DisplayMode {
             TOOLTIP_ONLY,

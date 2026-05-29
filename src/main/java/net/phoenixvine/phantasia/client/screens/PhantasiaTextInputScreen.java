@@ -1,26 +1,29 @@
 package net.phoenixvine.phantasia.client.screens;
 
+import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.MultilineTextField;
+import net.minecraft.client.gui.components.Whence;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
  * PhantasiaTextInputScreen
  *
- * A focused modal subscreen for text/number entry that needs more room than
- * the inline strip boxes in the editor provide (annotation labels, global
- * mistake notes, captions, etc.).
- *
- * Opens on top of the editor, returns the entered value via {@code onConfirm}
- * and restores the editor on cancel or confirm.
+ * An expanded modal subscreen providing a fully integrated multiline edit
+ * environment featuring an integrated cursor insertion color palette.
  */
 @OnlyIn(Dist.CLIENT)
 public class PhantasiaTextInputScreen extends Screen {
@@ -34,6 +37,15 @@ public class PhantasiaTextInputScreen extends Screen {
     private static final int C_BTN_H = 0xBB1A2840;
     private static final int C_GREEN = 0xFF66BB6A;
 
+    // Standard Minecraft Formats: 0-9, a-f, and r (Reset)
+    private static final char[] COLOR_CODES = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
+            'e', 'f', 'r' };
+    private static final int[] COLOR_VALUES = {
+            0xFF000000, 0xFF0000AA, 0xFF00AA00, 0xFF00AAAA, 0xFFAA0000, 0xFFAA00AA, 0xFFFFAA00, 0xFFAAAAAA,
+            0xFF555555, 0xFF5555FF, 0xFF55FF55, 0xFF55FFFF, 0xFFFF5555, 0xFFFF55FF, 0xFFFFFF55, 0xFFFFFFFF,
+            0xFFFFFFFF
+    };
+
     private final Screen parent;
     private final String title;
     private final String hint;
@@ -41,16 +53,11 @@ public class PhantasiaTextInputScreen extends Screen {
     private final int maxLength;
     private final Consumer<String> onConfirm;
 
-    private EditBox inputBox;
+    private CustomTextArea inputBox;
 
-    /**
-     * @param parent    screen to return to after confirm/cancel
-     * @param title     prompt shown above the box (e.g. "Annotation Label")
-     * @param hint      placeholder text
-     * @param initial   pre-filled value (current value of the field)
-     * @param maxLength max characters
-     * @param onConfirm called with the final string on confirm; not called on cancel
-     */
+    private int pw, ph, px, py;
+    private int btnY;
+
     public PhantasiaTextInputScreen(Screen parent, String title, String hint,
                                     String initial, int maxLength,
                                     Consumer<String> onConfirm) {
@@ -67,30 +74,20 @@ public class PhantasiaTextInputScreen extends Screen {
     protected void init() {
         super.init();
 
-        int pw = Math.min(400, this.width - 40);
-        int px = (this.width - pw) / 2;
-        int py = (this.height - 80) / 2;
+        this.pw = Math.min(440, this.width - 40);
+        this.ph = 180;
+        this.px = (this.width - this.pw) / 2;
+        this.py = (this.height - this.ph) / 2;
+        this.btnY = this.py + this.ph - 22;
 
-        inputBox = addRenderableWidget(new EditBox(font, px + 8, py + 28, pw - 16, 16,
-                Component.empty()));
-        inputBox.setMaxLength(maxLength);
-        inputBox.setHint(Component.literal(hint));
+        inputBox = addRenderableWidget(new CustomTextArea(px + 8, py + 24, pw - 16, ph - 70, Component.empty()));
         inputBox.setValue(initial);
-        inputBox.setBordered(true);
         setInitialFocus(inputBox);
-        // Select all so the user can immediately replace
-        inputBox.setHighlightPos(0);
-        inputBox.moveCursorToEnd();
     }
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float partial) {
         g.fill(0, 0, this.width, this.height, C_BG);
-
-        int pw = Math.min(400, this.width - 40);
-        int ph = 80;
-        int px = (this.width - pw) / 2;
-        int py = (this.height - ph) / 2;
 
         g.fill(px, py, px + pw, py + ph, C_PANEL);
         g.fill(px, py, px + pw, py + 1, C_ACCENT);
@@ -99,11 +96,35 @@ public class PhantasiaTextInputScreen extends Screen {
 
         super.render(g, mx, my, partial);
 
-        int btnY = py + ph - 20;
-        int half = pw / 2 - 4;
+        renderColorPicker(g, mx, my);
 
+        int half = pw / 2 - 4;
         drawBtn(g, mx, my, px + 8, btnY, half, 14, "✓ Confirm", C_GREEN);
         drawBtn(g, mx, my, px + pw / 2 + 4, btnY, half, 14, "✕ Cancel", C_BTN);
+    }
+
+    private void renderColorPicker(GuiGraphics g, int mx, int my) {
+        int labelWidth = font.width("Colors: ");
+        int startX = px + 8;
+        int pickerY = btnY - 20;
+
+        g.drawString(font, "Colors: ", startX, pickerY + 2, C_DIM);
+
+        int boxX = startX + labelWidth;
+        int size = 12;
+        int gap = 3;
+
+        for (int i = 0; i < COLOR_CODES.length; i++) {
+            int cx = boxX + i * (size + gap);
+            boolean hov = mx >= cx && mx < cx + size && my >= pickerY && my < pickerY + size;
+
+            g.fill(cx, pickerY, cx + size, pickerY + size, COLOR_VALUES[i]);
+            g.renderOutline(cx, pickerY, size, size, hov ? C_ACCENT : 0xFF444444);
+
+            if (hov) {
+                g.renderTooltip(font, Component.literal("§" + COLOR_CODES[i] + " (§" + COLOR_CODES[i] + ")"), mx, my);
+            }
+        }
     }
 
     private void drawBtn(GuiGraphics g, int mx, int my, int x, int y, int w, int h,
@@ -121,13 +142,7 @@ public class PhantasiaTextInputScreen extends Screen {
     public boolean mouseClicked(double mx, double my, int btn) {
         if (super.mouseClicked(mx, my, btn)) return true;
 
-        int pw = Math.min(400, this.width - 40);
-        int ph = 80;
-        int px = (this.width - pw) / 2;
-        int py = (this.height - ph) / 2;
-        int btnY = py + ph - 20;
         int half = pw / 2 - 4;
-
         if (mx >= px + 8 && mx < px + 8 + half && my >= btnY && my < btnY + 14) {
             confirm();
             return true;
@@ -136,12 +151,28 @@ public class PhantasiaTextInputScreen extends Screen {
             Minecraft.getInstance().setScreen(parent);
             return true;
         }
+
+        int labelWidth = font.width("Colors: ");
+        int boxX = px + 8 + labelWidth;
+        int pickerY = btnY - 20;
+        int size = 12;
+        int gap = 3;
+
+        for (int i = 0; i < COLOR_CODES.length; i++) {
+            int cx = boxX + i * (size + gap);
+            if (mx >= cx && mx < cx + size && my >= pickerY && my < pickerY + size) {
+                setInitialFocus(inputBox);
+                inputBox.forceInsertBypassingFilters("§" + COLOR_CODES[i]);
+                return true;
+            }
+        }
+
         return false;
     }
 
     @Override
     public boolean keyPressed(int kc, int sc, int mod) {
-        if (kc == GLFW.GLFW_KEY_ENTER || kc == GLFW.GLFW_KEY_KP_ENTER) {
+        if ((kc == GLFW.GLFW_KEY_ENTER || kc == GLFW.GLFW_KEY_KP_ENTER) && !hasShiftDown()) {
             confirm();
             return true;
         }
@@ -161,5 +192,219 @@ public class PhantasiaTextInputScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    /**
+     * Bespoke CustomTextArea
+     * Directly maps UI interactions onto MultilineTextField's internal structures.
+     */
+    /**
+     * Bespoke CustomTextArea
+     * Directly maps UI interactions onto MultilineTextField's internal structures.
+     */
+    private class CustomTextArea extends AbstractWidget {
+
+        private final MultilineTextField textField;
+        private final List<LinePos> linesCache = new ArrayList<>(); // Track rendered positions for accurate clicking
+
+        public CustomTextArea(int x, int y, int width, int height, Component message) {
+            super(x, y, width, height, message);
+            this.textField = new MultilineTextField(PhantasiaTextInputScreen.this.font, width - 12);
+            this.textField.setCharacterLimit(maxLength);
+        }
+
+        public void setValue(String val) {
+            this.textField.setValue(val);
+        }
+
+        public String getValue() {
+            return this.textField.value();
+        }
+
+        public MultilineTextField getTextField() {
+            return this.textField;
+        }
+
+        public void forceInsertBypassingFilters(String insertionText) {
+            String fullText = this.textField.value();
+            int currentCursor = this.textField.cursor();
+
+            int start = currentCursor;
+            int end = currentCursor;
+
+            if (this.textField.hasSelection()) {
+                String sel = this.textField.getSelectedText();
+                start = fullText.indexOf(sel);
+                if (start != -1) {
+                    end = start + sel.length();
+                } else {
+                    start = currentCursor;
+                }
+            }
+
+            StringBuilder builder = new StringBuilder(fullText);
+            builder.replace(start, end, insertionText);
+
+            String updatedText = builder.toString();
+            if (updatedText.length() <= maxLength) {
+                this.textField.setValue(updatedText);
+
+                int nextCursorPos = start + insertionText.length();
+                this.textField.seekCursor(net.minecraft.client.gui.components.Whence.ABSOLUTE, nextCursorPos);
+            }
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics g, int mx, int my, float partial) {
+            g.fill(getX(), getY(), getX() + width, getY() + height, 0xFF000000);
+            g.renderOutline(getX(), getY(), width, height, isFocused() ? C_ACCENT : 0xFF444444);
+
+            int textX = getX() + 6;
+            int textY = getY() + 6;
+
+            int cursorIdx = this.textField.cursor();
+            String fullText = this.textField.value();
+
+            // Clear and rebuild our coordinate cache map on each draw pass
+            linesCache.clear();
+            if (fullText.isEmpty()) {
+                linesCache.add(new LinePos(0, 0, ""));
+            } else {
+                PhantasiaTextInputScreen.this.font.getSplitter().splitLines(fullText, width - 12, Style.EMPTY, false,
+                        (style, start, end) -> linesCache.add(new LinePos(start, end, fullText.substring(start, end))));
+                if (fullText.endsWith("\n")) {
+                    linesCache.add(new LinePos(fullText.length(), fullText.length(), ""));
+                }
+            }
+
+            // Render Selection Box Highlighting Tracks if selection is active
+            if (this.textField.hasSelection()) {
+                String selectedText = this.textField.getSelectedText();
+                int selectIdx = fullText.indexOf(selectedText);
+                int selectEnd = selectIdx + selectedText.length();
+
+                for (int i = 0; i < linesCache.size(); i++) {
+                    LinePos line = linesCache.get(i);
+                    int lineY = textY + (i * 9);
+
+                    if (selectEnd > line.start && selectIdx < line.end) {
+                        int selStartInLine = Math.max(selectIdx, line.start) - line.start;
+                        int selEndInLine = Math.min(selectEnd, line.end) - line.start;
+
+                        String beforeSel = line.text.substring(0, selStartInLine);
+                        String selText = line.text.substring(selStartInLine, selEndInLine);
+
+                        int hX1 = textX + PhantasiaTextInputScreen.this.font.width(beforeSel);
+                        int hX2 = hX1 + PhantasiaTextInputScreen.this.font.width(selText);
+
+                        g.fill(hX1, lineY, hX2, lineY + 9, 0xFF2244AA);
+                    }
+                }
+            }
+
+            // Render text lines and active blinking caret positions
+            for (int i = 0; i < linesCache.size(); i++) {
+                LinePos line = linesCache.get(i);
+                int lineY = textY + (i * 9);
+
+                g.drawString(PhantasiaTextInputScreen.this.font, line.text, textX, lineY, C_TEXT, false);
+
+                if (isFocused() && cursorIdx >= line.start && cursorIdx <= line.end) {
+                    if ((System.currentTimeMillis() / 500) % 2 == 0) {
+                        int offset = cursorIdx - line.start;
+                        String sub = line.text.substring(0, Math.min(offset, line.text.length()));
+                        int cx = textX + PhantasiaTextInputScreen.this.font.width(sub);
+                        g.fill(cx, lineY, cx + 1, lineY + 9, C_ACCENT);
+                    }
+                }
+            }
+        }
+
+        @Override
+        public boolean mouseClicked(double mx, double my, int btn) {
+            if (mx >= getX() && mx < getX() + width && my >= getY() && my < getY() + height) {
+                this.setFocused(true);
+
+                if (!linesCache.isEmpty()) {
+                    int clickedLineIdx = (int) ((my - (getY() + 6)) / 9);
+                    clickedLineIdx = Math.max(0, Math.min(clickedLineIdx, linesCache.size() - 1));
+
+                    LinePos clickedLine = linesCache.get(clickedLineIdx);
+                    int localClickX = (int) (mx - (getX() + 6));
+
+                    // FIXED: Step through the raw string manually to account for hidden § codes
+                    String lineText = clickedLine.text;
+                    int rawCharOffset = 0;
+                    int currentVisualWidth = 0;
+
+                    while (rawCharOffset < lineText.length()) {
+                        // If we encounter a formatting code, skip measuring it visually but count it in raw characters
+                        if (lineText.charAt(rawCharOffset) == '§' && rawCharOffset + 1 < lineText.length()) {
+                            rawCharOffset += 2; // Jump past the § and the color character
+                            continue;
+                        }
+
+                        // Check the width of the string up to this point
+                        String visualSubstring = lineText.substring(0, rawCharOffset + 1);
+                        currentVisualWidth = PhantasiaTextInputScreen.this.font.width(visualSubstring);
+
+                        // If our accumulated visual width passes the click position, stop here
+                        if (currentVisualWidth > localClickX) {
+                            break;
+                        }
+
+                        rawCharOffset++;
+                    }
+
+                    int finalTargetCursor = clickedLine.start + rawCharOffset;
+
+                    // Move the cursor exactly where it belongs
+                    this.textField.seekCursor(net.minecraft.client.gui.components.Whence.ABSOLUTE, finalTargetCursor);
+                }
+                return true;
+            }
+            this.setFocused(false);
+            return false;
+        }
+
+        @Override
+        public boolean keyPressed(int kc, int sc, int mod) {
+            if (!this.isFocused()) return false;
+
+            if ((kc == GLFW.GLFW_KEY_ENTER || kc == GLFW.GLFW_KEY_KP_ENTER) && hasShiftDown()) {
+                this.textField.insertText("\n");
+                return true;
+            }
+
+            if (this.textField.keyPressed(kc)) {
+                return true;
+            }
+            return super.keyPressed(kc, sc, mod);
+        }
+
+        @Override
+        public boolean charTyped(char codePoint, int modifiers) {
+            if (this.isFocused() && SharedConstants.isAllowedChatCharacter(codePoint)) {
+                this.textField.insertText(Character.toString(codePoint));
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        protected void updateWidgetNarration(NarrationElementOutput output) {}
+
+        private static class LinePos {
+
+            final int start;
+            final int end;
+            final String text;
+
+            LinePos(int start, int end, String text) {
+                this.start = start;
+                this.end = end;
+                this.text = text;
+            }
+        }
     }
 }

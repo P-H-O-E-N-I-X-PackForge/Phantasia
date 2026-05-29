@@ -136,7 +136,6 @@ public class PhantasiaScriptEditorScreen extends Screen {
     private boolean showingCloseConfirm = false;
 
     // ── Inputs ────────────────────────────────────────────────────────────────
-    private EditBox captionBox;
     private EditBox tickBox;
     private EditBox hideLayerBox;
     private EditBox hidePosBox;
@@ -248,14 +247,6 @@ public class PhantasiaScriptEditorScreen extends Screen {
 
     private void buildInputWidgets() {
         clearWidgets();
-
-        captionBox = addW(new EditBox(font, 0, 0, 200, 12, Component.empty()));
-        captionBox.setMaxLength(256);
-        captionBox.setHint(Component.literal("Caption for this step..."));
-        captionBox.setResponder(v -> {
-            step().caption = v.isBlank() ? null : v;
-            dirty = true;
-        });
 
         tickBox = addW(new EditBox(font, 0, 0, 40, 12, Component.empty()));
         tickBox.setMaxLength(5);
@@ -531,10 +522,11 @@ public class PhantasiaScriptEditorScreen extends Screen {
     private void renderModeTooltipBanner(GuiGraphics g) {
         if (hoveredModeBtnThisFrame == null) return;
         if (hoveredModeBtnThisFrame == mode) return;
-        String tip = switch (hoveredModeBtnThisFrame) {
-            case SELECT -> "SELECT — Click blocks to add/remove from this step's position list";
-            case ANNOTATE -> "ANNOTATE — Click any block to attach a floating mistake label";
-        };
+        String tip;
+        if (hoveredModeBtnThisFrame == Mode.SELECT)
+            tip = "SELECT — Click blocks to add/remove from this step's position list";
+        else
+            tip = "ANNOTATE — Click any block to attach a floating mistake label";
         drawBanner(g, tip, TOP_BAR_H + 4, C_DIM);
     }
 
@@ -775,9 +767,6 @@ public class PhantasiaScriptEditorScreen extends Screen {
                 mx, my);
         btns.add(new Btn(x, 3, 80, TOP_BAR_H - 6, () -> showStartCamPanel = !showStartCamPanel));
 
-        String name = machineId.contains(":") ? machineId.split(":")[1].replace('_', ' ') : machineId;
-        g.drawCenteredString(font, name, this.width / 2, (TOP_BAR_H - 8) / 2, C_DIM);
-
         int rx = this.width - 4;
         rx = topBtn(g, mx, my, rx, "✕ Back", C_BTN, this::onClose);
         rx = topBtn(g, mx, my, rx, "💾 Save", C_GREEN, this::save);
@@ -904,22 +893,28 @@ public class PhantasiaScriptEditorScreen extends Screen {
         g.drawString(font, "Tick:", x, y1 + 3, C_DIM, false);
         x += font.width("Tick:") + 3;
         placeBox(tickBox, x, y1, 38, 13);
-        if (isOver(mx, my, x - font.width("Tick:") - 3, y1, font.width("Tick:") + 3, 13))
-            g.renderTooltip(font,
-                    Component.literal("Tick at which this step activates during preview. 20 ticks ≈ 1 second."), mx,
-                    my);
+        if (isOver(mx, my, x - font.width("Tick:") - 3, y1, font.width("Tick:") + 3 + 38, 13))
+            safeTooltip(g, "Tick: when this step activates. 20 ticks ≈ 1 sec.", mx, rowY);
         x += 44;
 
-        g.drawString(font, "Caption:", x, y1 + 3, C_DIM, false);
-        x += font.width("Caption:") + 4;
-        int capW = Math.min(240, this.width / 2 - x - 10);
-        placeBox(captionBox, x, y1, capW, 13);
-        String capFull = captionBox.getValue();
-        if (font.width(capFull) > capW - 4 && !capFull.isEmpty()) {
-            g.drawString(font, "→", x + capW - 8, y1 + 3, C_DIM, false);
-            if (isOver(mx, my, x, y1, capW, 13))
-                g.renderTooltip(font, Component.literal(capFull), mx, my);
-        }
+        // Caption — button opens subscreen for easier editing
+        String capVal = s.caption != null ? s.caption : "";
+        int capW = Math.min(220, this.width / 2 - x - 10);
+        boolean capHov = isOver(mx, my, x, y1, capW, 13);
+        g.fill(x, y1, x + capW, y1 + 13, capHov ? C_BTN_HOV : C_BTN);
+        g.fill(x, y1, x + capW, y1 + 1, 0x33FFFFFF);
+        String capDisplay = capVal.isEmpty() ? "✎  Caption..." : trunc(capVal, capW - 16);
+        g.drawString(font, capDisplay, x + 4, y1 + 3,
+                capVal.isEmpty() ? C_DIM : C_TEXT, false);
+        if (!capVal.isEmpty() && font.width(capVal) > capW - 16)
+            g.drawString(font, "…", x + capW - 8, y1 + 3, C_DIM, false);
+        btns.add(new Btn(x, y1, capW, 13, () -> Minecraft.getInstance().setScreen(
+                new PhantasiaTextInputScreen(this, "Step Caption", "What the viewer sees for this step...",
+                        s.caption != null ? s.caption : "", 256, v -> {
+                            checkpoint();
+                            s.caption = v.isBlank() ? null : v;
+                            dirty = true;
+                        }))));
         x += capW + 8;
 
         g.fill(x, y1, x + 1, y1 + 14, 0x33FFFFFF);
@@ -930,8 +925,7 @@ public class PhantasiaScriptEditorScreen extends Screen {
         g.fill(x, y1, x + 82, y1 + 14, s.working ? C_BTN_ACT : (wh ? C_BTN_HOV : C_BTN));
         if (s.working) g.fill(x, y1, x + 82, y1 + 1, C_GREEN);
         g.drawString(font, (s.working ? "✓" : "○") + " Running", x + 5, y1 + 3, s.working ? C_GREEN : C_DIM, false);
-        if (wh) g.renderTooltip(font, Component.literal("Toggle whether the machine is shown as running in this step"),
-                mx, my);
+        if (wh) safeTooltip(g, "Toggle: show machine as running in this step", mx, rowY);
         btns.add(new Btn(x, y1, 82, 14, () -> {
             checkpoint();
             s.working = !s.working;
@@ -943,10 +937,8 @@ public class PhantasiaScriptEditorScreen extends Screen {
             g.drawString(font, "Recipe:", x, y1 + 3, C_DIM, false);
             x += font.width("Recipe:") + 4;
             placeBox(fakeRecipeBox, x, y1, 180, 13);
-            if (isOver(mx, my, x - font.width("Recipe:") - 4, y1, font.width("Recipe:") + 4, 13))
-                g.renderTooltip(font, Component.literal(
-                        "Optional: inject a GT recipe so recipe-dependent renders (plasma colour, laser arc…) display correctly"),
-                        mx, my);
+            if (isOver(mx, my, x - font.width("Recipe:") - 4, y1, font.width("Recipe:") + 4 + 180, 13))
+                safeTooltip(g, "Optional GT recipe ID for recipe-dependent renders", mx, rowY);
             x += 186;
         }
 
@@ -957,8 +949,7 @@ public class PhantasiaScriptEditorScreen extends Screen {
         if (hasCam) g.fill(x, y1, x + 110, y1 + 1, C_ACCENT);
         g.drawString(font, hasCam ? "📷 Update Cam" : "📷 Capture Cam", x + 5, y1 + 3, hasCam ? C_ACCENT : C_DIM,
                 false);
-        if (cch) g.renderTooltip(font, Component.literal("Save the current 3D viewport angle as this step's camera"),
-                mx, my);
+        if (cch) safeTooltip(g, "Save current viewport as this step's camera", mx, rowY);
         btns.add(new Btn(x, y1, 110, 14, this::captureCamera));
         x += 116;
 
@@ -967,10 +958,8 @@ public class PhantasiaScriptEditorScreen extends Screen {
             g.drawString(font, "Zoom:", x, y1 + 3, C_DIM, false);
             x += font.width("Zoom:") + 3;
             placeBox(camZoomBox, x, y1, 40, 13);
-            if (isOver(mx, my, x - font.width("Zoom:") - 3, y1, font.width("Zoom:") + 3, 13))
-                g.renderTooltip(font,
-                        Component.literal("Camera zoom distance in world units. Leave blank for auto (fit machine)."),
-                        mx, my);
+            if (isOver(mx, my, x - font.width("Zoom:") - 3, y1, font.width("Zoom:") + 3 + 40, 13))
+                safeTooltip(g, "Zoom distance (world units). Blank = auto-fit.", mx, rowY);
             x += 46;
             // ✕ clear camera
             boolean rch = isOver(mx, my, x, y1, 48, 14);
@@ -991,9 +980,7 @@ public class PhantasiaScriptEditorScreen extends Screen {
             g.fill(x, y1, x + ltW, y1 + 14, lth ? C_BTN_HOV : C_BTN);
             g.fill(x, y1, x + ltW, y1 + 1, C_ACCENT);
             g.drawString(font, ltLabel, x + 8, y1 + 3, C_ACCENT, false);
-            if (lth) g.renderTooltip(font,
-                    Component.literal("Transition easing for this camera move. Click to cycle. Snap = instant."), mx,
-                    my);
+            if (lth) safeTooltip(g, "Easing for this camera move. Click to cycle. Snap = instant.", mx, rowY);
             btns.add(new Btn(x, y1, ltW, 14, () -> {
                 checkpoint();
                 LerpType[] vals = LerpType.values();
@@ -1008,8 +995,7 @@ public class PhantasiaScriptEditorScreen extends Screen {
                 x += font.width("in") + 3;
                 placeBox(lerpTicksBox, x, y1, 34, 13);
                 if (isOver(mx, my, x, y1, 34, 13))
-                    g.renderTooltip(font,
-                            Component.literal("Duration of the camera transition in ticks (20 = 1 second)."), mx, my);
+                    safeTooltip(g, "Transition duration in ticks (20 = 1 second).", mx, rowY);
                 x += 38;
                 g.drawString(font, "t", x, y1 + 3, C_DIM, false);
                 x += font.width("t") + 4;
@@ -1058,16 +1044,14 @@ public class PhantasiaScriptEditorScreen extends Screen {
         int hpW = 130;
         rx2 -= hpW;
         g.drawString(font, "HidePos:", rx2 - 54, y2 + 2, C_DIM, false);
-        if (isOver(mx, my, rx2 - 54, y2, 54, 13))
-            g.renderTooltip(font,
-                    Component.literal("Positions to hide in this step. Format: x,y,z; x,y,z  (local coords)"), mx, my);
+        if (isOver(mx, my, rx2 - 54, y2, 54 + hpW, 13))
+            safeTooltip(g, "Local positions to hide: x,y,z; x,y,z", mx, rowY);
         placeBox(hidePosBox, rx2, y2, hpW, 13);
         rx2 -= 58;
 
         g.drawString(font, "HideY:", rx2 - 40, y2 + 2, C_DIM, false);
-        if (isOver(mx, my, rx2 - 40, y2, 40, 13))
-            g.renderTooltip(font,
-                    Component.literal("Hide all blocks at this Y layer. Leave blank (or -1) to hide nothing."), mx, my);
+        if (isOver(mx, my, rx2 - 40, y2, 40 + 30, 13))
+            safeTooltip(g, "Hide all blocks at this Y layer. Blank = none.", mx, rowY);
         placeBox(hideLayerBox, rx2, y2, 30, 13);
     }
 
@@ -1294,18 +1278,21 @@ public class PhantasiaScriptEditorScreen extends Screen {
             return true;
         }
 
-        if (mode == null) {
-            return false;
-        }
-
         // Button registry — checked before super so our custom buttons always fire
         for (Btn b : btns) if (b.hit(mx, my)) {
             b.action().run();
             return true;
         }
 
-        // Let Minecraft route the click to any visible/active EditBox so it gains focus
-        if (super.mouseClicked(mx, my, btn)) return true;
+        // Manually route clicks to visible EditBoxes for focus (not via super which can eat clicks)
+        for (var child : children()) {
+            if (child instanceof EditBox eb && eb.visible && eb.active && mx >= eb.getX() &&
+                    mx < eb.getX() + eb.getWidth() && my >= eb.getY() && my < eb.getY() + eb.getHeight()) {
+                setFocused(eb);
+                eb.mouseClicked(mx, my, btn);
+                return true;
+            }
+        }
 
         // Layer slider
         if (startLayerSliderDrag(mx, my)) return true;
@@ -1362,16 +1349,15 @@ public class PhantasiaScriptEditorScreen extends Screen {
         int sceneBottom = this.height - BOTTOM_H;
         if (my < TOP_BAR_H || my >= sceneBottom) return false;
 
-        return switch (mode) {
-            case SELECT -> {
-                selectClickPending = true;
-                selectClickBtn = btn;
-                selectClickMX = mx;
-                selectClickMY = my;
-                yield true;
-            }
-            case ANNOTATE -> handleAnnotateClick(mx, my, btn);
-        };
+        if (mode == Mode.SELECT) {
+            selectClickPending = true;
+            selectClickBtn = btn;
+            selectClickMX = mx;
+            selectClickMY = my;
+            return true;
+        }
+        if (mode == Mode.ANNOTATE) return handleAnnotateClick(mx, my, btn);
+        return false;
     }
 
     private boolean startLayerSliderDrag(double mx, double my) {
@@ -1598,12 +1584,22 @@ public class PhantasiaScriptEditorScreen extends Screen {
                 return true;
             }
         }
+        // Escape exits the current mode before closing the screen
         if (kc == GLFW.GLFW_KEY_ESCAPE) {
             if (showingCloseConfirm) {
                 showingCloseConfirm = false;
                 return true;
             }
+            if (mode != null) {
+                setMode(null);
+                return true;
+            }
             onClose();
+            return true;
+        }
+        // Delete key removes the selected step
+        if (kc == GLFW.GLFW_KEY_DELETE) {
+            deleteStep();
             return true;
         }
 
@@ -1870,9 +1866,8 @@ public class PhantasiaScriptEditorScreen extends Screen {
     }
 
     private void populateInputsFromStep() {
-        if (captionBox == null) return;
+        if (tickBox == null) return;
         PhantasiaScriptData.StepData s = step();
-        captionBox.setValue(s.caption != null ? s.caption : "");
         tickBox.setValue(String.valueOf(s.tick));
         hideLayerBox.setValue(s.hideLayer >= 0 ? String.valueOf(s.hideLayer) : "");
         hidePosBox.setValue(serializePosList(s.hidePositions));
@@ -1923,6 +1918,18 @@ public class PhantasiaScriptEditorScreen extends Screen {
         return new float[] { sx, sy, depth };
     }
 
+    /** Renders a tooltip pinned just above {@code anchorY}, never spilling into the step row or timeline. */
+    private void safeTooltip(GuiGraphics g, String text, int mx, int anchorY) {
+        int tw = font.width(text) + 8;
+        int th = font.lineHeight + 4;
+        int tx = Math.max(2, Math.min(mx - tw / 2, this.width - tw - 2));
+        int ty = anchorY - th - 2;
+        if (ty < TOP_BAR_H + 2) ty = TOP_BAR_H + 2;
+        g.fill(tx - 1, ty - 1, tx + tw + 1, ty + th + 1, 0xEE0A0A18);
+        g.fill(tx - 1, ty - 1, tx + tw + 1, ty, C_ACCENT);
+        g.drawString(font, text, tx + 4, ty + 2, C_TEXT, false);
+    }
+
     private void drawBanner(GuiGraphics g, String text, int y, int accentColor) {
         int tw = font.width(text) + 20;
         int tx = (this.width - tw) / 2;
@@ -1953,7 +1960,7 @@ public class PhantasiaScriptEditorScreen extends Screen {
     }
 
     private void hideAllInputs() {
-        for (var box : List.of(captionBox, tickBox, hideLayerBox, hidePosBox,
+        for (var box : List.of(tickBox, hideLayerBox, hidePosBox,
                 fakeRecipeBox,
                 lerpTicksBox, camZoomBox, scriptDurationBox,
                 scYawBox, scPitchBox, scZoomBox,
