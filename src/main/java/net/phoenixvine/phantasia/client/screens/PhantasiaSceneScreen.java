@@ -62,12 +62,10 @@ public class PhantasiaSceneScreen extends Screen {
      * Only reset when the scene screen itself is fully closed via onClose().
      */
     private static boolean machineWorking = false;
-    private static int NEXT_REGION = 0;
-    private static final int REGION_SIZE = 512;
+    private static final int REGION_SIZE = 512; // retained for any external references
 
     public static void invalidateSharedLevel() {
         SHARED_LEVEL = null;
-        NEXT_REGION = 0;
     }
 
     public static BlockPos getOriginForCurrentPattern() {
@@ -274,11 +272,12 @@ public class PhantasiaSceneScreen extends Screen {
                 renderer.setBaseplatePositions(pattern.baseplatePositions);
                 renderer.setControllerWorldPos(pattern.controllerWorldPos);
             }
-            // GT's DynamicRenderManager is just a type registry — it has no
-            // render hook. GT dynamic renders (fusion rings, etc.) are driven
-            // by the machine's MetaMachineBlockEntity BER, which is already
-            // handled by drawTileEntities once the BEs are registered.
         }
+        // Wire the controller machine into the renderer so IRenderer.renderTick()
+        // is driven each frame (fusion ring rotation, material color, etc.).
+        // Also clear stale entities from the previous pattern before doing so.
+        SHARED_LEVEL.entities.clear();
+        renderer.setControllerMachine(pattern != null ? pattern.controller : null);
 
         // ── Camera ────────────────────────────────────────────────────────────
         if (camera == null) {
@@ -426,8 +425,24 @@ public class PhantasiaSceneScreen extends Screen {
     // ─────────────────────────────────────────────────────────────────────────
 
     private PhantasiaLoadedPattern loadPattern(MultiblockShapeInfo shape) {
-        int regionIndex = NEXT_REGION++;
-        BlockPos origin = new BlockPos(regionIndex * REGION_SIZE, 50, 0);
+        // Place blocks near the player's current position so Embeddium's chunk
+        // visibility system keeps their textures animated and particles active.
+        // (0, 50, 0) is unloaded for most TFG players who spawn far from world origin.
+        // We snap to chunk boundaries to avoid straddling chunk section borders,
+        // which would cause Embeddium to rebuild two sections instead of one.
+        Minecraft mc = Minecraft.getInstance();
+        BlockPos playerPos = mc.player != null
+                ? mc.player.blockPosition()
+                : (mc.level != null ? BlockPos.ZERO : BlockPos.ZERO);
+        // Snap to 16-block (chunk) boundary, place 3 chunks away in +X so the
+        // dummy blocks don't overlap any real terrain the player is standing in.
+        int ox = ((playerPos.getX() >> 4) + 3) << 4;
+        int oz = (playerPos.getZ() >> 4) << 4;
+        // Use y=50 as a safe height above bedrock that exists in all dimension types.
+        BlockPos origin = new BlockPos(ox, 50, oz);
+
+        SHARED_LEVEL.renderedBlocks.clear();
+        SHARED_LEVEL.blockEntities.clear();
 
         Map<BlockPos, BlockInfo> blockMap = new HashMap<>();
         Map<BlockPos, BlockPos> localToWorld = new HashMap<>();

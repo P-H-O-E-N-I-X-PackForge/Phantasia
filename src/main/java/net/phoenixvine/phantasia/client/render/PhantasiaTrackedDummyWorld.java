@@ -24,6 +24,14 @@ public class PhantasiaTrackedDummyWorld extends TrackedDummyWorld {
      * mc.particleEngine. Routing here ensures particles from animateTick reach
      * the same engine GT BER particles use (via the particleProxyLevel swap in
      * drawTileEntities), so mc.particleEngine.render() draws them each frame.
+     *
+     * NOTE: TrackedDummyWorld.addFreshEntity(), getAllEntities(), tickWorld(),
+     * and getBlockTint() are all already correctly implemented in the superclass
+     * and do NOT need to be overridden here.
+     * - addFreshEntity() stores entities in this.entities (Int2ObjectArrayMap)
+     * - getAllEntities() returns a list from that map
+     * - tickWorld() ticks entities and BE tickers each call
+     * - getBlockTint() proxies to the real ClientLevel via proxyWorld
      */
     @Override
     public void addParticle(ParticleOptions particleData,
@@ -55,73 +63,19 @@ public class PhantasiaTrackedDummyWorld extends TrackedDummyWorld {
      * checks level.getBlockEntity(pos) != null and returns early if so. The
      * dummy world has real BEs registered, so we temporarily remove the BE
      * during the animateTick call and restore it in a finally block.
-     *
-     * Exceptions from individual blocks (e.g. failed particle type lazy
-     * resolution) are allowed to propagate — the caller (tickAmbientEffects)
-     * wraps each call in its own try/catch so one bad block doesn't kill others.
      */
     public void tickAnimateForPos(BlockPos pos, RandomSource random) {
         BlockState state = getBlockState(pos);
         if (state.isAir()) return;
-
-        // Guard: spawnClient() in TFG blocks bails if level.isClientSide is false.
-        // TrackedDummyWorld inherits isClientSide=true from LDLib DummyWorld, but
-        // guard here explicitly in case a subclass or mixin changes it.
         if (!this.isClientSide) return;
 
-        BlockEntity hidden = getBlockEntity(pos);
-        if (hidden != null) removeBlockEntityForTick(pos);
-
+        // Temporarily hide the BE so hasTicker guards in blocks like TFG's
+        // ActiveParticleBlock don't bail early when a BE is present.
+        BlockEntity hidden = blockEntities.remove(pos);
         try {
             state.getBlock().animateTick(state, this, pos, random);
         } finally {
-            if (hidden != null) restoreBlockEntityAfterTick(pos, hidden);
+            if (hidden != null) blockEntities.put(pos, hidden);
         }
-    }
-
-    // ── BE hide/restore via reflection ───────────────────────────────────────
-
-    private static java.lang.reflect.Field beMapField = null;
-
-    private void removeBlockEntityForTick(BlockPos pos) {
-        try {
-            java.util.Map<?, ?> map = getBlockEntityMap();
-            if (map != null) map.remove(pos);
-        } catch (Exception ignored) {}
-    }
-
-    private void restoreBlockEntityAfterTick(BlockPos pos, BlockEntity be) {
-        try {
-            @SuppressWarnings("unchecked")
-            java.util.Map<BlockPos, BlockEntity> map = (java.util.Map<BlockPos, BlockEntity>) getBlockEntityMap();
-            if (map != null) map.put(pos, be);
-        } catch (Exception ignored) {}
-    }
-
-    private java.util.Map<?, ?> getBlockEntityMap() {
-        if (beMapField == null) {
-            for (Class<?> c = this.getClass(); c != null; c = c.getSuperclass()) {
-                for (java.lang.reflect.Field f : c.getDeclaredFields()) {
-                    if (!java.util.Map.class.isAssignableFrom(f.getType())) continue;
-                    try {
-                        f.setAccessible(true);
-                        Object val = f.get(this);
-                        if (val instanceof java.util.Map<?, ?> m && !m.isEmpty()) {
-                            Object first = m.values().iterator().next();
-                            if (first instanceof BlockEntity) {
-                                beMapField = f;
-                                return m;
-                            }
-                        }
-                    } catch (Exception ignored) {}
-                }
-            }
-        }
-        if (beMapField != null) {
-            try {
-                return (java.util.Map<?, ?>) beMapField.get(this);
-            } catch (Exception ignored) {}
-        }
-        return null;
     }
 }
