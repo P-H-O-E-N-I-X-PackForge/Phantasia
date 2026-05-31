@@ -405,42 +405,22 @@ public final class PhantasiaWorldRenderer {
         // 6. Snapshot matrices for ray-trace (must happen while they're live).
         snapshotMatrices();
 
-        // 7. Draw solid/cutout VBOs (all layers except translucent).
-        drawVBOs(false);
+        // ── Mark animated sprites active for Embeddium/Rubidium ──────────────
+        // Embeddium replaces TextureAtlas.cycleAnimationFrames() with its own system
+        // that only animates sprites visible in the player camera frustum. Our dummy
+        // world blocks at x=512 are never in that frustum, so their textures freeze
+        // after the first frame. We mark each visible block's animated sprites as
+        // active once per render frame so Embeddium advances them.
+        markAnimatedSpritesActive();
 
-        // 8. Draw animated blocks that belong to solid/cutout layers.
-        // These must come AFTER solid VBOs (so they depth-test correctly against
-        // each other) but BEFORE the translucent VBO so glass draws on top of them.
-        // Drawing them after the translucent pass caused them to overdraw glass
-        // (depthMask was left true from the animated draw, after glass wrote with
-        // depthMask=false — reversing the correct back-to-front translucent order).
-        {
-            RenderSystem.enableDepthTest();
-            RenderSystem.depthMask(true);
-            MultiBufferSource.BufferSource animBuffers = Minecraft.getInstance().renderBuffers().bufferSource();
-            drawAnimatedBlocks(animBuffers, false);
-            animBuffers.endBatch();
-        }
+        // 7. Draw stable VBOs.
+        drawVBOs();
 
-        // 9. Draw translucent VBO (glass, ice, etc.) with depthMask=false so
-        // it blends correctly over the solid geometry drawn above.
-        drawVBOs(true);
-
-        // 10. Draw animated blocks that belong to the translucent layer (rare —
-        // e.g. modded animated glass). Reset depth state first since drawVBOs(true)
-        // leaves depthMask=false.
-        if (!animatedPositions.isEmpty()) {
-            RenderSystem.enableDepthTest();
-            RenderSystem.depthMask(false); // keep depthMask=false for translucent animated blocks
-            RenderSystem.enableBlend();
-            MultiBufferSource.BufferSource animTransBuffers = Minecraft.getInstance().renderBuffers().bufferSource();
-            drawAnimatedBlocks(animTransBuffers, true);
-            animTransBuffers.endBatch();
-            RenderSystem.depthMask(true);
-        }
-
-        // 11. Draw suppressed (instantly hidden) and fading-in blocks.
-        // Reset depth state first: the translucent VBO pass leaves depthMask(false).
+        // 8. Draw suppressed (instantly hidden) and fading-in blocks.
+        // Reset depth state first: the last VBO layer (translucent) leaves
+        // depthMask(false), which would make fading-in blocks write colour
+        // but skip depth — causing doRayTrace to unproject onto the opaque
+        // surface behind a block that is visually present on screen.
         boolean needsDynamicPass = hasTransitions || !suppressedPositions.isEmpty();
         if (needsDynamicPass) {
             RenderSystem.enableDepthTest();
@@ -448,10 +428,10 @@ public final class PhantasiaWorldRenderer {
             MultiBufferSource.BufferSource dynBuffers = mc.renderBuffers().bufferSource();
             if (!suppressedPositions.isEmpty()) drawSuppressed(dynBuffers);
             if (hasTransitions) drawFadingIn(dynBuffers);
-            dynBuffers.endBatch();
+            dynBuffers.endBatch(); // ONE flush for the whole dynamic pass
         }
 
-        // 12. Tile entities, entities & particles — with correct lighting.
+        // 9. Tile entities, entities & particles — with correct lighting and camera-relative pose.
         float partial = mc.getFrameTime();
         MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
         turnOnLight(partial);
@@ -459,34 +439,46 @@ public final class PhantasiaWorldRenderer {
         drawTileEntities(buffers, partial, camX, camY, camZ);
         drawEntities(buffers, partial, camX, camY, camZ);
 
+        // Flush all BE/entity geometry BEFORE rendering particles so depth is correct.
         buffers.endBatch();
 
         // ─── PARTICLE RENDER ─────────────────────────────────────────────────
-        // Two particle sources:
+        // Particles enter mc.particleEngine from two sources:
+        //   1. GT BER particles — be.setLevel(particleProxyLevel) causes addParticle
+        //      to route to mc.particleEngine (has GT's MufflerParticle.Provider).
+        //   2. animateTick particles — PhantasiaTrackedDummyWorld.addParticle()
+        //      override routes directly to mc.particleEngine.createParticle().
         //
-        // 1. mc.particleEngine — GT BER particles (MufflerParticle, etc.) added
-        // during drawTileEntities via the particleProxyLevel swap.
+        // CAMERA POSITION COMPENSATION:
+        // Particle.render() computes vertex = (p_world - camera.getPosition()) × billboard.
+        // Our gluLookAt model-view is M = R × T(-eye).
+        // Shader applies: M × vertex = R × T(-eye) × (p_world - camera.pos).
+        // If camera.pos == scene_eye, the eye is subtracted twice — particles appear
+        // at (p_world - 2×eye), which is far below/away from the scene.
         //
-        // 2. LDLib ParticleManager (world.getParticleManager()) — animateTick
-        // particles from SHARED_LEVEL.addParticle() routing.
-        // pm.tick() must be called first to flush waitToAdded → particles map.
+        // Fix: push T(+eye) onto the model-view stack before the render call so:
+        //   M' = M × T(+eye) = R × T(-eye) × T(+eye) = R
+        //   M' × vertex = R × (p_world - eye)  ← correct camera-relative position
         //
-        // CRITICAL: use this.camera (our scene camera), NOT mc.gameRenderer.getMainCamera()
-        // (the real-world player camera). Particles billboard toward the active camera;
-        // using the wrong camera makes them face away from the viewport and invisible.
+        // Do NOT call mc.particleEngine.tick() here — Minecraft.tick() already does
+        // this at 20/s. Calling it every render frame kills particles before they
+        // can be seen.
         try {
-            var lightTexture = mc.gameRenderer.lightTexture();
+            var camPos = this.camera.getPosition();
+            PoseStack mv = RenderSystem.getModelViewStack();
+            mv.pushPose();
+            mv.translate(camPos.x, camPos.y, camPos.z);
+            RenderSystem.applyModelViewMatrix();
 
-            mc.particleEngine.render(new PoseStack(), buffers, lightTexture, this.camera, partial);
+            mc.particleEngine.render(new PoseStack(), buffers,
+                    mc.gameRenderer.lightTexture(), this.camera, partial);
             buffers.endBatch();
-            mc.particleEngine.tick(); // expire so they don't bleed into the real world view
 
-            var pm = ((PhantasiaTrackedDummyWorld) world).getParticleManager();
-            if (pm != null) {
-                pm.tick(); // flush waitToAdded → particles map
-                pm.render(new PoseStack(), this.camera, partial);
-            }
-        } catch (Exception ignored) {}
+            mv.popPose();
+            RenderSystem.applyModelViewMatrix();
+        } catch (Exception e) {
+            LOGGER.error("[Phantasia] particle render failed", e);
+        }
         // ────────────────────────────────────────────────────────────────────
 
         turnOffLight();
@@ -529,30 +521,15 @@ public final class PhantasiaWorldRenderer {
         }
         bakedVisible = pendingBakeMask.get();
         frontTileEntities = backTileEntities != null ? backTileEntities : Collections.emptySet();
-        // Swap animated block set and rebuild the layer cache.
-        if (backAnimatedPositions != null) {
-            animatedPositions = backAnimatedPositions;
-            backAnimatedPositions = null;
-            animatedLayers.clear();
-            Minecraft mc2 = Minecraft.getInstance();
-            BlockRenderDispatcher brd2 = mc2.getBlockRenderer();
-            RandomSource rnd2 = RandomSource.createNewThreadLocalInstance();
-            for (BlockPos pos : animatedPositions) {
-                BlockState state = world.getBlockState(pos);
-                List<RenderType> layers = new ArrayList<>(2);
-                for (RenderType layer : LAYERS) {
-                    if (WorldSceneRenderer.canRenderInLayer(brd2, state, pos, world, layer, rnd2)) {
-                        layers.add(layer);
-                        break;
-                    }
-                }
-                animatedLayers.put(pos, layers);
-            }
-        }
         // Suppressed positions that are now absent from the new front[] can be cleared.
         suppressedPositions.removeIf(p -> !bakedVisible.contains(p));
         backReady = false;
         backTileEntities = null;
+        // Rebuild sprite cache now that bakedVisible has changed.
+        // markAnimatedSpritesActive() reads from this cache every render frame —
+        // keeping the expensive getBlockModel+getQuads work here (once per bake swap)
+        // rather than per-frame eliminates the performance regression.
+        rebuildSpriteCache();
     }
 
     // ── Bake ─────────────────────────────────────────────────────────────────
@@ -601,27 +578,11 @@ public final class PhantasiaWorldRenderer {
             // belong to exactly one layer). Fluids are bucketed separately because
             // their layer is determined by FluidState and can differ from the host
             // block's layer.
-            // Detect animated blocks first so we can exclude them from the VBO.
-            // Animated blocks must NOT be baked — their texture UV changes every frame,
-            // and baking freezes the UV at bake-time. They are re-emitted every frame
-            // by drawAnimatedBlocks() instead. Including them in the VBO AND in
-            // drawAnimatedBlocks causes z-fighting and depth-order artefacts with
-            // translucent layers (they appear to show through glass, etc.).
-            Set<BlockPos> animated = new HashSet<>();
-            for (BlockPos pos : snapshot) {
-                BlockState state = world.getBlockState(pos);
-                if (isAnimatedBlock(brd, state, pos, random)) animated.add(pos);
-            }
-            backAnimatedPositions = animated;
-
             Map<RenderType, List<BlockPos>> solidBuckets = new HashMap<>(LAYER_COUNT);
             Map<RenderType, List<BlockPos>> fluidBuckets = new HashMap<>(LAYER_COUNT);
             for (BlockPos pos : snapshot) {
                 BlockState state = world.getBlockState(pos);
                 if (state.getBlock() == Blocks.AIR) continue;
-                // Skip animated blocks — they are drawn every frame by drawAnimatedBlocks,
-                // not baked into the static VBO.
-                if (animated.contains(pos)) continue;
                 if (state.getRenderShape() != RenderShape.INVISIBLE) {
                     for (RenderType layer : LAYERS) {
                         if (WorldSceneRenderer.canRenderInLayer(brd, state, pos, world, layer, random)) {
@@ -752,20 +713,94 @@ public final class PhantasiaWorldRenderer {
 
     // ── VBO draw ──────────────────────────────────────────────────────────────
 
+    // ── Embeddium/Rubidium sprite activation ──────────────────────────────────
+
+    private static java.lang.reflect.Method embeddiumMarkActive = null;
+    private static boolean embeddiumChecked = false;
+
+    private static final String[] SPRITE_UTIL_CANDIDATES = {
+            "org.embeddedt.embeddium.client.render.texture.SpriteUtil",
+            "me.jellysquid.mods.sodium.client.render.texture.SpriteUtil",
+            "org.embeddedt.embeddium.api.render.texture.SpriteUtil",
+    };
+
     /**
-     * Draws VBO layers.
-     *
-     * @param translucentOnly if true draws only the translucent layer;
-     *                        if false draws all OTHER layers (solid, cutout, etc.).
-     *                        This lets the caller interleave animated blocks between
-     *                        the solid and translucent passes so depth ordering is correct.
+     * Cached set of sprites to mark active each frame — rebuilt in
+     * {@link #rebuildSpriteCache()} only when {@code bakedVisible} changes
+     * (i.e. after each bake swap). Recomputing this every render frame by
+     * calling getBlockModel+getQuads on every visible block was expensive.
      */
-    private void drawVBOs(boolean translucentOnly) {
+    private final java.util.Set<net.minecraft.client.renderer.texture.TextureAtlasSprite>
+            cachedSprites = new java.util.HashSet<>();
+
+    /**
+     * Rebuilds {@link #cachedSprites} from the current {@code bakedVisible} set.
+     * Called once from {@link #swapBuffers} after each completed bake.
+     *
+     * Uses the Forge-extended {@code getQuads(state, face, random, ModelData, RenderType)}
+     * overload so custom model loaders (TFG geometry, etc.) return their full quad
+     * list. The base {@code getQuads(state, face, random)} overload returns empty or
+     * partial results for Forge OBJ / custom geometry blocks.
+     *
+     * Does NOT filter by {@code createTicker()} — {@code markSpriteActive} is a
+     * no-op for non-animated sprites in Embeddium so marking everything is safe and
+     * ensures TFG blocks whose sprites animate via a non-standard ticker are covered.
+     */
+    private void rebuildSpriteCache() {
+        cachedSprites.clear();
+        Minecraft mc = Minecraft.getInstance();
+        BlockRenderDispatcher brd = mc.getBlockRenderer();
+        RandomSource rnd = RandomSource.createNewThreadLocalInstance();
+
+        for (BlockPos pos : bakedVisible) {
+            BlockState state = world.getBlockState(pos);
+            if (state.isAir()) continue;
+            try {
+                var model = brd.getBlockModel(state);
+                // Use Forge's ModelData-aware overload so custom geometry loaders
+                // (TFG, Create, etc.) return their full quad lists.
+                var modelData = net.minecraftforge.client.model.data.ModelData.EMPTY;
+                for (var face : net.minecraft.core.Direction.values()) {
+                    for (var quad : model.getQuads(state, face, rnd, modelData, null)) {
+                        var sprite = quad.getSprite();
+                        if (sprite != null) cachedSprites.add(sprite);
+                    }
+                }
+                for (var quad : model.getQuads(state, null, rnd, modelData, null)) {
+                    var sprite = quad.getSprite();
+                    if (sprite != null) cachedSprites.add(sprite);
+                }
+            } catch (Exception ignored) {}
+        }
+    }
+
+    /**
+     * Marks all cached sprites as active so Embeddium/Rubidium advances their
+     * animation frames this tick. No-ops when neither is present.
+     */
+    private void markAnimatedSpritesActive() {
+        if (!embeddiumChecked) {
+            embeddiumChecked = true;
+            for (String candidate : SPRITE_UTIL_CANDIDATES) {
+                try {
+                    Class<?> su = Class.forName(candidate);
+                    embeddiumMarkActive = su.getMethod("markSpriteActive",
+                            net.minecraft.client.renderer.texture.TextureAtlasSprite.class);
+                    break;
+                } catch (Exception ignored) {}
+            }
+        }
+        if (embeddiumMarkActive == null) return;
+        for (var sprite : cachedSprites) {
+            try { embeddiumMarkActive.invoke(null, sprite); }
+            catch (Exception ignored) {}
+        }
+    }
+
+    private void drawVBOs() {
         for (int i = 0; i < LAYER_COUNT; i++) {
             VertexBuffer vbo = front[i];
             RenderType layer = LAYERS.get(i);
-            boolean isTranslucent = (layer == RenderType.translucent());
-            if (translucentOnly != isTranslucent) continue;
             if (vbo.isInvalid() || vbo.getFormat() == null) continue;
             layer.setupRenderState();
             applyLayerBlend(layer);
@@ -858,91 +893,6 @@ public final class PhantasiaWorldRenderer {
                 ps.popPose();
             }
         }
-    }
-
-    // ── Animated block pass ───────────────────────────────────────────────────
-
-    /**
-     * Redraws animated blocks every frame via immediate-mode so their texture
-     * UV coordinates update each frame (coils, fire, GT active overlays, etc.).
-     *
-     * These are excluded from the static VBO (see scheduleBake) because baking
-     * freezes UV coordinates at bake time — the animation would never advance.
-     *
-     * @param translucentOnly if true, only draws blocks whose cached layer is
-     *                        translucent; if false, draws all non-translucent ones.
-     *                        Called twice per frame to interleave correctly with
-     *                        the solid and translucent VBO passes.
-     */
-    private void drawAnimatedBlocks(MultiBufferSource.BufferSource buffers, boolean translucentOnly) {
-        if (animatedPositions.isEmpty()) return;
-
-        Minecraft mc = Minecraft.getInstance();
-        BlockRenderDispatcher brd = mc.getBlockRenderer();
-        RandomSource random = RandomSource.createNewThreadLocalInstance();
-        PoseStack ps = new PoseStack();
-
-        for (BlockPos pos : animatedPositions) {
-            if (!isVisible(pos)) continue;
-            BlockState state = world.getBlockState(pos);
-            if (state.isAir() || state.getRenderShape() == RenderShape.INVISIBLE) continue;
-
-            List<RenderType> layers = animatedLayers.get(pos);
-            if (layers == null || layers.isEmpty()) continue;
-
-            for (RenderType layer : layers) {
-                boolean isTranslucent = (layer == RenderType.translucent());
-                if (translucentOnly != isTranslucent) continue;
-
-                ps.pushPose();
-                ps.translate(pos.getX(), pos.getY(), pos.getZ());
-                if (Platform.isForge()) {
-                    WorldSceneRenderer.renderBlocksForge(brd, state, pos, world, ps,
-                            buffers.getBuffer(layer), random, layer);
-                } else {
-                    brd.renderBatched(state, pos, world, ps, buffers.getBuffer(layer), true, random);
-                }
-                ps.popPose();
-            }
-        }
-    }
-
-    /**
-     * Returns true if the block at {@code pos} uses an animated texture and
-     * therefore must be redrawn every frame rather than baked into a static VBO.
-     *
-     * Detection: asks the block model for its quads and checks whether any quad's
-     * sprite has a non-null {@code animatedTexture} (i.e. more than one atlas frame).
-     * Covers GT coils, vanilla fire/lava/water, and any modded animated block.
-     * Also explicitly includes blocks that have a BER (BlockEntityRenderer) because
-     * their visual state (active overlays, etc.) changes per-frame via the BER and
-     * must not be frozen in the VBO.
-     */
-    private boolean isAnimatedBlock(BlockRenderDispatcher brd, BlockState state, BlockPos pos, RandomSource random) {
-        if (state.isAir() || state.getRenderShape() == RenderShape.INVISIBLE) return false;
-        // Blocks with a BER change visually via their renderer each frame; baking
-        // them freezes the underlying model at one state (e.g. inactive) while the
-        // BER would draw the active overlay on top — causing a mismatch.
-        Minecraft mc = Minecraft.getInstance();
-        BlockEntity be = world.getBlockEntity(pos);
-        if (be != null && mc.getBlockEntityRenderDispatcher().getRenderer(be) != null) return true;
-        // Check for animated texture frames in the block model quads.
-        try {
-            var model = brd.getBlockModel(state);
-            for (var face : net.minecraft.core.Direction.values()) {
-                for (var quad : model.getQuads(state, face, random)) {
-                    var sprite = quad.getSprite();
-                    // createTicker() returns null for non-animated sprites —
-                    // it is the public API for checking animation presence.
-                    if (sprite != null && sprite.contents().createTicker() != null) return true;
-                }
-            }
-            for (var quad : model.getQuads(state, null, random)) {
-                var sprite = quad.getSprite();
-                if (sprite != null && sprite.contents().createTicker() != null) return true;
-            }
-        } catch (Exception ignored) {}
-        return false;
     }
 
     // ── Tile entity pass ──────────────────────────────────────────────────────

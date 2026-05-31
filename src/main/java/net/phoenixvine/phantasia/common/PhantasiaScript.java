@@ -181,7 +181,18 @@ public class PhantasiaScript {
                         state.getBlock().getDescriptionId().contains("gearbox");
             });
 
-            default -> pos -> true;
+            default -> {
+                // parts:keyword — single keyword match, e.g. "parts:hatch", "parts:muffler"
+                if (show.startsWith("parts:")) {
+                    String keyword = show.substring(6);
+                    yield localPred(state -> {
+                        if (!(state.getBlock() instanceof MetaMachineBlock mmb)) return false;
+                        if (mmb.getDefinition() instanceof MultiblockMachineDefinition) return false;
+                        return mmb.getDefinition().getId().getPath().contains(keyword);
+                    });
+                }
+                yield pos -> true;
+            }
         };
     }
 

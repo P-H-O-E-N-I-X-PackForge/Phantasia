@@ -2,7 +2,9 @@ package net.phoenixvine.phantasia.client.render;
 
 import com.lowdragmc.lowdraglib.utils.TrackedDummyWorld;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -12,31 +14,60 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 @OnlyIn(Dist.CLIENT)
 public class PhantasiaTrackedDummyWorld extends TrackedDummyWorld {
 
+    // ── Particle routing ──────────────────────────────────────────────────────
+
+    /**
+     * Routes animateTick particle spawns directly to mc.particleEngine.
+     *
+     * LDLib DummyWorld.addParticle() cannot construct Particle objects from
+     * ParticleOptions — that requires ParticleProvider lookups only present in
+     * mc.particleEngine. Routing here ensures particles from animateTick reach
+     * the same engine GT BER particles use (via the particleProxyLevel swap in
+     * drawTileEntities), so mc.particleEngine.render() draws them each frame.
+     */
+    @Override
+    public void addParticle(ParticleOptions particleData,
+                            double x, double y, double z,
+                            double xSpeed, double ySpeed, double zSpeed) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.particleEngine != null) {
+            try {
+                mc.particleEngine.createParticle(particleData, x, y, z, xSpeed, ySpeed, zSpeed);
+            } catch (Exception ignored) {
+                // Provider not registered for this particle type — skip silently.
+            }
+        }
+    }
+
+    @Override
+    public void addAlwaysVisibleParticle(ParticleOptions particleData,
+                                         double x, double y, double z,
+                                         double xSpeed, double ySpeed, double zSpeed) {
+        addParticle(particleData, x, y, z, xSpeed, ySpeed, zSpeed);
+    }
+
+    // ── animateTick with hasTicker guard bypass ───────────────────────────────
+
     /**
      * Drives one ambient animation tick for the block at {@code pos}.
      *
-     * <p>
-     * Particles emitted via {@code level.addParticle()} route to this world's
-     * LDLib {@code ParticleManager} (set in PhantasiaSceneScreen via
-     * {@code setParticleManager}). The renderer calls {@code pm.tick()} then
-     * {@code pm.render(camera, partial)} each frame so they are drawn correctly.
+     * The hasTicker guard bypass: TFG's ActiveParticleBlock with hasTicker=true
+     * checks level.getBlockEntity(pos) != null and returns early if so. The
+     * dummy world has real BEs registered, so we temporarily remove the BE
+     * during the animateTick call and restore it in a finally block.
      *
-     * <p>
-     * <b>The hasTicker guard — solved without a TFG dep:</b>
-     * Some TFG blocks (ActiveParticleBlock with hasTicker=true) contain:
-     *
-     * <pre>
-     * if (hasTicker &amp;&amp; level.getBlockEntity(pos) != null) return;
-     * </pre>
-     *
-     * in their {@code animateTick}. The dummy world has real BEs registered so
-     * that guard always fires. We temporarily remove the BE from the world's
-     * internal map during the {@code animateTick} call, then restore it in a
-     * {@code finally} block — no compile-time dep on TFG needed.
+     * Exceptions from individual blocks (e.g. failed particle type lazy
+     * resolution) are allowed to propagate — the caller (tickAmbientEffects)
+     * wraps each call in its own try/catch so one bad block doesn't kill others.
      */
     public void tickAnimateForPos(BlockPos pos, RandomSource random) {
         BlockState state = getBlockState(pos);
         if (state.isAir()) return;
+
+        // Guard: spawnClient() in TFG blocks bails if level.isClientSide is false.
+        // TrackedDummyWorld inherits isClientSide=true from LDLib DummyWorld, but
+        // guard here explicitly in case a subclass or mixin changes it.
+        if (!this.isClientSide) return;
 
         BlockEntity hidden = getBlockEntity(pos);
         if (hidden != null) removeBlockEntityForTick(pos);
@@ -67,11 +98,6 @@ public class PhantasiaTrackedDummyWorld extends TrackedDummyWorld {
         } catch (Exception ignored) {}
     }
 
-    /**
-     * Walks the class hierarchy to find the field holding the BE map.
-     * Identified as: a Map whose values are BlockEntity instances.
-     * Cached after first successful lookup.
-     */
     private java.util.Map<?, ?> getBlockEntityMap() {
         if (beMapField == null) {
             for (Class<?> c = this.getClass(); c != null; c = c.getSuperclass()) {
