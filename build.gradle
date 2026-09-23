@@ -166,7 +166,6 @@ dependencies {
     modImplementation("dev.emi:emi-forge:${emi_version}+${minecraft_version}")
     modRuntimeOnly("curse.maven:jade-324717:5390389")
 
-    modImplementation 'local:spritekit-1.0-SNAPSHOT'
 
     jarJar(modImplementation("net.phoenixvine.wiki:phoenix_wiki:0.4.7"))
 
