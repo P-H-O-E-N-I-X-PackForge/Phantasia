@@ -58,11 +58,15 @@ Optional integration with GregTech CEu and Ars Nouveau with more to come soon!
     versionRange = "[4,)"
     ordering = "NONE"
     side = "BOTH"
-
-
 [[dependencies.${mod_id}]]
 modId = "configuration"
-mandatory = false
+mandatory = true
 versionRange = "[2,)"
+ordering = "NONE"
+side = "BOTH"
+[[dependencies.${mod_id}]]
+modId = "phoenix_wiki"
+mandatory = true
+versionRange = "[0,)"
 ordering = "NONE"
 side = "BOTH"

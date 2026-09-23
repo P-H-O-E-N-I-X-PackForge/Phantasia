@@ -75,6 +75,10 @@ repositories {
         }
     }
     maven {
+        name = "Repsy"
+        url = uri("https://repo.repsy.io/mvn/user75142941/phoenixsuite")
+    }
+    maven {
         url = "https://thedarkcolour.github.io/KotlinForForge/"
     }
     flatDir {
@@ -164,16 +168,11 @@ dependencies {
 
     modImplementation 'local:spritekit-1.0-SNAPSHOT'
 
-    // Phoenix Wiki - jar-in-jar'd shared theme system (net.phoenixvine.wiki.theme.PhoenixTheme)
-    // and markdown/wiki engine (net.phoenixvine.wiki.PhoenixWikiAPI) - the same theme choice this
-    // library holds is shared with every other Phoenixvine mod that also embeds it. After changing
-    // anything in that project, run `./gradlew publishToPhantasia` there to refresh libs/phoenix_wiki-*.jar.
-    jarJar(modImplementation("local:phoenix_wiki:0.1.0"))
+    jarJar(modImplementation("net.phoenixvine.wiki:phoenix_wiki:0.4.7"))
 
     // GregTech and dependencies
     modCompileOnly("com.gregtechceu.gtceu:gtceu-${minecraft_version}:${gtceu_version}:slim") { transitive = false }
     modRuntimeOnly("com.gregtechceu.gtceu:gtceu-${minecraft_version}:${gtceu_version}:slim") { transitive = false }
-
 
     modCompileOnly("curse.maven:ars-nouveau-401955:${ars_nouveau_file_id}") { transitive = false }
     modRuntimeOnly("curse.maven:ars-nouveau-401955:${ars_nouveau_file_id}") { transitive = false }
@@ -202,10 +201,8 @@ dependencies {
     modCompileOnly("curse.maven:create-328085:${create_file_id}") { transitive = false }
     modRuntimeOnly("curse.maven:create-328085:${create_file_id}") { transitive = false }
 
-
     modCompileOnly("curse.maven:guideme-1173950:7127447")
     modRuntimeOnly("curse.maven:guideme-1173950:7127447")
-
 
     modCompileOnly("curse.maven:patchouli-306770:7731017")
     modRuntimeOnly("curse.maven:patchouli-306770:7731017")
@@ -214,9 +211,6 @@ dependencies {
     modRuntimeOnly "software.bernie.geckolib:geckolib-neoforge-1.20.1:${geckolib_version}"
     modCompileOnly "top.theillusivec4.curios:curios-forge:${curios_version}"
     modRuntimeOnly "top.theillusivec4.curios:curios-forge:${curios_version}"
-
-  //  modCompileOnly "curse.maven:multiblocked2-1104057:7415529"
-  //  modRuntimeOnly "curse.maven:multiblocked2-1104057:7415529"
 
     modCompileOnly("com.lowdragmc.ldlib:ldlib-forge-${minecraft_version}:${ldlib_version}") { transitive = false }
     modRuntimeOnly("com.lowdragmc.ldlib:ldlib-forge-${minecraft_version}:${ldlib_version}") { transitive = false }
@@ -230,7 +224,6 @@ dependencies {
     // Embeddium Development Environment Client
     modRuntimeOnly("org.embeddedt:embeddium-1.20.1:0.3.31-beta.53+mc1.20.1") { transitive = false }
     modCompileOnly("org.embeddedt:embeddium-1.20.1:0.3.31-beta.53+mc1.20.1") { transitive = false }
-
 
     modRuntimeOnly("curse.maven:ai-improvements-233019:4578262")
 
@@ -355,5 +348,28 @@ tasks.register('extractWebTextures') {
         }
 
         logger.lifecycle("[extractWebTextures] Done — ${jarCount} jars → ${outputDir}")
+    }
+}
+
+// Consumed by PhoenixChronicles via mavenLocal() + modImplementation (same pattern phoenix_archive
+// uses there) -- a flatDir/named local jar dependency bypasses NeoGradle's SRG<->mapped remap
+// transform for a real mod jar, same class of bug already hit and fixed for phoenix_archive. After
+// changing Phantasia, run `./gradlew publishToMavenLocal` here to refresh what Chronicles sees.
+publishing {
+    publications {
+        create('mavenJava', MavenPublication) {
+            artifactId = base.archivesName.get()
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = "Repsy"
+            url = uri("https://repo.repsy.io/mvn/user75142941/phoenixsuite")
+            credentials {
+                username = project.findProperty("repsyUsername") ?: System.getenv("REPSY_USERNAME")
+                password = project.findProperty("repsyPassword") ?: System.getenv("REPSY_PASSWORD")
+            }
+        }
     }
 }
