@@ -560,7 +560,7 @@ public final class PhantasiaWorldRenderer {
 
             long _p3dyn = System.nanoTime();
             if (net.minecraftforge.fml.ModList.get().isLoaded("gtceu")) {
-                net.phoenixvine.phantasia.compat.gtceu.GTCEuDynamicRenderHelper.drawDynamicRenderers(
+                net.phoenixvine.phantasia.compat.gtceu.GtmBackends.get().drawDynamicRenderers(
                         world, frontTileEntities, slotOrigin,
                         localPoseStack, buffers, partial, camX, camY, camZ);
             }

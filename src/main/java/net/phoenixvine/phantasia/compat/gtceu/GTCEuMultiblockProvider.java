@@ -17,7 +17,7 @@ import java.util.*;
 
 public class GTCEuMultiblockProvider implements IPhantasiaMultiblockProvider {
 
-    private final Map<ResourceLocation, GTCEuMultiblockDefinition> cache = new HashMap<>();
+    private final Map<ResourceLocation, IPhantasiaMultiblockDefinition> cache = new HashMap<>();
 
     @Override
     public String getModId() {
@@ -36,7 +36,7 @@ public class GTCEuMultiblockProvider implements IPhantasiaMultiblockProvider {
                     new ResourceLocation("gtceu", machineId);
             MachineDefinition def = GTRegistries.MACHINES.get(rl);
             if (def instanceof MultiblockMachineDefinition multi) {
-                return Optional.of(cache.computeIfAbsent(rl, k -> new GTCEuMultiblockDefinition(multi)));
+                return Optional.of(cache.computeIfAbsent(rl, k -> GtmBackends.get().createDefinition(multi)));
             }
         } catch (Exception ignored) {}
         return Optional.empty();
@@ -61,7 +61,7 @@ public class GTCEuMultiblockProvider implements IPhantasiaMultiblockProvider {
         for (MachineDefinition def : GTRegistries.MACHINES) {
             if (def instanceof MultiblockMachineDefinition multi) {
                 ResourceLocation id = multi.getId();
-                result.add(cache.computeIfAbsent(id, k -> new GTCEuMultiblockDefinition(multi)));
+                result.add(cache.computeIfAbsent(id, k -> GtmBackends.get().createDefinition(multi)));
             }
         }
         return result;
@@ -73,7 +73,7 @@ public class GTCEuMultiblockProvider implements IPhantasiaMultiblockProvider {
         if (!(stack.getItem() instanceof MetaMachineItem machineItem)) return Optional.empty();
         var def = machineItem.getDefinition();
         if (!(def instanceof MultiblockMachineDefinition multi)) return Optional.empty();
-        return Optional.of(cache.computeIfAbsent(multi.getId(), k -> new GTCEuMultiblockDefinition(multi)));
+        return Optional.of(cache.computeIfAbsent(multi.getId(), k -> GtmBackends.get().createDefinition(multi)));
     }
 
     @Override
@@ -95,7 +95,7 @@ public class GTCEuMultiblockProvider implements IPhantasiaMultiblockProvider {
     public Optional<IPhantasiaMultiblockDefinition> resolveControllerFromBlock(BlockState state) {
         if (!(state.getBlock() instanceof MetaMachineBlock mmb)) return Optional.empty();
         if (!(mmb.getDefinition() instanceof MultiblockMachineDefinition multi)) return Optional.empty();
-        return Optional.of(cache.computeIfAbsent(multi.getId(), k -> new GTCEuMultiblockDefinition(multi)));
+        return Optional.of(cache.computeIfAbsent(multi.getId(), k -> GtmBackends.get().createDefinition(multi)));
     }
 
     @Override

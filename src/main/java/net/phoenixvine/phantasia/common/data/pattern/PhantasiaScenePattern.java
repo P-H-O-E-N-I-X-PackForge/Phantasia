@@ -1,9 +1,6 @@
 package net.phoenixvine.phantasia.common.data.pattern;
 
-import com.gregtechceu.gtceu.api.blockentity.MetaMachineBlockEntity;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
-import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
-import com.gregtechceu.gtceu.api.pattern.MultiblockShapeInfo;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 
 import net.minecraft.core.BlockPos;
@@ -12,6 +9,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.phoenixvine.phantasia.client.render.PhantasiaTrackedDummyWorld;
 import net.phoenixvine.phantasia.common.data.scene.PhantasiaSceneData;
+import net.phoenixvine.phantasia.compat.gtceu.GtmBackends;
 import net.phoenixvine.phantasia.utils.PhantasiaBlockInfo;
 
 import java.util.*;
@@ -131,24 +129,9 @@ public class PhantasiaScenePattern {
                                                            Set<BlockPos> allBaseplates) {
         if (def == null) return null;
 
-        List<MultiblockShapeInfo> shapes = def.getMatchingShapes();
-        if (shapes == null || shapes.isEmpty()) return null;
-
-        MultiblockShapeInfo shape = shapes.get(0);
-        com.lowdragmc.lowdraglib.utils.BlockInfo[][][] rawLdlib = shape.getBlocks();
-        if (rawLdlib == null || rawLdlib.length == 0) return null;
-        PhantasiaBlockInfo[][][] raw = new PhantasiaBlockInfo[rawLdlib.length][][];
-        for (int xi = 0; xi < rawLdlib.length; xi++) {
-            raw[xi] = new PhantasiaBlockInfo[rawLdlib[xi].length][];
-            for (int yi = 0; yi < rawLdlib[xi].length; yi++) {
-                raw[xi][yi] = new PhantasiaBlockInfo[rawLdlib[xi][yi].length];
-                for (int zi = 0; zi < rawLdlib[xi][yi].length; zi++) {
-                    com.lowdragmc.lowdraglib.utils.BlockInfo bi = rawLdlib[xi][yi][zi];
-                    raw[xi][yi][zi] = bi != null ? PhantasiaBlockInfo.fromBlockState(bi.getBlockState()) :
-                            PhantasiaBlockInfo.EMPTY;
-                }
-            }
-        }
+        var backend = GtmBackends.get();
+        PhantasiaBlockInfo[][][] raw = backend.previewBlocks(def);
+        if (raw == null || raw.length == 0) return null;
 
         BlockPos origin = new BlockPos(pd.x, pd.y, pd.z);
 
@@ -163,8 +146,6 @@ public class PhantasiaScenePattern {
         Map<BlockPos, BlockEntity> cachedBEs = new HashMap<>();
         Set<BlockPos> baseplatePos = new HashSet<>();
         Set<BlockPos> bePos = new HashSet<>();
-        BlockPos controllerWP = null;
-        MultiblockControllerMachine controller = null;
 
         var _baseplateState0 = net.phoenixvine.phantasia.utils.PhantasiaBaseplateConfig.currentBaseplateBlockState();
         PhantasiaBlockInfo floor = _baseplateState0 != null ? PhantasiaBlockInfo.fromBlockState(_baseplateState0) :
@@ -188,13 +169,8 @@ public class PhantasiaScenePattern {
                     BlockPos wp = origin.offset(x, y, z);
                     try {
                         var be = info.getBlockEntity(wp);
-                        if (be instanceof MetaMachineBlockEntity mbe) {
-                            mbe.setLevel(sharedWorld);
-                            var machine = mbe.getMetaMachine();
-                            if (machine instanceof MultiblockControllerMachine ctrl && controllerWP == null) {
-                                controller = ctrl;
-                                controllerWP = wp;
-                            }
+                        if (be != null && backend.isMachineEntity(be)) {
+                            be.setLevel(sharedWorld);
                             bePos.add(wp);
                             cachedBEs.put(wp, be);
                         }
@@ -266,8 +242,8 @@ public class PhantasiaScenePattern {
 
         try {
             var be = blockInfo.getBlockEntity(origin);
-            if (be instanceof MetaMachineBlockEntity mbe) {
-                mbe.setLevel(sharedWorld);
+            if (be != null && GtmBackends.get().isMachineEntity(be)) {
+                be.setLevel(sharedWorld);
             }
             if (be != null) sharedWorld.setInnerBlockEntity(be);
         } catch (Exception ignored) {}

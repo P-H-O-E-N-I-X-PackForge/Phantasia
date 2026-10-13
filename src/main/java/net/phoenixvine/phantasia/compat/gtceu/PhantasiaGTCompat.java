@@ -3,7 +3,6 @@ package net.phoenixvine.phantasia.compat.gtceu;
 import com.gregtechceu.gtceu.api.GTCEuAPI;
 import com.gregtechceu.gtceu.api.data.DimensionMarker;
 import com.gregtechceu.gtceu.api.data.chemical.material.event.MaterialEvent;
-import com.gregtechceu.gtceu.api.data.chemical.material.event.MaterialRegistryEvent;
 import com.gregtechceu.gtceu.api.data.chemical.material.event.PostMaterialEvent;
 import com.gregtechceu.gtceu.api.machine.MachineDefinition;
 import com.gregtechceu.gtceu.api.recipe.GTRecipeType;
@@ -25,24 +24,19 @@ public final class PhantasiaGTCompat {
     private PhantasiaGTCompat() {}
 
     public static void init(IEventBus modEventBus) {
-        PHANTASIA_REGISTRATE.registerRegistrate();
+        GtmBackends.get().bootstrap(modEventBus);
 
         if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
             GTCEuBlockInspectHelper.register();
             PhantasiaMultiblockRegistry.register(new GTCEuMultiblockProvider());
         }
 
-        modEventBus.addListener(PhantasiaGTCompat::addMaterialRegistries);
         modEventBus.addListener(PhantasiaGTCompat::addMaterials);
         modEventBus.addListener(PhantasiaGTCompat::modifyMaterials);
         modEventBus.addGenericListener(GTRecipeType.class, PhantasiaGTCompat::registerRecipeTypes);
         modEventBus.addGenericListener(MachineDefinition.class, PhantasiaGTCompat::registerMachines);
         modEventBus.addGenericListener(SoundEntry.class, PhantasiaGTCompat::registerSounds);
         modEventBus.addGenericListener(DimensionMarker.class, PhantasiaGTCompat::registerDimensionMarkers);
-    }
-
-    private static void addMaterialRegistries(MaterialRegistryEvent event) {
-        GTCEuAPI.materialManager.createRegistry(Phantasia.MOD_ID);
     }
 
     private static void addMaterials(MaterialEvent event) {}

@@ -20,6 +20,11 @@ sourceSets {
     main.resources {
         srcDir 'src/generated/resources'
     }
+    // Code that only exists for the GregTech 8 development API. Compiled against GT 8 and shipped in the same jar;
+    // load it only when that API is the installed one, so players on 7.x never touch it.
+    gtm8 {
+        java.srcDir 'src/gtm8/java'
+    }
     test {
         java.srcDirs = ['src/test/java']
     }
@@ -33,6 +38,7 @@ repositories {
         url = 'https://maven.gtceu.com'
         content {
             includeGroup 'com.gregtechceu.gtceu'
+            includeGroup 'brachy.modularui'
         }
     }
     maven {
@@ -130,12 +136,15 @@ legacyForge {
     mods {
         "${mod_id}" {
             sourceSet(sourceSets.main)
+            // The GT 8 classes can be named in the mixin config, so they must be on the dev classpath too.
+            sourceSet(sourceSets.gtm8)
         }
     }
 }
 
 // Fixed to mirror your working phoenixcore manifest setup
 jar {
+    from sourceSets.gtm8.output
     manifest {
         attributes([
                 "MixinConfigs": "phantasia.mixins.json"
@@ -150,9 +159,18 @@ mixin {
     config 'phantasia.mixins.json'
 }
 
+configurations {
+    gtm8CompileOnly.extendsFrom(compileOnly, implementation)
+}
+obfuscation.createRemappingConfiguration(configurations.gtm8CompileOnly)
+sourceSets.gtm8.compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+
 apply from: "$rootDir/gradle/scripts/spotless.gradle"
 
 dependencies {
+    // GregTech 8 development API, for the gtm8 source set only.
+    modGtm8CompileOnly("com.gregtechceu.gtceu:gtceu-${minecraft_version}:${gtceu8_version}:slim") { transitive = false }
+
     compileOnly("org.jetbrains:annotations:26.0.1")
 
     // Mixin Processor
@@ -162,16 +180,25 @@ dependencies {
     modCompileOnly("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}")
     modCompileOnly("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
     modRuntimeOnly("mezz.jei:jei-${minecraft_version}-forge:${jei_version}")
-    modRuntimeOnly("dev.emi:emi-forge:${emi_version}+${minecraft_version}")
+    modRuntimeOnly("dev.emi:emi-forge:${project.findProperty('gtm') == '8' ? '1.1.24' : emi_version}+${minecraft_version}")
     modImplementation("dev.emi:emi-forge:${emi_version}+${minecraft_version}")
     modRuntimeOnly("curse.maven:jade-324717:5390389")
 
 
-    jarJar(modImplementation("net.phoenixvine.wiki:phoenix_wiki:0.4.7"))
+    modImplementation("net.phoenixvine.wiki:phoenix_wiki:0.4.8")
 
     // GregTech and dependencies
-    modCompileOnly("com.gregtechceu.gtceu:gtceu-${minecraft_version}:${gtceu_version}:slim") { transitive = false }
-    modRuntimeOnly("com.gregtechceu.gtceu:gtceu-${minecraft_version}:${gtceu_version}:slim") { transitive = false }
+    // -Pgtmcompile=<version> compiles the main source set against another GregTech (e.g. 8.0.0-SNAPSHOT) to list
+    // everything that no longer builds there. It is a porting aid, not something to ship from.
+    modCompileOnly("com.gregtechceu.gtceu:gtceu-${minecraft_version}:${project.findProperty('gtmcompile') ?: gtceu_version}:slim") { transitive = false }
+    // Which GregTech the dev client/server runs: 7.x by default, the GT 8 snapshot with -Pgtm=8, or any exact
+    // version with -Pgtm=<version> (e.g. -Pgtm=8.0.0).
+    modRuntimeOnly("com.gregtechceu.gtceu:gtceu-${minecraft_version}:${project.findProperty('gtm') == '8' ? gtceu8_version : (project.findProperty('gtm') ?: gtceu_version)}:slim") { transitive = false }
+    // The GT 8 snapshot jar-in-jars these (its slim jar leaves them out), so a dev run on it has to provide them.
+    if (project.findProperty('gtm') == '8') {
+        modRuntimeOnly("brachy.modularui:modularui-mc1.20.1:3.3.0-SNAPSHOT") { transitive = false }
+        modRuntimeOnly("io.github.llamalad7:mixinextras-forge:0.5.3")
+    }
 
     modCompileOnly("curse.maven:ars-nouveau-401955:${ars_nouveau_file_id}") { transitive = false }
     modRuntimeOnly("curse.maven:ars-nouveau-401955:${ars_nouveau_file_id}") { transitive = false }
@@ -215,7 +242,7 @@ dependencies {
     modRuntimeOnly("com.lowdragmc.ldlib:ldlib-forge-${minecraft_version}:${ldlib_version}") { transitive = false }
     modCompileOnly("com.tterrag.registrate:Registrate:${registrate_version}")
     modRuntimeOnly("com.tterrag.registrate:Registrate:${registrate_version}")
-    modImplementation("dev.toma.configuration:configuration-forge-${minecraft_version}:${configuration_version}")
+    modImplementation("curse.maven:configuration-444699:5840405") // Configuration 3.1.0 (GregTech 8 needs 3.1+)
 
     // Your working core dependency
     modCompileOnly("curse.maven:phoenixcore-1355504:8100682")
@@ -370,5 +397,26 @@ publishing {
                 password = project.findProperty("repsyPassword") ?: System.getenv("REPSY_PASSWORD")
             }
         }
+    }
+}
+
+// One-click dev runs against newer GregTech, visible in IntelliJ's Gradle tool window under "mod development".
+// They re-run the normal runClient / runServer with the -Pgtm switch set (see the modRuntimeOnly GregTech line).
+[['Gtm8', '8', 'the GregTech 8 development snapshot'], ['Gtm8Release', '8.0.0', 'the GregTech 8.0.0 release']].each { suffix, version, label ->
+    ['Client', 'Server'].each { side ->
+        tasks.register("run${side}${suffix}", GradleBuild) {
+            group = 'mod development'
+            description = "Runs the dev ${side.toLowerCase()} with ${label} instead of GregTech ${gtceu_version}."
+            dir = projectDir
+            tasks = ["run${side}".toString()]
+            startParameter.projectProperties = [gtm: version]
+        }
+    }
+}
+
+if (project.hasProperty('gtmcompile')) {
+    tasks.withType(JavaCompile).configureEach {
+        // keep going past import errors so every broken member shows up in one run
+        options.compilerArgs.addAll(['-XDshould-stop.ifError=FLOW', '-Xmaxerrs', '2000'])
     }
 }
