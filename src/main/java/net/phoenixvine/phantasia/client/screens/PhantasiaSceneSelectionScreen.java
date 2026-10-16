@@ -213,9 +213,9 @@ public class PhantasiaSceneSelectionScreen extends PhantasiaScreen {
         int w = font.width(label) + 16;
         boolean act = (activeTab == tab);
         boolean hov = isOver(mx, my, x, y, w, TAB_H);
-        g.fill(x, y, x + w, y + TAB_H, act ? C_BTN_HOV() : (hov ? C_BTN_HOV() : C_BTN()));
+        g.fill(x, y, x + w, y + TAB_H, hov && !act ? C_BTN_HOV() : C_BTN());
         if (act) g.fill(x, y + TAB_H - 2, x + w, y + TAB_H, C_ACCENT());
-        g.drawString(font, label, x + 8, y + 4, act ? C_ACCENT() : C_DIM(), false);
+        g.drawString(font, label, x + 8, y + 4, act ? C_ACCENT() : (hov ? C_TEXT() : C_DIM()), false);
     }
 
     @Nullable
@@ -255,7 +255,7 @@ public class PhantasiaSceneSelectionScreen extends PhantasiaScreen {
         boolean allHov = isOver(mx, my, startX, py, maxW, 12);
         g.fill(startX, py, startX + maxW, py + 12, allSel ? C_BTN_ACT() : (allHov ? C_BTN_HOV() : C_BTN()));
         if (allSel) g.fill(startX, py, startX + 2, py + 12, C_ACCENT());
-        g.drawString(font, allLabel, startX + 6, py + 2, allSel ? C_ACCENT() : C_TEXT(), false);
+        g.drawString(font, allLabel, startX + 6, py + 2, C_TEXT(), false);
         py += 16;
 
         int hidden = 0;
@@ -269,7 +269,7 @@ public class PhantasiaSceneSelectionScreen extends PhantasiaScreen {
             boolean hov = isOver(mx, my, startX, py, maxW, 12);
             g.fill(startX, py, startX + maxW, py + 12, sel ? C_BTN_ACT() : (hov ? C_BTN_HOV() : C_BTN()));
             if (sel) g.fill(startX, py, startX + 2, py + 12, C_ACCENT());
-            g.drawString(font, label, startX + 6, py + 2, sel ? C_ACCENT() : C_TEXT(), false);
+            g.drawString(font, label, startX + 6, py + 2, C_TEXT(), false);
             py += 16;
         }
         if (hidden > 0) {
