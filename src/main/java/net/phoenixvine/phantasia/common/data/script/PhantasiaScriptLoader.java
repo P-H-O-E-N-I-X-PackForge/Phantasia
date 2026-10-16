@@ -1,7 +1,7 @@
 package net.phoenixvine.phantasia.common.data.script;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.neoforged.fml.loading.FMLPaths;
 import net.phoenixvine.phantasia.client.screens.PhantasiaSceneSelectionScreen;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockDefinition;
 import net.phoenixvine.phantasia.common.multiblock.PhantasiaMultiblockRegistry;
@@ -217,7 +217,8 @@ public class PhantasiaScriptLoader {
     }
 
     private static ResourceLocation parseId(String machineId) {
-        return machineId.contains(":") ? new ResourceLocation(machineId) : new ResourceLocation("gtceu", machineId);
+        return machineId.contains(":") ? ResourceLocation.parse(machineId) :
+                ResourceLocation.fromNamespaceAndPath("gtceu", machineId);
     }
 
     private static void ensureDir(Path dir) {

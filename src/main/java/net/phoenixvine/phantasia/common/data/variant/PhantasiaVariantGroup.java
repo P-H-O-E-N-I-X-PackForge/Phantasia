@@ -1,11 +1,11 @@
 package net.phoenixvine.phantasia.common.data.variant;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.phoenixvine.phantasia.common.data.pattern.PhantasiaLoadedPattern;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScriptData;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockDefinition;
@@ -231,7 +231,7 @@ public final class PhantasiaVariantGroup {
 
             List<String> ids = new ArrayList<>();
             for (Block b : nonMachine) {
-                ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(b);
+                ResourceLocation rl = BuiltInRegistries.BLOCK.getKey(b);
                 ids.add(rl != null ? rl.toString() : b.getDescriptionId());
             }
             Collections.sort(ids);
@@ -255,7 +255,7 @@ public final class PhantasiaVariantGroup {
                         return wp != null ? wp.size() : 0;
                     })
                     .thenComparing(b -> {
-                        ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(b);
+                        ResourceLocation rl = BuiltInRegistries.BLOCK.getKey(b);
                         return rl != null ? rl.toString() : b.getDescriptionId();
                     }));
 
@@ -303,8 +303,8 @@ public final class PhantasiaVariantGroup {
     public static BlockState resolveBlock(String id) {
         if (id == null || id.isBlank()) return null;
         try {
-            ResourceLocation rl = new ResourceLocation(id);
-            Block block = ForgeRegistries.BLOCKS.getValue(rl);
+            ResourceLocation rl = ResourceLocation.parse(id);
+            Block block = BuiltInRegistries.BLOCK.get(rl);
             if (block == null || block == Blocks.AIR) return null;
             return block.defaultBlockState();
         } catch (Exception e) {

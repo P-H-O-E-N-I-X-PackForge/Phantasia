@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -13,9 +14,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.Phantasia;
 import net.phoenixvine.phantasia.client.camera.CameraView;
 import net.phoenixvine.phantasia.client.camera.LerpType;
@@ -55,6 +55,10 @@ import static net.phoenixvine.phantasia.utils.PhantasiaThemeUtils.*;
 
 @OnlyIn(Dist.CLIENT)
 public class PhantasiaSceneScreen extends Screen {
+    @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    }
+
 
     public static PhantasiaTrackedDummyWorld SHARED_LEVEL;
 
@@ -585,7 +589,7 @@ public class PhantasiaSceneScreen extends Screen {
             if (wp.equals(pattern.controllerWorldPos)) continue;
             BlockState state = SHARED_LEVEL.getBlockState(wp);
             if (!PhantasiaMultiblockRegistry.isPartBlock(state)) continue;
-            ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+            ResourceLocation rl = BuiltInRegistries.BLOCK.getKey(state.getBlock());
             if (rl == null) continue;
             String p = rl.getPath();
             if (p.contains("hatch") || p.contains("bus") || p.contains("muffler") || p.contains("maintenance"))
@@ -623,7 +627,7 @@ public class PhantasiaSceneScreen extends Screen {
 
         if (openedAtMs < 0) {
             openedAtMs = System.currentTimeMillis();
-            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(
                     new net.phoenixvine.phantasia.api.PhantasiaEvents.ViewerOpen(definition, this));
         }
 
@@ -849,9 +853,10 @@ public class PhantasiaSceneScreen extends Screen {
 
             if (e.sourceAmount >= 0) {
                 try {
-                    if (be instanceof com.hollingsworth.arsnouveau.common.block.tile.SourceJarTile jar) {
-                        jar.setSource(e.sourceAmount);
-                        jar.setChanged();
+                    if (net.phoenixvine.phantasia.compat.arsnouveaucompat.PhantasiaArsCompat.isSourceJar(be)) {
+                        net.phoenixvine.phantasia.compat.arsnouveaucompat.PhantasiaArsCompat.setSource(be,
+                                e.sourceAmount);
+                        be.setChanged();
                         rebakePos.add(world);
                     }
                 } catch (Exception ignored) {}
@@ -859,9 +864,9 @@ public class PhantasiaSceneScreen extends Screen {
 
             if (e.item != null && !e.item.isBlank()) {
                 try {
-                    net.minecraft.resources.ResourceLocation rl = new net.minecraft.resources.ResourceLocation(e.item);
-                    net.minecraft.world.item.Item item = net.minecraftforge.registries.ForgeRegistries.ITEMS
-                            .getValue(rl);
+                    net.minecraft.resources.ResourceLocation rl = net.minecraft.resources.ResourceLocation
+                            .parse(e.item);
+                    net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(rl);
                     net.minecraft.world.item.ItemStack stack = (item == null ||
                             item == net.minecraft.world.item.Items.AIR) ? net.minecraft.world.item.ItemStack.EMPTY :
                                     new net.minecraft.world.item.ItemStack(item);
@@ -871,14 +876,19 @@ public class PhantasiaSceneScreen extends Screen {
                         rebakePos.add(world);
                     } else {
                         net.minecraft.world.item.ItemStack finalStack = stack;
-                        be.getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER)
-                                .ifPresent(handler -> {
-                                    if (handler.getSlots() > 0 && handler.isItemValid(0, finalStack)) {
-                                        handler.insertItem(0, finalStack, false);
-                                        be.setChanged();
-                                        rebakePos.add(world);
-                                    }
-                                });
+                        {
+                            net.neoforged.neoforge.items.IItemHandler handler = be.getLevel() == null ? null :
+                                    be.getLevel().getCapability(
+                                            net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                                            be.getBlockPos(), be.getBlockState(), be, null);
+                            if (handler != null) {
+                                if (handler.getSlots() > 0 && handler.isItemValid(0, finalStack)) {
+                                    handler.insertItem(0, finalStack, false);
+                                    be.setChanged();
+                                    rebakePos.add(world);
+                                }
+                            }
+                        }
                     }
                 } catch (Exception ignored) {}
             }
@@ -1268,9 +1278,9 @@ public class PhantasiaSceneScreen extends Screen {
     private static net.minecraft.world.item.Item resolveItemById(String id) {
         if (id == null || id.isBlank()) return null;
         try {
-            var rl = id.contains(":") ? new net.minecraft.resources.ResourceLocation(id) :
-                    new net.minecraft.resources.ResourceLocation("minecraft", id);
-            var item = ForgeRegistries.ITEMS.getValue(rl);
+            var rl = id.contains(":") ? net.minecraft.resources.ResourceLocation.parse(id) :
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("minecraft", id);
+            var item = BuiltInRegistries.ITEM.get(rl);
             return (item == null || item == net.minecraft.world.item.Items.AIR) ? null : item;
         } catch (Exception e) {
             return null;
@@ -1720,7 +1730,7 @@ public class PhantasiaSceneScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         if (mx >= this.width - getCurrentPanelWidth()) return false;
 
         if (script != null) {
@@ -1940,7 +1950,7 @@ public class PhantasiaSceneScreen extends Screen {
     @Override
     public void onClose() {
         float secondsViewed = openedAtMs >= 0 ? (System.currentTimeMillis() - openedAtMs) / 1000f : 0f;
-        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(
                 new net.phoenixvine.phantasia.api.PhantasiaEvents.ViewerClose(definition, this, secondsViewed));
         openedAtMs = -1;
 

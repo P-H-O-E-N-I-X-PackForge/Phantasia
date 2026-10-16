@@ -1,8 +1,8 @@
 package net.phoenixvine.phantasia.compat.arsnouveaucompat;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.screens.editors.PhantasiaScriptEditorScreen;
 import net.phoenixvine.phantasia.client.screens.editors.PhantasiaScriptStepItemEditorScreen;
 import net.phoenixvine.phantasia.common.data.scene.PhantasiaSceneData;

@@ -1,10 +1,10 @@
 package net.phoenixvine.phantasia.compat.ip;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockDefinition;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockProvider;
 import net.phoenixvine.phantasia.compat.ie.IEMultiblockDefinition;
@@ -45,8 +45,8 @@ public class IPMultiblockProvider implements IPhantasiaMultiblockProvider {
     @Override
     public Optional<IPhantasiaMultiblockDefinition> resolve(String machineId) {
         try {
-            ResourceLocation rl = machineId.contains(":") ? new ResourceLocation(machineId) :
-                    new ResourceLocation(NS, machineId);
+            ResourceLocation rl = machineId.contains(":") ? ResourceLocation.parse(machineId) :
+                    ResourceLocation.fromNamespaceAndPath(NS, machineId);
             for (MultiblockHandler.IMultiblock mb : MultiblockHandler.getMultiblocks()) {
                 if (mb.getUniqueName().equals(rl))
                     return Optional.of(cache.computeIfAbsent(rl, k -> new IEMultiblockDefinition(mb)));
@@ -73,7 +73,7 @@ public class IPMultiblockProvider implements IPhantasiaMultiblockProvider {
 
     @Override
     public boolean isPartBlock(BlockState state) {
-        ResourceLocation key = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+        ResourceLocation key = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         return key != null && NS.equals(key.getNamespace());
     }
 

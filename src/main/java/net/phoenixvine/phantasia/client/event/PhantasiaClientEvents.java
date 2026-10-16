@@ -8,12 +8,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.client.event.RenderGuiOverlayEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.phoenixvine.phantasia.Phantasia;
 import net.phoenixvine.phantasia.common.PhantasiaItems;
 import net.phoenixvine.phantasia.common.PhantasiaKeybind;
@@ -22,13 +22,13 @@ import net.phoenixvine.phantasia.common.item.PhantasiaWandItem;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 
-@Mod.EventBusSubscriber(modid = Phantasia.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Phantasia.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class PhantasiaClientEvents {
 
     private PhantasiaClientEvents() {}
 
     @SubscribeEvent
-    public static void onRenderOverlay(RenderGuiOverlayEvent.Pre event) {
+    public static void onRenderOverlay(RenderGuiLayerEvent.Pre event) {
         PhantasiaKeybind.onRenderOverlay(event);
     }
 

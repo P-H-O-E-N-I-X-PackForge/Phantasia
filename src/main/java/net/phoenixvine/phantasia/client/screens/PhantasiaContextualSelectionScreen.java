@@ -3,8 +3,8 @@ package net.phoenixvine.phantasia.client.screens;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.common.data.guides.PhantasiaGuideData;
 import net.phoenixvine.phantasia.common.data.scene.PhantasiaSceneData;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockDefinition;
@@ -125,9 +125,9 @@ public class PhantasiaContextualSelectionScreen extends PhantasiaScreen {
             case SCENE -> {
                 PhantasiaSceneData scene = (PhantasiaSceneData) item.data();
                 String res = scene.iconItem != null ? scene.iconItem : "minecraft:chest";
-                var rl = res.contains(":") ? new net.minecraft.resources.ResourceLocation(res) :
-                        new net.minecraft.resources.ResourceLocation("minecraft", res);
-                var resolvedItem = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(rl);
+                var rl = res.contains(":") ? net.minecraft.resources.ResourceLocation.parse(res) :
+                        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("minecraft", res);
+                var resolvedItem = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(rl);
                 g.renderItem(new net.minecraft.world.item.ItemStack(
                         resolvedItem != null ? resolvedItem : net.minecraft.world.item.Items.CHEST), 0, 0);
                 cardTitle = scene.name != null && !scene.name.isBlank() ? scene.name : "Custom Scene";
@@ -136,9 +136,9 @@ public class PhantasiaContextualSelectionScreen extends PhantasiaScreen {
             case GUIDE -> {
                 PhantasiaGuideData guide = (PhantasiaGuideData) item.data();
                 String res = guide.iconItem != null ? guide.iconItem : "minecraft:book";
-                var rl = res.contains(":") ? new net.minecraft.resources.ResourceLocation(res) :
-                        new net.minecraft.resources.ResourceLocation("minecraft", res);
-                var resolvedItem = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(rl);
+                var rl = res.contains(":") ? net.minecraft.resources.ResourceLocation.parse(res) :
+                        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("minecraft", res);
+                var resolvedItem = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(rl);
                 g.renderItem(new net.minecraft.world.item.ItemStack(
                         resolvedItem != null ? resolvedItem : net.minecraft.world.item.Items.BOOK), 0, 0);
                 cardTitle = guide.title != null && !guide.title.isBlank() ? guide.title : "Manual Guide";

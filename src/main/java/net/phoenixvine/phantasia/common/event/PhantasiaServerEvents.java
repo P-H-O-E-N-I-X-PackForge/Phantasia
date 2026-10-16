@@ -3,13 +3,13 @@ package net.phoenixvine.phantasia.common.event;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.phoenixvine.phantasia.Phantasia;
 import net.phoenixvine.phantasia.common.PhantasiaItems;
 
-@Mod.EventBusSubscriber(modid = Phantasia.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = Phantasia.MOD_ID, bus = EventBusSubscriber.Bus.GAME)
 public final class PhantasiaServerEvents {
 
     private static final String NBT_KEY = "phantasia_manual_given";

@@ -1,6 +1,7 @@
 package net.phoenixvine.phantasia.compat.ae2;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -11,7 +12,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.phoenixvine.phantasia.client.render.PhantasiaTrackedDummyWorld;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScriptData;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockDefinition;
@@ -67,7 +67,7 @@ public class AE2SceneDefinition implements IPhantasiaMultiblockDefinition {
     @Override
     public ItemStack getIcon() {
         if (cachedIcon == null) {
-            Block b = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("ae2", iconBlockId));
+            Block b = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("ae2", iconBlockId));
             cachedIcon = (b != null && b != Blocks.AIR) ? new ItemStack(b) : ItemStack.EMPTY;
         }
         return cachedIcon;
@@ -133,7 +133,7 @@ public class AE2SceneDefinition implements IPhantasiaMultiblockDefinition {
     }
 
     static PhantasiaBlockInfo ae2(String aeBlockId) {
-        Block b = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("ae2", aeBlockId));
+        Block b = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("ae2", aeBlockId));
         if (b == null || b == Blocks.AIR) {
             net.phoenixvine.phantasia.Phantasia.LOGGER.warn("[Phantasia/AE2] Block not found: ae2:{}", aeBlockId);
             return PhantasiaBlockInfo.EMPTY;

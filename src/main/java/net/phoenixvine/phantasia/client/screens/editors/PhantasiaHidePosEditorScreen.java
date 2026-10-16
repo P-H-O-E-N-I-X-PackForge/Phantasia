@@ -9,8 +9,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.camera.CameraView;
 import net.phoenixvine.phantasia.client.camera.PhantasiaCamera;
 import net.phoenixvine.phantasia.client.render.PhantasiaTrackedDummyWorld;
@@ -26,6 +26,10 @@ import static net.phoenixvine.phantasia.utils.PhantasiaThemeUtils.*;
 
 @OnlyIn(Dist.CLIENT)
 public class PhantasiaHidePosEditorScreen extends Screen {
+    @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    }
+
 
     private static final int TOP_BAR_H = 22;
     private static final int BOTTOM_H = 36;
@@ -465,7 +469,7 @@ public class PhantasiaHidePosEditorScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         int viewW = viewportW();
         if (mx < viewW && my > TOP_BAR_H) {
 

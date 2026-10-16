@@ -1,9 +1,9 @@
 package net.phoenixvine.phantasia.compat.aae;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.fml.ModList;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScriptData;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockDefinition;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockProvider;
@@ -52,8 +52,9 @@ public class AAEMultiblockProvider implements IPhantasiaMultiblockProvider {
 
     @Override
     public Optional<PhantasiaBlockInfo> resolveBlock(String id) {
-        ResourceLocation rl = id.contains(":") ? new ResourceLocation(id) : new ResourceLocation("advanced_ae", id);
-        net.minecraft.world.level.block.Block b = ForgeRegistries.BLOCKS.getValue(rl);
+        ResourceLocation rl = id.contains(":") ? ResourceLocation.parse(id) :
+                ResourceLocation.fromNamespaceAndPath("advanced_ae", id);
+        net.minecraft.world.level.block.Block b = BuiltInRegistries.BLOCK.get(rl);
         if (b == null || b == net.minecraft.world.level.block.Blocks.AIR) return Optional.empty();
         return Optional.of(PhantasiaBlockInfo.fromBlockState(b.defaultBlockState()));
     }
@@ -65,7 +66,7 @@ public class AAEMultiblockProvider implements IPhantasiaMultiblockProvider {
 
     @Override
     public boolean isControllerBlock(BlockState state) {
-        ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+        ResourceLocation rl = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         if (rl == null || !"advanced_ae".equals(rl.getNamespace())) return false;
         return switch (rl.getPath()) {
             case "quantum_core", "reaction_chamber", "quantum_crafter" -> true;
@@ -75,7 +76,7 @@ public class AAEMultiblockProvider implements IPhantasiaMultiblockProvider {
 
     @Override
     public boolean isPartBlock(BlockState state) {
-        ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+        ResourceLocation rl = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         if (rl == null || !"advanced_ae".equals(rl.getNamespace())) return false;
         return switch (rl.getPath()) {
             case "quantum_core", "quantum_unit", "quantum_structure", "quantum_accelerator", "quantum_multi_threader", "quantum_storage_128", "quantum_storage_256", "data_entangler", "reaction_chamber", "quantum_crafter", "adv_pattern_provider", "small_adv_pattern_provider" -> true;
@@ -135,7 +136,7 @@ public class AAEMultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new AAESceneDefinition(
-                new ResourceLocation("advanced_ae", "quantum_supercomputer"),
+                ResourceLocation.fromNamespaceAndPath("advanced_ae", "quantum_supercomputer"),
                 "Quantum Supercomputer",
                 "quantum_core",
                 shape, script);
@@ -176,7 +177,7 @@ public class AAEMultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new AAESceneDefinition(
-                new ResourceLocation("advanced_ae", "adv_pattern_provider"),
+                ResourceLocation.fromNamespaceAndPath("advanced_ae", "adv_pattern_provider"),
                 "Advanced Pattern Provider",
                 "adv_pattern_provider",
                 shape, script);
@@ -208,7 +209,7 @@ public class AAEMultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new AAESceneDefinition(
-                new ResourceLocation("advanced_ae", "reaction_chamber"),
+                ResourceLocation.fromNamespaceAndPath("advanced_ae", "reaction_chamber"),
                 "Reaction Chamber",
                 "reaction_chamber",
                 shape, script);

@@ -57,7 +57,7 @@ public interface IPhantasiaMultiblockDefinition {
         return false;
     }
 
-    @net.minecraftforge.api.distmarker.OnlyIn(net.minecraftforge.api.distmarker.Dist.CLIENT)
+    @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
     default void renderWorkingOverlay(net.minecraft.client.gui.GuiGraphics g,
                                       int vpX, int vpY, int vpW, int vpH, float partial) {}
 

@@ -4,8 +4,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.screens.PhantasiaScreen;
 import net.phoenixvine.phantasia.common.data.scene.PhantasiaSceneData;
 
@@ -409,7 +409,7 @@ public class PhantasiaSceneMistakesEditorScreen extends PhantasiaScreen {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         scrollOffset = Math.max(0, scrollOffset - (int) Math.signum(delta));
         return true;
     }

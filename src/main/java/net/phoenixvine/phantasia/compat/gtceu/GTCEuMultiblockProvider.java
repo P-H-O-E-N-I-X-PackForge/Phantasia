@@ -32,8 +32,8 @@ public class GTCEuMultiblockProvider implements IPhantasiaMultiblockProvider {
     @Override
     public Optional<IPhantasiaMultiblockDefinition> resolve(String machineId) {
         try {
-            ResourceLocation rl = machineId.contains(":") ? new ResourceLocation(machineId) :
-                    new ResourceLocation("gtceu", machineId);
+            ResourceLocation rl = machineId.contains(":") ? ResourceLocation.parse(machineId) :
+                    ResourceLocation.fromNamespaceAndPath("gtceu", machineId);
             MachineDefinition def = GTRegistries.MACHINES.get(rl);
             if (def instanceof MultiblockMachineDefinition multi) {
                 return Optional.of(cache.computeIfAbsent(rl, k -> new GTCEuMultiblockDefinition(multi)));
@@ -45,7 +45,8 @@ public class GTCEuMultiblockProvider implements IPhantasiaMultiblockProvider {
     @Override
     public Optional<PhantasiaBlockInfo> resolveBlock(String id) {
         try {
-            ResourceLocation rl = id.contains(":") ? new ResourceLocation(id) : new ResourceLocation("gtceu", id);
+            ResourceLocation rl = id.contains(":") ? ResourceLocation.parse(id) :
+                    ResourceLocation.fromNamespaceAndPath("gtceu", id);
             MachineDefinition def = GTRegistries.MACHINES.get(rl);
             if (def != null) {
                 var block = def.getBlock();

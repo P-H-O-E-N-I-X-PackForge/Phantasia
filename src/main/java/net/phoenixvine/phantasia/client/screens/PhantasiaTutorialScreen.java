@@ -2,8 +2,8 @@ package net.phoenixvine.phantasia.client.screens;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.tutorial.TutorialSequence;
 import net.phoenixvine.phantasia.client.tutorial.TutorialSlide;
 import net.phoenixvine.wiki.theme.PhoenixTheme;

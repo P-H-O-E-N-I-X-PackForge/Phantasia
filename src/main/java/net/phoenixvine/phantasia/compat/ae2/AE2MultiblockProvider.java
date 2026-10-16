@@ -1,8 +1,8 @@
 package net.phoenixvine.phantasia.compat.ae2;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.fml.ModList;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScriptData;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockDefinition;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockProvider;
@@ -56,8 +56,9 @@ public class AE2MultiblockProvider implements IPhantasiaMultiblockProvider {
 
     @Override
     public Optional<PhantasiaBlockInfo> resolveBlock(String id) {
-        ResourceLocation rl = id.contains(":") ? new ResourceLocation(id) : new ResourceLocation("ae2", id);
-        net.minecraft.world.level.block.Block b = ForgeRegistries.BLOCKS.getValue(rl);
+        ResourceLocation rl = id.contains(":") ? ResourceLocation.parse(id) :
+                ResourceLocation.fromNamespaceAndPath("ae2", id);
+        net.minecraft.world.level.block.Block b = BuiltInRegistries.BLOCK.get(rl);
         if (b == null || b == net.minecraft.world.level.block.Blocks.AIR) return Optional.empty();
         return Optional.of(PhantasiaBlockInfo.fromBlockState(b.defaultBlockState()));
     }
@@ -69,13 +70,13 @@ public class AE2MultiblockProvider implements IPhantasiaMultiblockProvider {
 
     @Override
     public boolean isControllerBlock(net.minecraft.world.level.block.state.BlockState state) {
-        ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+        ResourceLocation rl = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         return rl != null && "ae2".equals(rl.getNamespace()) && "controller".equals(rl.getPath());
     }
 
     @Override
     public boolean isPartBlock(net.minecraft.world.level.block.state.BlockState state) {
-        ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+        ResourceLocation rl = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         if (rl == null || !"ae2".equals(rl.getNamespace())) return false;
         return switch (rl.getPath()) {
             case "controller", "quantum_ring", "quantum_link", "crafting_unit", "1k_crafting_storage", "4k_crafting_storage", "16k_crafting_storage", "64k_crafting_storage", "crafting_accelerator", "crafting_monitor", "spatial_pylon", "pattern_provider", "molecular_assembler", "interface", "drive", "energy_cell", "dense_energy_cell" -> true;
@@ -121,7 +122,7 @@ public class AE2MultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new AE2SceneDefinition(
-                new ResourceLocation("ae2", "quantum_network_bridge"),
+                ResourceLocation.fromNamespaceAndPath("ae2", "quantum_network_bridge"),
                 "Quantum Network Bridge",
                 "quantum_ring",
                 shape, script);
@@ -188,7 +189,7 @@ public class AE2MultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new AE2SceneDefinition(
-                new ResourceLocation("ae2", "crafting_cpu"),
+                ResourceLocation.fromNamespaceAndPath("ae2", "crafting_cpu"),
                 "Crafting CPU",
                 "crafting_unit",
                 shape, script);
@@ -230,7 +231,7 @@ public class AE2MultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new AE2SceneDefinition(
-                new ResourceLocation("ae2", "me_controller"),
+                ResourceLocation.fromNamespaceAndPath("ae2", "me_controller"),
                 "ME Controller",
                 "controller",
                 shape, script);
@@ -279,7 +280,7 @@ public class AE2MultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new AE2SceneDefinition(
-                new ResourceLocation("ae2", "spatial_io"),
+                ResourceLocation.fromNamespaceAndPath("ae2", "spatial_io"),
                 "Spatial IO",
                 "spatial_pylon",
                 shape, script);
@@ -320,7 +321,7 @@ public class AE2MultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new AE2SceneDefinition(
-                new ResourceLocation("ae2", "pattern_provider"),
+                ResourceLocation.fromNamespaceAndPath("ae2", "pattern_provider"),
                 "Pattern Provider",
                 "pattern_provider",
                 shape, script);
@@ -362,7 +363,7 @@ public class AE2MultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new AE2SceneDefinition(
-                new ResourceLocation("ae2", "me_interface"),
+                ResourceLocation.fromNamespaceAndPath("ae2", "me_interface"),
                 "ME Interface",
                 "interface",
                 shape, script);
@@ -404,7 +405,7 @@ public class AE2MultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new AE2SceneDefinition(
-                new ResourceLocation("ae2", "me_drive"),
+                ResourceLocation.fromNamespaceAndPath("ae2", "me_drive"),
                 "ME Drive",
                 "drive",
                 shape, script);
@@ -458,7 +459,7 @@ public class AE2MultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new AE2SceneDefinition(
-                new ResourceLocation("ae2", "crafting_subnet"),
+                ResourceLocation.fromNamespaceAndPath("ae2", "crafting_subnet"),
                 "Crafting Subnet",
                 "pattern_provider",
                 shape, script);

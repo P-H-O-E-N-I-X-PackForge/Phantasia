@@ -249,7 +249,7 @@ public final class VanillaMultiblockDefinition implements IPhantasiaMultiblockDe
                 "[Phantasia] applyBeamState: isWorking={} sections.size()={} beSystem.id={}", isWorking,
                 sections.size(), System.identityHashCode(beacon));
         if (isWorking) {
-            if (sections.isEmpty()) sections.add(new BeaconBlockEntity.BeaconBeamSection(new float[] { 1f, 1f, 1f }));
+            if (sections.isEmpty()) sections.add(new BeaconBlockEntity.BeaconBeamSection(0xFFFFFF));
         } else {
             sections.clear();
         }

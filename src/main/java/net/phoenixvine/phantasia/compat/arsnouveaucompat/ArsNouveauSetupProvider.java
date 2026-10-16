@@ -15,11 +15,11 @@ public class ArsNouveauSetupProvider implements IPhantasiaMultiSetupProvider {
         setups = List.of(
                 new ArsNouveauMultiSetup(
                         ArsNouveauMultiSetup.SetupType.ENCHANTING_APPARATUS,
-                        new ResourceLocation("ars_nouveau", "enchanting_apparatus"),
+                        ResourceLocation.fromNamespaceAndPath("ars_nouveau", "enchanting_apparatus"),
                         "Enchanting Apparatus"),
                 new ArsNouveauMultiSetup(
                         ArsNouveauMultiSetup.SetupType.IMBUEMENT_CHAMBER,
-                        new ResourceLocation("ars_nouveau", "imbuement_chamber"),
+                        ResourceLocation.fromNamespaceAndPath("ars_nouveau", "imbuement_chamber"),
                         "Imbuement Chamber"));
     }
 

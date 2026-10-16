@@ -50,7 +50,7 @@ public final class PhantasiaBlockInfo {
         if (blockState.isAir() || !(blockState.getBlock() instanceof EntityBlock eb)) return null;
         BlockEntity be = eb.newBlockEntity(pos, blockState);
         if (be == null) return null;
-        if (nbt != null) be.load(nbt);
+        if (nbt != null) be.loadWithComponents(nbt, net.minecraft.core.RegistryAccess.EMPTY);
         if (world != null) be.setLevel(world);
         return be;
     }

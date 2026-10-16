@@ -13,8 +13,8 @@ import net.minecraft.world.level.block.entity.ConduitBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.camera.CameraView;
 import net.phoenixvine.phantasia.client.camera.LerpType;
 import net.phoenixvine.phantasia.client.camera.PhantasiaCamera;
@@ -216,7 +216,7 @@ public class PhantasiaSceneViewerScreen extends PhantasiaScreen {
                 f.set(beacon, list);
             }
             list.clear();
-            if (active) list.add(new BeaconBlockEntity.BeaconBeamSection(new float[] { 1f, 1f, 1f }));
+            if (active) list.add(new BeaconBlockEntity.BeaconBeamSection(0xFFFFFF));
         } catch (Exception ignored) {}
     }
 
@@ -226,9 +226,9 @@ public class PhantasiaSceneViewerScreen extends PhantasiaScreen {
             BlockPos worldPos = entry.getKey();
             try {
                 net.minecraft.world.level.block.entity.BlockEntity be = level.getBlockEntity(worldPos);
-                if (!(be instanceof com.hollingsworth.arsnouveau.common.block.tile.SourceJarTile jar)) continue;
+                if (!net.phoenixvine.phantasia.compat.arsnouveaucompat.PhantasiaArsCompat.isSourceJar(be)) continue;
                 if (be.getLevel() == null) be.setLevel(level);
-                jar.setSource(entry.getValue());
+                net.phoenixvine.phantasia.compat.arsnouveaucompat.PhantasiaArsCompat.setSource(be, entry.getValue());
                 level.blockEntities.put(worldPos, be);
             } catch (Exception ignored) {}
         }
@@ -266,9 +266,10 @@ public class PhantasiaSceneViewerScreen extends PhantasiaScreen {
             if (be == null) continue;
             if (be.getLevel() == null) be.setLevel(level);
             try {
-                if (be instanceof com.hollingsworth.arsnouveau.common.block.tile.SourceJarTile jar) {
-                    jar.setSource(entry.getValue());
-                    net.minecraft.nbt.CompoundTag nbt = be.saveWithoutMetadata();
+                if (net.phoenixvine.phantasia.compat.arsnouveaucompat.PhantasiaArsCompat.isSourceJar(be)) {
+                    net.phoenixvine.phantasia.compat.arsnouveaucompat.PhantasiaArsCompat.setSource(be,
+                            entry.getValue());
+                    net.minecraft.nbt.CompoundTag nbt = be.saveWithoutMetadata(be.getLevel().registryAccess());
                     net.minecraft.world.level.block.state.BlockState currentState = level.getBlockState(worldPos);
                     level.renderedBlocks.put(worldPos,
                             net.phoenixvine.phantasia.utils.PhantasiaBlockInfo.fromBlockStateAndNbt(currentState, nbt));
@@ -284,9 +285,9 @@ public class PhantasiaSceneViewerScreen extends PhantasiaScreen {
             if (be == null) continue;
             if (be.getLevel() == null) be.setLevel(level);
             try {
-                net.minecraft.resources.ResourceLocation rl = new net.minecraft.resources.ResourceLocation(
+                net.minecraft.resources.ResourceLocation rl = net.minecraft.resources.ResourceLocation.parse(
                         entry.getValue());
-                net.minecraft.world.item.Item itm = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(rl);
+                net.minecraft.world.item.Item itm = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(rl);
                 net.minecraft.world.item.ItemStack stack = (itm == null || itm == net.minecraft.world.item.Items.AIR) ?
                         net.minecraft.world.item.ItemStack.EMPTY : new net.minecraft.world.item.ItemStack(itm);
                 if (be instanceof net.minecraft.world.Container container) {
@@ -295,14 +296,19 @@ public class PhantasiaSceneViewerScreen extends PhantasiaScreen {
                     rebakePos.add(worldPos);
                 } else {
                     net.minecraft.world.item.ItemStack finalStack = stack;
-                    be.getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER)
-                            .ifPresent(handler -> {
-                                if (handler.getSlots() > 0 && handler.isItemValid(0, finalStack)) {
-                                    handler.insertItem(0, finalStack, false);
-                                    be.setChanged();
-                                    rebakePos.add(worldPos);
-                                }
-                            });
+                    {
+                        net.neoforged.neoforge.items.IItemHandler handler = be.getLevel() == null ? null :
+                                be.getLevel().getCapability(
+                                        net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                                        be.getBlockPos(), be.getBlockState(), be, null);
+                        if (handler != null) {
+                            if (handler.getSlots() > 0 && handler.isItemValid(0, finalStack)) {
+                                handler.insertItem(0, finalStack, false);
+                                be.setChanged();
+                                rebakePos.add(worldPos);
+                            }
+                        }
+                    }
                 }
             } catch (Exception ignored) {}
         }
@@ -616,7 +622,7 @@ public class PhantasiaSceneViewerScreen extends PhantasiaScreen {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         if (my > TOP_BAR_H && my < this.height - TIMELINE_H && camera != null) {
             if (!camera.isLocked()) camera.zoom(delta > 0 ? ZOOM_IN : ZOOM_OUT, 2f, 300f);
             return true;

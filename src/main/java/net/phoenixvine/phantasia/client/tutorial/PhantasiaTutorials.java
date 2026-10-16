@@ -4,8 +4,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.screens.PhantasiaSceneSelectionScreen;
 import net.phoenixvine.phantasia.common.data.guides.PhantasiaGuideRegistry;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScripts;
@@ -211,9 +211,9 @@ public final class PhantasiaTutorials {
             String iconRes = (i < guides.size() && guides.get(i).iconItem != null) ? guides.get(i).iconItem :
                     fallbackIcons[i % fallbackIcons.length];
             try {
-                var rl = iconRes.contains(":") ? new net.minecraft.resources.ResourceLocation(iconRes) :
-                        new net.minecraft.resources.ResourceLocation("minecraft", iconRes);
-                var item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(rl);
+                var rl = iconRes.contains(":") ? net.minecraft.resources.ResourceLocation.parse(iconRes) :
+                        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("minecraft", iconRes);
+                var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(rl);
                 if (item != null && item != net.minecraft.world.item.Items.AIR) {
                     g.pose().pushPose();
                     g.pose().translate(cx + (SEL_CARD_W - 32) / 2f, cy + 8, 0);
@@ -256,8 +256,8 @@ public final class PhantasiaTutorials {
             g.fill(cx, cy, cx + SEL_CARD_W, cy + SEL_CARD_H, (0xBB << 24) | (C_PANEL() & 0x00FFFFFF));
             g.fill(cx, cy, cx + SEL_CARD_W, cy + 2, C_BORDER());
             try {
-                var rl = new net.minecraft.resources.ResourceLocation(fallbackIcons[i]);
-                var item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(rl);
+                var rl = net.minecraft.resources.ResourceLocation.parse(fallbackIcons[i]);
+                var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(rl);
                 if (item != null && item != net.minecraft.world.item.Items.AIR) {
                     g.pose().pushPose();
                     g.pose().translate(cx + (SEL_CARD_W - 32) / 2f, cy + 6, 0);

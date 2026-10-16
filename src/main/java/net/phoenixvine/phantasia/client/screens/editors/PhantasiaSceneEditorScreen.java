@@ -7,8 +7,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.camera.CameraView;
 import net.phoenixvine.phantasia.client.camera.LerpType;
 import net.phoenixvine.phantasia.client.camera.PhantasiaCamera;
@@ -470,9 +470,10 @@ public class PhantasiaSceneEditorScreen extends PhantasiaScreen {
                 if (be.getLevel() == null) be.setLevel(editorLevel);
                 if (wi.sourceAmount >= 0) {
                     try {
-                        if (be instanceof com.hollingsworth.arsnouveau.common.block.tile.SourceJarTile jar) {
-                            jar.setSource(wi.sourceAmount);
-                            net.minecraft.nbt.CompoundTag nbt = be.saveWithoutMetadata();
+                        if (net.phoenixvine.phantasia.compat.arsnouveaucompat.PhantasiaArsCompat.isSourceJar(be)) {
+                            net.phoenixvine.phantasia.compat.arsnouveaucompat.PhantasiaArsCompat.setSource(be,
+                                    wi.sourceAmount);
+                            net.minecraft.nbt.CompoundTag nbt = be.saveWithoutMetadata(be.getLevel().registryAccess());
                             net.minecraft.world.level.block.state.BlockState currentState = editorLevel
                                     .getBlockState(worldPos);
                             editorLevel.renderedBlocks.put(worldPos, net.phoenixvine.phantasia.utils.PhantasiaBlockInfo
@@ -484,10 +485,10 @@ public class PhantasiaSceneEditorScreen extends PhantasiaScreen {
                 }
                 if (wi.item != null && !wi.item.isBlank()) {
                     try {
-                        net.minecraft.resources.ResourceLocation rl = new net.minecraft.resources.ResourceLocation(
+                        net.minecraft.resources.ResourceLocation rl = net.minecraft.resources.ResourceLocation.parse(
                                 wi.item);
-                        net.minecraft.world.item.Item itm = net.minecraftforge.registries.ForgeRegistries.ITEMS
-                                .getValue(rl);
+                        net.minecraft.world.item.Item itm = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                                .get(rl);
                         net.minecraft.world.item.ItemStack stack = (itm == null ||
                                 itm == net.minecraft.world.item.Items.AIR) ? net.minecraft.world.item.ItemStack.EMPTY :
                                         new net.minecraft.world.item.ItemStack(itm);
@@ -497,14 +498,19 @@ public class PhantasiaSceneEditorScreen extends PhantasiaScreen {
                             rebakePos.add(worldPos);
                         } else {
                             net.minecraft.world.item.ItemStack finalStack = stack;
-                            be.getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER)
-                                    .ifPresent(handler -> {
-                                        if (handler.getSlots() > 0 && handler.isItemValid(0, finalStack)) {
-                                            handler.insertItem(0, finalStack, false);
-                                            be.setChanged();
-                                            rebakePos.add(worldPos);
-                                        }
-                                    });
+                            {
+                                net.neoforged.neoforge.items.IItemHandler handler = be.getLevel() == null ? null :
+                                        be.getLevel().getCapability(
+                                                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                                                be.getBlockPos(), be.getBlockState(), be, null);
+                                if (handler != null) {
+                                    if (handler.getSlots() > 0 && handler.isItemValid(0, finalStack)) {
+                                        handler.insertItem(0, finalStack, false);
+                                        be.setChanged();
+                                        rebakePos.add(worldPos);
+                                    }
+                                }
+                            }
                         }
                     } catch (Exception ignored) {}
                 }
@@ -1003,18 +1009,19 @@ public class PhantasiaSceneEditorScreen extends PhantasiaScreen {
                 if (be.getLevel() == null) be.setLevel(editorLevel);
                 if (sourceAmt >= 0) {
                     try {
-                        if (be instanceof com.hollingsworth.arsnouveau.common.block.tile.SourceJarTile jar) {
-                            jar.setSource(sourceAmt);
-                            jar.setChanged();
+                        if (net.phoenixvine.phantasia.compat.arsnouveaucompat.PhantasiaArsCompat.isSourceJar(be)) {
+                            net.phoenixvine.phantasia.compat.arsnouveaucompat.PhantasiaArsCompat.setSource(be,
+                                    sourceAmt);
+                            be.setChanged();
                         }
                     } catch (Exception ignored) {}
                 }
                 if (!item.isBlank()) {
                     try {
-                        net.minecraft.resources.ResourceLocation rl = new net.minecraft.resources.ResourceLocation(
+                        net.minecraft.resources.ResourceLocation rl = net.minecraft.resources.ResourceLocation.parse(
                                 item);
-                        net.minecraft.world.item.Item itm = net.minecraftforge.registries.ForgeRegistries.ITEMS
-                                .getValue(rl);
+                        net.minecraft.world.item.Item itm = net.minecraft.core.registries.BuiltInRegistries.ITEM
+                                .get(rl);
                         net.minecraft.world.item.ItemStack stack = (itm == null ||
                                 itm == net.minecraft.world.item.Items.AIR) ? net.minecraft.world.item.ItemStack.EMPTY :
                                         new net.minecraft.world.item.ItemStack(itm);
@@ -1023,13 +1030,18 @@ public class PhantasiaSceneEditorScreen extends PhantasiaScreen {
                             be.setChanged();
                         } else {
                             net.minecraft.world.item.ItemStack finalStack = stack;
-                            be.getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER)
-                                    .ifPresent(handler -> {
-                                        if (handler.getSlots() > 0 && handler.isItemValid(0, finalStack)) {
-                                            handler.insertItem(0, finalStack, false);
-                                            be.setChanged();
-                                        }
-                                    });
+                            {
+                                net.neoforged.neoforge.items.IItemHandler handler = be.getLevel() == null ? null :
+                                        be.getLevel().getCapability(
+                                                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                                                be.getBlockPos(), be.getBlockState(), be, null);
+                                if (handler != null) {
+                                    if (handler.getSlots() > 0 && handler.isItemValid(0, finalStack)) {
+                                        handler.insertItem(0, finalStack, false);
+                                        be.setChanged();
+                                    }
+                                }
+                            }
                         }
                     } catch (Exception ignored) {}
                 }
@@ -1953,9 +1965,9 @@ public class PhantasiaSceneEditorScreen extends PhantasiaScreen {
         if (id == null || id.isBlank()) return null;
         try {
             net.minecraft.resources.ResourceLocation rl = id.contains(":") ?
-                    new net.minecraft.resources.ResourceLocation(id) :
-                    new net.minecraft.resources.ResourceLocation("minecraft", id);
-            net.minecraft.world.item.Item item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(rl);
+                    net.minecraft.resources.ResourceLocation.parse(id) :
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("minecraft", id);
+            net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(rl);
             return (item == null || item == net.minecraft.world.item.Items.AIR) ? null : item;
         } catch (Exception e) {
             return null;
@@ -2079,13 +2091,13 @@ public class PhantasiaSceneEditorScreen extends PhantasiaScreen {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         int sceneBottom = this.height - BOTTOM_H;
         if (my >= TOP_BAR_H && my < sceneBottom && camera != null) {
             camera.zoom(delta > 0 ? 0.9f : 1.1f, 2f, 200f);
             return true;
         }
-        return super.mouseScrolled(mx, my, delta);
+        return super.mouseScrolled(mx, my, 0.0, delta);
     }
 
     @Override

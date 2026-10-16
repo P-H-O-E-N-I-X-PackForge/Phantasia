@@ -1,13 +1,13 @@
 package net.phoenixvine.phantasia.compat.custom;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import com.google.gson.*;
 
@@ -68,7 +68,7 @@ public class PhantasiaCustomLayout {
             id = str.substring(0, bracket);
             props = str.substring(bracket + 1, str.endsWith("]") ? str.length() - 1 : str.length());
         }
-        Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(id));
+        Block block = BuiltInRegistries.BLOCK.get(ResourceLocation.parse(id));
         if (block == null || block == Blocks.AIR) return Blocks.AIR.defaultBlockState();
         BlockState state = block.defaultBlockState();
         if (props != null) {
@@ -86,7 +86,7 @@ public class PhantasiaCustomLayout {
     }
 
     public static String serializeBlockState(BlockState state) {
-        ResourceLocation key = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+        ResourceLocation key = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         if (key == null) return "minecraft:air";
         String base = key.toString();
         Collection<Property<?>> props = state.getProperties();

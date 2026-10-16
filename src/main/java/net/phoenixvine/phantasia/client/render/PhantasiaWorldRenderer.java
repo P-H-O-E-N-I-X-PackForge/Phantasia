@@ -1,7 +1,5 @@
 package net.phoenixvine.phantasia.client.render;
 
-import com.lowdragmc.lowdraglib.client.scene.WorldSceneRenderer;
-
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -317,7 +315,7 @@ public final class PhantasiaWorldRenderer {
             BlockState state = world.getBlockState(pos);
             if (state == null || state.isAir()) continue;
             tickEntries.add(new AnimTickEntry(pos, state));
-            if (state.isRandomlyTicking() || state.getBlock().isRandomlyTicking(state))
+            if (state.isRandomlyTicking())
                 eligible.add(pos);
         }
         animateTickEligible = eligible.isEmpty() ? Collections.emptySet() : Collections.unmodifiableSet(eligible);
@@ -510,7 +508,7 @@ public final class PhantasiaWorldRenderer {
         tickedThisFrame = tick;
 
         RenderSystem.setShaderGameTime(currentTick >= 0 ? currentTick : 0,
-                ((currentTick >= 0 ? currentTick : 0) + mc.getFrameTime()) / 20f);
+                ((currentTick >= 0 ? currentTick : 0) + mc.getTimer().getGameTimeDeltaPartialTick(false)) / 20f);
         snapshotMatrices();
         totalSetupTimeNs += (System.nanoTime() - t0);
 
@@ -539,7 +537,7 @@ public final class PhantasiaWorldRenderer {
             totalVboTimeNs += (System.nanoTime() - t1);
 
             long t2 = System.nanoTime();
-            float partial = mc.getFrameTime();
+            float partial = mc.getTimer().getGameTimeDeltaPartialTick(false);
             MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
             turnOnLight(partial);
             float camX = view.eyeX(), camY = view.eyeY(), camZ = view.eyeZ();
@@ -559,11 +557,7 @@ public final class PhantasiaWorldRenderer {
             totalEntityTimeNs += (System.nanoTime() - _p3ent);
 
             long _p3dyn = System.nanoTime();
-            if (net.minecraftforge.fml.ModList.get().isLoaded("gtceu")) {
-                net.phoenixvine.phantasia.compat.gtceu.GtmBackends.get().drawDynamicRenderers(
-                        world, frontTileEntities, slotOrigin,
-                        localPoseStack, buffers, partial, camX, camY, camZ);
-            }
+            // GregTech 8 machines render through their block entities, which are already drawn above.
             totalDynRendererTimeNs += (System.nanoTime() - _p3dyn);
 
             long _p3flush = System.nanoTime();
@@ -577,15 +571,15 @@ public final class PhantasiaWorldRenderer {
             if (!PhantasiaParticleEngine.isOculusBlockingParticles()) {
                 try {
                     Vec3 camPos = this.camera.getPosition();
-                    PoseStack mv = RenderSystem.getModelViewStack();
-                    mv.pushPose();
-                    mv.translate(camPos.x, camPos.y, camPos.z);
+                    org.joml.Matrix4fStack mv = RenderSystem.getModelViewStack();
+                    mv.pushMatrix();
+                    mv.translate((float) camPos.x, (float) camPos.y, (float) camPos.z);
                     RenderSystem.applyModelViewMatrix();
                     long _partRender = System.nanoTime();
                     PhantasiaParticleEngine.renderDirect(buffers, mc.gameRenderer.lightTexture(), this.camera, partial);
                     buffers.endBatch();
                     totalParticleRenderNs += (System.nanoTime() - _partRender);
-                    mv.popPose();
+                    mv.popMatrix();
                     RenderSystem.applyModelViewMatrix();
                 } catch (Exception e) {
                     LOGGER.error("[Phantasia] particle render failed", e);
@@ -742,9 +736,9 @@ public final class PhantasiaWorldRenderer {
                         (float) (view.eyeY() - oy),
                         (float) (view.eyeZ() - oz))));
 
-        PoseStack mv = RenderSystem.getModelViewStack();
-        mv.pushPose();
-        mv.setIdentity();
+        org.joml.Matrix4fStack mv = RenderSystem.getModelViewStack();
+        mv.pushMatrix();
+        mv.identity();
 
         gluLookAt(mv,
                 (float) (view.eyeX() - ox), (float) (view.eyeY() - oy), (float) (view.eyeZ() - oz),
@@ -754,7 +748,8 @@ public final class PhantasiaWorldRenderer {
         RenderSystem.applyModelViewMatrix();
         RenderSystem.activeTexture(33984);
         syncCameraEntity(view, ox, oy, oz);
-        camera.setup(world, cameraEntity, false, false, Minecraft.getInstance().getFrameTime());
+        camera.setup(world, cameraEntity, false, false,
+                Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));
     }
 
     private void syncCameraEntity(CameraView view, double ox, double oy, double oz) {
@@ -796,8 +791,7 @@ public final class PhantasiaWorldRenderer {
         Minecraft mc = Minecraft.getInstance();
         RenderSystem.viewport(0, 0, mc.getWindow().getWidth(), mc.getWindow().getHeight());
         RenderSystem.restoreProjectionMatrix();
-        PoseStack mv = RenderSystem.getModelViewStack();
-        mv.popPose();
+        RenderSystem.getModelViewStack().popMatrix();
         RenderSystem.applyModelViewMatrix();
         RenderSystem.depthMask(false);
         RenderSystem.disableDepthTest();
@@ -892,7 +886,7 @@ public final class PhantasiaWorldRenderer {
                 tinted.setAlpha(alpha);
                 ps.pushPose();
                 ps.translate(pos.getX(), pos.getY(), pos.getZ());
-                WorldSceneRenderer.renderBlocksForge(brd, state, pos, world, ps, tinted, random, layer);
+                brd.renderBatched(state, pos, world, ps, tinted, true, random, world.getModelData(pos), layer);
                 ps.popPose();
                 tinted.resetTint();
             }
@@ -912,8 +906,7 @@ public final class PhantasiaWorldRenderer {
 
         RenderSystem.setShader(net.minecraft.client.renderer.GameRenderer::getPositionColorShader);
         com.mojang.blaze3d.vertex.Tesselator tess = com.mojang.blaze3d.vertex.Tesselator.getInstance();
-        com.mojang.blaze3d.vertex.BufferBuilder bb = tess.getBuilder();
-        bb.begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
+        com.mojang.blaze3d.vertex.BufferBuilder bb = tess.begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
                 com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_COLOR);
 
         for (Map.Entry<BlockPos, Integer> entry : activeHighlights.entrySet()) {
@@ -932,9 +925,10 @@ public final class PhantasiaWorldRenderer {
 
             double x0 = pos.getX() - ox + box.minX, y0 = pos.getY() - oy + box.minY, z0 = pos.getZ() - oz + box.minZ;
             double x1 = pos.getX() - ox + box.maxX, y1 = pos.getY() - oy + box.maxY, z1 = pos.getZ() - oz + box.maxZ;
-            addFilledBox(bb, x0, y0, z0, x1, y1, z1, r, g, b, a);
+            addFilledBox(bb, (float) x0, (float) y0, (float) z0, (float) x1, (float) y1, (float) z1, r, g, b, a);
         }
-        tess.end();
+        com.mojang.blaze3d.vertex.MeshData highlightMesh = bb.build();
+        if (highlightMesh != null) com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(highlightMesh);
 
         MultiBufferSource.BufferSource buffers = Minecraft.getInstance().renderBuffers().bufferSource();
         PoseStack ps = new PoseStack();
@@ -964,40 +958,40 @@ public final class PhantasiaWorldRenderer {
     }
 
     private static void addFilledBox(com.mojang.blaze3d.vertex.BufferBuilder bb,
-                                     double x0, double y0, double z0,
-                                     double x1, double y1, double z1,
+                                     float x0, float y0, float z0,
+                                     float x1, float y1, float z1,
                                      float r, float g, float b, float a) {
         int ri = (int) (r * 255), gi = (int) (g * 255), bi = (int) (b * 255), ai = (int) (a * 255);
 
-        bb.vertex(x0, y0, z0).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x1, y0, z0).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x1, y0, z1).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x0, y0, z1).color(ri, gi, bi, ai).endVertex();
+        bb.addVertex(x0, y0, z0).setColor(ri, gi, bi, ai);
+        bb.addVertex(x1, y0, z0).setColor(ri, gi, bi, ai);
+        bb.addVertex(x1, y0, z1).setColor(ri, gi, bi, ai);
+        bb.addVertex(x0, y0, z1).setColor(ri, gi, bi, ai);
 
-        bb.vertex(x0, y1, z0).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x0, y1, z1).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x1, y1, z1).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x1, y1, z0).color(ri, gi, bi, ai).endVertex();
+        bb.addVertex(x0, y1, z0).setColor(ri, gi, bi, ai);
+        bb.addVertex(x0, y1, z1).setColor(ri, gi, bi, ai);
+        bb.addVertex(x1, y1, z1).setColor(ri, gi, bi, ai);
+        bb.addVertex(x1, y1, z0).setColor(ri, gi, bi, ai);
 
-        bb.vertex(x1, y0, z0).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x0, y0, z0).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x0, y1, z0).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x1, y1, z0).color(ri, gi, bi, ai).endVertex();
+        bb.addVertex(x1, y0, z0).setColor(ri, gi, bi, ai);
+        bb.addVertex(x0, y0, z0).setColor(ri, gi, bi, ai);
+        bb.addVertex(x0, y1, z0).setColor(ri, gi, bi, ai);
+        bb.addVertex(x1, y1, z0).setColor(ri, gi, bi, ai);
 
-        bb.vertex(x0, y0, z1).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x1, y0, z1).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x1, y1, z1).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x0, y1, z1).color(ri, gi, bi, ai).endVertex();
+        bb.addVertex(x0, y0, z1).setColor(ri, gi, bi, ai);
+        bb.addVertex(x1, y0, z1).setColor(ri, gi, bi, ai);
+        bb.addVertex(x1, y1, z1).setColor(ri, gi, bi, ai);
+        bb.addVertex(x0, y1, z1).setColor(ri, gi, bi, ai);
 
-        bb.vertex(x0, y0, z0).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x0, y0, z1).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x0, y1, z1).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x0, y1, z0).color(ri, gi, bi, ai).endVertex();
+        bb.addVertex(x0, y0, z0).setColor(ri, gi, bi, ai);
+        bb.addVertex(x0, y0, z1).setColor(ri, gi, bi, ai);
+        bb.addVertex(x0, y1, z1).setColor(ri, gi, bi, ai);
+        bb.addVertex(x0, y1, z0).setColor(ri, gi, bi, ai);
 
-        bb.vertex(x1, y0, z1).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x1, y0, z0).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x1, y1, z0).color(ri, gi, bi, ai).endVertex();
-        bb.vertex(x1, y1, z1).color(ri, gi, bi, ai).endVertex();
+        bb.addVertex(x1, y0, z1).setColor(ri, gi, bi, ai);
+        bb.addVertex(x1, y0, z0).setColor(ri, gi, bi, ai);
+        bb.addVertex(x1, y1, z0).setColor(ri, gi, bi, ai);
+        bb.addVertex(x1, y1, z1).setColor(ri, gi, bi, ai);
     }
 
     private void drawTileEntities(PoseStack poseStack, MultiBufferSource.BufferSource buffers, float partial,
@@ -1249,7 +1243,7 @@ public final class PhantasiaWorldRenderer {
                 restoreVariants(variantSaved);
 
                 if (!fullBakeDone) {
-                    for (BakedLayer bl : baked) if (bl != null) bl.renderedBuffer().release();
+                    for (BakedLayer bl : baked) if (bl != null) bl.release();
                     return;
                 }
             }
@@ -1340,7 +1334,7 @@ public final class PhantasiaWorldRenderer {
                     } finally {
                         ModelBlockRenderer.clearCache();
                         if (!chunkDone) {
-                            for (BakedLayer bl : baked) if (bl != null) bl.renderedBuffer().release();
+                            for (BakedLayer bl : baked) if (bl != null) bl.release();
                         }
                     }
 
@@ -1410,7 +1404,7 @@ public final class PhantasiaWorldRenderer {
 
                 if (!consolidateDone) {
 
-                    for (BakedLayer bl : finalBaked) if (bl != null) bl.renderedBuffer().release();
+                    for (BakedLayer bl : finalBaked) if (bl != null) bl.release();
                     return;
                 }
             }
@@ -1489,7 +1483,7 @@ public final class PhantasiaWorldRenderer {
                 restoreVariants(variantSaved);
 
                 if (!partialDone) {
-                    for (BakedLayer bl : baked) if (bl != null) bl.renderedBuffer().release();
+                    for (BakedLayer bl : baked) if (bl != null) bl.release();
                     return;
                 }
             }
@@ -1544,8 +1538,8 @@ public final class PhantasiaWorldRenderer {
                                          Set<BlockPos> animatedOut) {
         int count = solid.size() + fluid.size();
         int sizeHint = Math.max(layer.bufferSize(), Math.min(count * 512, 64 * 1024 * 1024));
-        BufferBuilder bb = new BufferBuilder(sizeHint);
-        bb.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
+        com.mojang.blaze3d.vertex.ByteBufferBuilder owner = new com.mojang.blaze3d.vertex.ByteBufferBuilder(sizeHint);
+        BufferBuilder bb = new BufferBuilder(owner, VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
         PoseStack ps = new PoseStack();
         TintedVertexConsumer tinted = new TintedVertexConsumer(bb);
 
@@ -1554,14 +1548,14 @@ public final class PhantasiaWorldRenderer {
             if (++checkInterval >= 512) {
                 checkInterval = 0;
                 if (Thread.interrupted()) {
-                    bb.end().release();
+                    owner.close();
                     return null;
                 }
             }
             BlockState state = world.getBlockState(pos);
             ps.pushPose();
             ps.translate(pos.getX(), pos.getY(), pos.getZ());
-            WorldSceneRenderer.renderBlocksForge(brd, state, pos, world, ps, tinted, random, layer);
+            brd.renderBatched(state, pos, world, ps, tinted, true, random, world.getModelData(pos), layer);
             ps.popPose();
             tinted.resetTint();
             if (state.isRandomlyTicking() || state.getBlock() instanceof net.minecraft.world.level.block.EntityBlock) {
@@ -1581,42 +1575,54 @@ public final class PhantasiaWorldRenderer {
             tinted.resetTint();
         }
 
-        return new BakedLayer(bb.end());
+        com.mojang.blaze3d.vertex.MeshData mesh = bb.build();
+        if (mesh == null) {
+            owner.close();
+            return null;
+        }
+        return new BakedLayer(mesh, owner);
     }
 
     private void uploadToVBO(VertexBuffer vbo, BakedLayer bl) {
         if (!vbo.isInvalid()) {
             vbo.bind();
-            vbo.upload(bl.renderedBuffer());
+            vbo.upload(bl.mesh());
             VertexBuffer.unbind();
+        } else {
+            bl.release();
+            return;
         }
+        bl.owner().close();
     }
 
     private void uploadEmptyVBO(VertexBuffer vbo, RenderType layer) {
         if (!vbo.isInvalid()) {
-            BufferBuilder bb = new BufferBuilder(layer.bufferSize());
-            bb.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
-            vbo.bind();
-            vbo.upload(bb.end());
-            VertexBuffer.unbind();
+            try (com.mojang.blaze3d.vertex.ByteBufferBuilder owner = new com.mojang.blaze3d.vertex.ByteBufferBuilder(
+                    1024)) {
+                vbo.bind();
+                vbo.upload(degenerateMesh(owner));
+                VertexBuffer.unbind();
+            }
         }
+    }
+
+    /** A mesh with one zero-area quad: 1.21 cannot build an empty mesh, and a stale VBO must still be overwritten. */
+    private static com.mojang.blaze3d.vertex.MeshData degenerateMesh(com.mojang.blaze3d.vertex.ByteBufferBuilder owner) {
+        BufferBuilder bb = new BufferBuilder(owner, VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
+        for (int i = 0; i < 4; i++) {
+            bb.addVertex(0f, 0f, 0f).setColor(255, 255, 255, 255).setUv(0f, 0f).setLight(0).setNormal(0f, 1f, 0f);
+        }
+        return bb.buildOrThrow();
     }
 
     private void uploadEmptyBuffers(boolean intoOverlay) {
         pendingUploads.set(LAYER_COUNT);
         for (int i = 0; i < LAYER_COUNT; i++) {
             RenderType layer = LAYERS.get(i);
-            BufferBuilder bb = new BufferBuilder(layer.bufferSize());
-            bb.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
-            BufferBuilder.RenderedBuffer rb = bb.end();
             final int fi = i;
             RenderSystem.recordRenderCall(() -> {
                 VertexBuffer target = intoOverlay ? overlay[fi] : back[fi];
-                if (!target.isInvalid()) {
-                    target.bind();
-                    target.upload(rb);
-                    VertexBuffer.unbind();
-                }
+                uploadEmptyVBO(target, layer);
                 if (pendingUploads.decrementAndGet() == 0) {
                     if (intoOverlay) overlayReady = true;
                     else backReady = true;
@@ -1677,15 +1683,23 @@ public final class PhantasiaWorldRenderer {
         return r;
     }
 
-    private record BakedLayer(BufferBuilder.RenderedBuffer renderedBuffer) {}
+    private record BakedLayer(com.mojang.blaze3d.vertex.MeshData mesh,
+                              com.mojang.blaze3d.vertex.ByteBufferBuilder owner) {
+
+        /** Frees a layer that was baked but will not be uploaded. */
+        void release() {
+            mesh.close();
+            owner.close();
+        }
+    }
 
     private static boolean canRenderInLayer(BlockRenderDispatcher brd, BlockState state, BlockPos pos,
                                             net.minecraft.world.level.BlockAndTintGetter world,
                                             RenderType layer, RandomSource random) {
-        return WorldSceneRenderer.canRenderInLayer(brd, state, pos, world, layer, random);
+        return brd.getBlockModel(state).getRenderTypes(state, random, world.getModelData(pos)).contains(layer);
     }
 
-    private static void gluLookAt(PoseStack mv,
+    private static void gluLookAt(org.joml.Matrix4f mv,
                                   float eyeX, float eyeY, float eyeZ,
                                   float centerX, float centerY, float centerZ,
                                   float upX, float upY, float upZ) {
@@ -1708,7 +1722,7 @@ public final class PhantasiaWorldRenderer {
                 -(ux * eyeX + uy * eyeY + uz * eyeZ),
                 (fx * eyeX + fy * eyeY + fz * eyeZ),
                 1);
-        mv.mulPoseMatrix(m);
+        mv.mul(m);
     }
 
     private static boolean gluUnProject(float winX, float winY, float winZ,

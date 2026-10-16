@@ -10,8 +10,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.common.data.pattern.PhantasiaLoadedPattern;
 import net.phoenixvine.phantasia.utils.PhantasiaBlockInfo;
 
@@ -26,6 +26,10 @@ import static net.phoenixvine.phantasia.utils.PhantasiaThemeUtils.*;
 
 @OnlyIn(Dist.CLIENT)
 public class PhantasiaMaterialCostScreen extends Screen {
+    @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    }
+
 
     private static final int ROW_H = 22;
     private static final int HEADER_H = 50;
@@ -1080,7 +1084,7 @@ public class PhantasiaMaterialCostScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         int imx = (int) mx, imy = (int) my;
         if (pickerNode != null) {
             int ph = pickerVisibleRows() * PICKER_ROW + 24;

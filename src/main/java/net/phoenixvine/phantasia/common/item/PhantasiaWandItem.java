@@ -15,8 +15,8 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.Phantasia;
 import net.phoenixvine.phantasia.client.screens.editors.PhantasiaCustomEditorScreen;
 import net.phoenixvine.phantasia.compat.custom.PhantasiaCustomLayout;
@@ -132,7 +132,7 @@ public class PhantasiaWandItem extends Item {
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void appendHoverText(ItemStack stack, @Nullable Level level,
+    public void appendHoverText(ItemStack stack, net.minecraft.world.item.Item.TooltipContext context,
                                 List<Component> lines, TooltipFlag flag) {
         BlockPos p1 = getPos(stack, KEY_POS1);
         BlockPos p2 = getPos(stack, KEY_POS2);
@@ -155,17 +155,16 @@ public class PhantasiaWandItem extends Item {
     }
 
     private static void setPos(ItemStack stack, String key, BlockPos pos) {
-        CompoundTag root = stack.getOrCreateTag();
         CompoundTag tag = new CompoundTag();
         tag.putInt("x", pos.getX());
         tag.putInt("y", pos.getY());
         tag.putInt("z", pos.getZ());
-        root.put(key, tag);
+        net.phoenixvine.phantasia.utils.PhantasiaItemData.edit(stack, root -> root.put(key, tag));
     }
 
     @Nullable
     public static BlockPos getPos(ItemStack stack, String key) {
-        CompoundTag root = stack.getTag();
+        CompoundTag root = net.phoenixvine.phantasia.utils.PhantasiaItemData.getTag(stack);
         if (root == null || !root.contains(key)) return null;
         CompoundTag tag = root.getCompound(key);
         return new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z"));

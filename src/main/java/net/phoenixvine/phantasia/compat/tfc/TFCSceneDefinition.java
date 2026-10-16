@@ -1,6 +1,7 @@
 package net.phoenixvine.phantasia.compat.tfc;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -11,7 +12,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.phoenixvine.phantasia.client.render.PhantasiaTrackedDummyWorld;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScriptData;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockDefinition;
@@ -67,13 +67,13 @@ public class TFCSceneDefinition implements IPhantasiaMultiblockDefinition {
     @Override
     public ItemStack getIcon() {
         if (cachedIcon == null) {
-            ResourceLocation rl = iconId.contains(":") ? new ResourceLocation(iconId) :
-                    new ResourceLocation("tfc", iconId);
-            Item item = ForgeRegistries.ITEMS.getValue(rl);
+            ResourceLocation rl = iconId.contains(":") ? ResourceLocation.parse(iconId) :
+                    ResourceLocation.fromNamespaceAndPath("tfc", iconId);
+            Item item = BuiltInRegistries.ITEM.get(rl);
             if (item != null && item != Items.AIR) {
                 cachedIcon = new ItemStack(item);
             } else {
-                Block b = ForgeRegistries.BLOCKS.getValue(rl);
+                Block b = BuiltInRegistries.BLOCK.get(rl);
                 if (b != null && b != Blocks.AIR) {
                     ItemStack s = new ItemStack(b);
                     cachedIcon = s.isEmpty() ? ItemStack.EMPTY : s;
@@ -133,7 +133,7 @@ public class TFCSceneDefinition implements IPhantasiaMultiblockDefinition {
     }
 
     static PhantasiaBlockInfo tfc(String id) {
-        Block b = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("tfc", id));
+        Block b = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("tfc", id));
         if (b == null || b == Blocks.AIR) {
             net.phoenixvine.phantasia.Phantasia.LOGGER.warn("[Phantasia/TFC] Block not found: tfc:{}", id);
             return PhantasiaBlockInfo.EMPTY;

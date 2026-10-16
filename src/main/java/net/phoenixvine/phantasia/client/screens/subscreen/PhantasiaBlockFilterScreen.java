@@ -6,14 +6,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.screens.PhantasiaSceneScreen;
 import net.phoenixvine.phantasia.common.data.pattern.PhantasiaLoadedPattern;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScript;
@@ -24,6 +24,10 @@ import static net.phoenixvine.phantasia.utils.PhantasiaThemeUtils.*;
 
 @OnlyIn(Dist.CLIENT)
 public class PhantasiaBlockFilterScreen extends Screen {
+    @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    }
+
 
     private enum Tab {
         FILTER,
@@ -74,7 +78,7 @@ public class PhantasiaBlockFilterScreen extends Screen {
                 if (!(state.getBlock() instanceof MetaMachineBlock)) continue;
                 if (wp.equals(pattern.controllerWorldPos)) continue;
 
-                ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+                ResourceLocation rl = BuiltInRegistries.BLOCK.getKey(state.getBlock());
                 if (rl == null) continue;
                 String path = rl.getPath();
 
@@ -287,7 +291,7 @@ public class PhantasiaBlockFilterScreen extends Screen {
         }
         y += 4;
 
-        ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+        ResourceLocation rl = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         if (rl != null) {
             for (net.minecraft.util.FormattedCharSequence seq : font.split(
                     Component.literal(rl.toString()).withStyle(net.minecraft.ChatFormatting.ITALIC), leftColWidth)) {
@@ -332,7 +336,9 @@ public class PhantasiaBlockFilterScreen extends Screen {
         y += 6;
 
         if (!itemStack.isEmpty()) {
-            List<Component> tooltips = itemStack.getTooltipLines(Minecraft.getInstance().player,
+            List<Component> tooltips = itemStack.getTooltipLines(
+                    net.minecraft.world.item.Item.TooltipContext.of(Minecraft.getInstance().level),
+                    Minecraft.getInstance().player,
                     net.minecraft.world.item.TooltipFlag.Default.NORMAL);
             for (Component line : tooltips) {
                 for (net.minecraft.util.FormattedCharSequence sequence : font.split(line, maxRightWidth)) {
@@ -480,7 +486,9 @@ public class PhantasiaBlockFilterScreen extends Screen {
 
                             ItemStack itemStack = new ItemStack(state.getBlock().asItem());
                             if (!itemStack.isEmpty()) {
-                                List<Component> tooltips = itemStack.getTooltipLines(Minecraft.getInstance().player,
+                                List<Component> tooltips = itemStack.getTooltipLines(
+                                        net.minecraft.world.item.Item.TooltipContext.of(Minecraft.getInstance().level),
+                                        Minecraft.getInstance().player,
                                         net.minecraft.world.item.TooltipFlag.Default.NORMAL);
                                 for (Component line : tooltips) {
                                     int lines = font.split(line, maxRightWidth).size();
@@ -541,13 +549,13 @@ public class PhantasiaBlockFilterScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         if (tab == Tab.LIST) {
             int maxScroll = Math.max(0, blocksByName.size() * 20 - (this.height - 86));
             listScrollY = Math.max(0, Math.min(maxScroll, listScrollY + (delta > 0 ? -15 : 15)));
             return true;
         }
-        return super.mouseScrolled(mx, my, delta);
+        return super.mouseScrolled(mx, my, 0.0, delta);
     }
 
     @Override

@@ -1,10 +1,10 @@
 package net.phoenixvine.phantasia.utils;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.phoenixvine.phantasia.Phantasia;
 import net.phoenixvine.wiki.theme.PhoenixTheme;
 
@@ -69,7 +69,7 @@ public final class PhantasiaBaseplateConfig {
         if (trimmed.equals("minecraft:air") || trimmed.equals("air")) return null;
         ResourceLocation rl = ResourceLocation.tryParse(trimmed);
         if (rl != null) {
-            Block block = ForgeRegistries.BLOCKS.getValue(rl);
+            Block block = BuiltInRegistries.BLOCK.get(rl);
             if (block != null) {
                 BlockState state = block.defaultBlockState();
                 if (state.isAir()) return null;

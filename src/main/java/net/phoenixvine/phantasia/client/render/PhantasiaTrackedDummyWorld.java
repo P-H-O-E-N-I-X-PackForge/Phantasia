@@ -14,8 +14,8 @@ import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.utils.PhantasiaBlockInfo;
 
 import org.joml.Vector3f;
@@ -92,7 +92,6 @@ public class PhantasiaTrackedDummyWorld extends PhantasiaDummyWorld {
         return created;
     }
 
-    @Override
     @Nullable
     public BlockEntity getExistingBlockEntity(@Nonnull BlockPos pos) {
         return getBlockEntity(pos);

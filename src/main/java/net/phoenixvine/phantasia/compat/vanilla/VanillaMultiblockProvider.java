@@ -397,21 +397,21 @@ public final class VanillaMultiblockProvider implements IPhantasiaMultiblockProv
     private static IPhantasiaMultiblockDefinition def(String id, String name, ItemStack icon,
                                                       List<IPhantasiaMultiblockShape> shapes,
                                                       PhantasiaScriptData script) {
-        return new VanillaMultiblockDefinition(new ResourceLocation(id), name, icon, shapes, script, null, 0, false,
+        return new VanillaMultiblockDefinition(ResourceLocation.parse(id), name, icon, shapes, script, null, 0, false,
                 false);
     }
 
     private static IPhantasiaMultiblockDefinition defWithBeam(String id, String name, ItemStack icon,
                                                               List<IPhantasiaMultiblockShape> shapes,
                                                               PhantasiaScriptData script) {
-        return new VanillaMultiblockDefinition(new ResourceLocation(id), name, icon, shapes, script, null, 0, true,
+        return new VanillaMultiblockDefinition(ResourceLocation.parse(id), name, icon, shapes, script, null, 0, true,
                 false);
     }
 
     private static IPhantasiaMultiblockDefinition defWithConduit(String id, String name, ItemStack icon,
                                                                  List<IPhantasiaMultiblockShape> shapes,
                                                                  PhantasiaScriptData script) {
-        return new VanillaMultiblockDefinition(new ResourceLocation(id), name, icon, shapes, script, null, 0, false,
+        return new VanillaMultiblockDefinition(ResourceLocation.parse(id), name, icon, shapes, script, null, 0, false,
                 true);
     }
 
@@ -420,7 +420,7 @@ public final class VanillaMultiblockProvider implements IPhantasiaMultiblockProv
                                                              PhantasiaScriptData script,
                                                              net.minecraft.world.entity.EntityType<? extends net.minecraft.world.entity.LivingEntity> mobType,
                                                              int scale) {
-        return new VanillaMultiblockDefinition(new ResourceLocation(id), name, icon, shapes, script, mobType, scale,
+        return new VanillaMultiblockDefinition(ResourceLocation.parse(id), name, icon, shapes, script, mobType, scale,
                 false, false);
     }
 }

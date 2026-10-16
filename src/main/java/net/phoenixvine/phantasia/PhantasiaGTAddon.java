@@ -4,37 +4,23 @@ import com.gregtechceu.gtceu.api.addon.GTAddon;
 import com.gregtechceu.gtceu.api.addon.IGTAddon;
 import com.gregtechceu.gtceu.api.registry.registrate.GTRegistrate;
 
-import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeOutput;
 import net.phoenixvine.phantasia.common.PhantasiaTestingRecipes;
-import net.phoenixvine.phantasia.compat.gtceu.PhantasiaGTCompat;
-
-import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
-@GTAddon
+@GTAddon(Phantasia.MOD_ID)
 public class PhantasiaGTAddon implements IGTAddon {
+
+    private static GTRegistrate registrate;
 
     @Override
     public GTRegistrate getRegistrate() {
-        return PhantasiaGTCompat.PHANTASIA_REGISTRATE;
+        if (registrate == null) registrate = GTRegistrate.create(Phantasia.MOD_ID);
+        return registrate;
     }
 
     @Override
-    public void initializeAddon() {}
-
-    @Override
-    public String addonModId() {
-        return Phantasia.MOD_ID;
-    }
-
-    @Override
-    public void registerTagPrefixes() {}
-
-    @Override
-    public void addRecipes(Consumer<FinishedRecipe> provider) {
+    public void addRecipes(RecipeOutput provider) {
         PhantasiaTestingRecipes.init(provider);
     }
-
-    @Override
-    public void registerElements() {}
 }

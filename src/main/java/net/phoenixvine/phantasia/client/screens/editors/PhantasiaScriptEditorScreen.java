@@ -14,8 +14,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.camera.CameraView;
 import net.phoenixvine.phantasia.client.camera.LerpType;
 import net.phoenixvine.phantasia.client.camera.PhantasiaCamera;
@@ -1993,9 +1993,9 @@ public class PhantasiaScriptEditorScreen extends PhantasiaScreen implements Phan
     private static net.minecraft.world.item.Item eipResolveItem(String id) {
         if (id == null || id.isBlank()) return null;
         try {
-            var rl = id.contains(":") ? new net.minecraft.resources.ResourceLocation(id) :
-                    new net.minecraft.resources.ResourceLocation("minecraft", id);
-            var item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(rl);
+            var rl = id.contains(":") ? net.minecraft.resources.ResourceLocation.parse(id) :
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("minecraft", id);
+            var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(rl);
             return (item == null || item == net.minecraft.world.item.Items.AIR) ? null : item;
         } catch (Exception e) {
             return null;
@@ -2631,12 +2631,12 @@ public class PhantasiaScriptEditorScreen extends PhantasiaScreen implements Phan
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         if (my >= TOP_BAR_H && my < this.height - BOTTOM_H && camera != null) {
             camera.zoom(delta > 0 ? 0.9f : 1.1f, 2f, 150f);
             return true;
         }
-        return super.mouseScrolled(mx, my, delta);
+        return super.mouseScrolled(mx, my, 0.0, delta);
     }
 
     @Override

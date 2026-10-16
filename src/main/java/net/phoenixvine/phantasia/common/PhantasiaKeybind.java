@@ -3,20 +3,20 @@ package net.phoenixvine.phantasia.common;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.RenderGuiOverlayEvent;
-import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
+import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import net.phoenixvine.phantasia.client.keybind.PhoenixKeybinds;
 import net.phoenixvine.phantasia.client.screens.PhantasiaContextualSelectionScreen;
 import net.phoenixvine.phantasia.client.screens.PhantasiaSceneScreen;
@@ -79,7 +79,7 @@ public class PhantasiaKeybind {
 
         tooltipTarget = null;
 
-        ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(stack.getItem());
+        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
         if (itemId != null) {
             String itemKey = itemId.toString();
             boolean matched = hasTooltipItemMatch(itemKey);
@@ -109,9 +109,7 @@ public class PhantasiaKeybind {
     }
 
     @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-
+    public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
 
@@ -154,7 +152,7 @@ public class PhantasiaKeybind {
     private static void openForMultiblock(Minecraft mc, IPhantasiaMultiblockDefinition defToOpen) {
         String targetId = defToOpen.getId().getPath().toLowerCase(java.util.Locale.ROOT);
 
-        ResourceLocation iconKey = ForgeRegistries.ITEMS.getKey(defToOpen.getIcon().getItem());
+        ResourceLocation iconKey = BuiltInRegistries.ITEM.getKey(defToOpen.getIcon().getItem());
         String iconItemKey = iconKey != null ? iconKey.toString() : null;
 
         java.util.List<net.phoenixvine.phantasia.common.data.scene.PhantasiaSceneData> matchingScenes = new java.util.ArrayList<>();
@@ -200,7 +198,7 @@ public class PhantasiaKeybind {
 
         IPhantasiaMultiblockDefinition matchingScript = null;
         for (var def : PhantasiaSceneSelectionScreen.PHANTASIA_SCENES) {
-            ResourceLocation iconKey = ForgeRegistries.ITEMS.getKey(def.getIcon().getItem());
+            ResourceLocation iconKey = BuiltInRegistries.ITEM.getKey(def.getIcon().getItem());
             if (iconKey != null && iconKey.toString().equals(itemKey)) {
                 matchingScript = def;
                 break;
@@ -225,8 +223,8 @@ public class PhantasiaKeybind {
     }
 
     @SubscribeEvent
-    public static void onRenderOverlay(RenderGuiOverlayEvent.Pre event) {
-        if (event.getOverlay() != VanillaGuiOverlay.PLAYER_LIST.type()) return;
+    public static void onRenderOverlay(RenderGuiLayerEvent.Pre event) {
+        if (!event.getName().equals(VanillaGuiLayers.TAB_LIST)) return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
@@ -316,7 +314,7 @@ public class PhantasiaKeybind {
     private static String getTargetItemId(Minecraft mc) {
         ItemStack stack = mc.player.getMainHandItem();
         if (!stack.isEmpty() && PhantasiaMultiblockRegistry.resolveFromItem(stack).isEmpty()) {
-            ResourceLocation heldId = ForgeRegistries.ITEMS.getKey(stack.getItem());
+            ResourceLocation heldId = BuiltInRegistries.ITEM.getKey(stack.getItem());
             if (heldId != null && hasTooltipItemMatch(heldId.toString())) {
                 return heldId.toString();
             }
@@ -325,7 +323,7 @@ public class PhantasiaKeybind {
             BlockPos pos = ((BlockHitResult) mc.hitResult).getBlockPos();
             BlockState state = mc.level.getBlockState(pos);
             if (!PhantasiaMultiblockRegistry.isControllerBlock(state)) {
-                ResourceLocation blockId = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+                ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(state.getBlock());
                 if (blockId != null && hasTooltipItemMatch(blockId.toString())) {
                     return blockId.toString();
                 }

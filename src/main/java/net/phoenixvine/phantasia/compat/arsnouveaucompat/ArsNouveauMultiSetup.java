@@ -8,7 +8,7 @@ import net.phoenixvine.phantasia.common.multisetup.IPhantasiaMultiSetup;
 import net.phoenixvine.phantasia.common.multisetup.IPhantasiaSetupRecipe;
 import net.phoenixvine.phantasia.utils.PhantasiaBlockInfo;
 
-import com.hollingsworth.arsnouveau.api.enchanting_apparatus.EnchantingApparatusRecipe;
+import com.hollingsworth.arsnouveau.common.crafting.recipes.EnchantingApparatusRecipe;
 import com.hollingsworth.arsnouveau.common.crafting.recipes.ImbuementRecipe;
 import com.hollingsworth.arsnouveau.setup.registry.RecipeRegistry;
 
@@ -93,14 +93,14 @@ public class ArsNouveauMultiSetup implements IPhantasiaMultiSetup {
     }
 
     private void loadApparatusRecipes(RecipeManager rm) {
-        rm.getAllRecipesFor(RecipeRegistry.APPARATUS_TYPE.get()).forEach(recipe -> {
+        rm.getAllRecipesFor(RecipeRegistry.APPARATUS_TYPE.get()).forEach(holder -> {
 
-            EnchantingApparatusRecipe r = (EnchantingApparatusRecipe) recipe;
+            EnchantingApparatusRecipe r = holder.value();
 
-            List<ItemStack> pedItems = r.pedestalItems.stream()
+            List<ItemStack> pedItems = r.pedestalItems().stream()
                     .map(ing -> ing.getItems().length > 0 ? ing.getItems()[0] : ItemStack.EMPTY)
                     .toList();
-            ItemStack reagent = r.reagent.getItems().length > 0 ? r.reagent.getItems()[0] : ItemStack.EMPTY;
+            ItemStack reagent = r.reagent().getItems().length > 0 ? r.reagent().getItems()[0] : ItemStack.EMPTY;
 
             var result = ArsNouveauLayoutBuilder.enchantingApparatusRecipe(pedItems, reagent);
 
@@ -108,28 +108,28 @@ public class ArsNouveauMultiSetup implements IPhantasiaMultiSetup {
             allInputs.add(0, reagent);
 
             cachedRecipes.add(new ArsNouveauSetupRecipe(
-                    r.getId(),
-                    r.result.copy(),
+                    holder.id(),
+                    r.result().copy(),
                     allInputs,
-                    r.sourceCost,
+                    r.sourceCost(),
                     result.layout(),
                     result.itemPlacements()));
         });
     }
 
     private void loadImbuementRecipes(RecipeManager rm) {
-        rm.getAllRecipesFor(RecipeRegistry.IMBUEMENT_TYPE.get()).forEach(recipe -> {
+        rm.getAllRecipesFor(RecipeRegistry.IMBUEMENT_TYPE.get()).forEach(holder -> {
 
-            ImbuementRecipe r = (ImbuementRecipe) recipe;
+            ImbuementRecipe r = holder.value();
 
-            ItemStack input = r.input.getItems().length > 0 ? r.input.getItems()[0] : ItemStack.EMPTY;
+            ItemStack input = r.getInput().getItems().length > 0 ? r.getInput().getItems()[0] : ItemStack.EMPTY;
             var result = ArsNouveauLayoutBuilder.imbuementRecipe(input);
 
             cachedRecipes.add(new ArsNouveauSetupRecipe(
-                    r.getId(),
-                    r.output.copy(),
+                    holder.id(),
+                    r.getOutput().copy(),
                     List.of(input),
-                    r.source,
+                    r.getSource(),
                     result.layout(),
                     result.itemPlacements()));
         });

@@ -4,8 +4,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.common.data.variant.PhantasiaVariantGroup;
 import net.phoenixvine.phantasia.common.data.variant.PhantasiaVariantState;
 import net.phoenixvine.phantasia.utils.PhantasiaThemeUtils;
@@ -19,6 +19,10 @@ import static net.phoenixvine.phantasia.utils.PhantasiaThemeUtils.*;
 
 @OnlyIn(Dist.CLIENT)
 public class PhantasiaVariantsScreen extends Screen {
+    @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    }
+
 
     private static final int PANEL_W = 280;
     private static final int PANEL_PADDING = 12;
@@ -353,7 +357,7 @@ public class PhantasiaVariantsScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         if (openDropdownGroupId != null) {
             PhantasiaVariantGroup openGroup = variantState.getGroups().stream()
                     .filter(gr -> gr.getId().equals(openDropdownGroupId))

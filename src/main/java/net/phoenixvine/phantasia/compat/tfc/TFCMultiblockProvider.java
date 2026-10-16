@@ -1,8 +1,8 @@
 package net.phoenixvine.phantasia.compat.tfc;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.fml.ModList;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScriptData;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockDefinition;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockProvider;
@@ -52,8 +52,9 @@ public class TFCMultiblockProvider implements IPhantasiaMultiblockProvider {
 
     @Override
     public Optional<PhantasiaBlockInfo> resolveBlock(String id) {
-        ResourceLocation rl = id.contains(":") ? new ResourceLocation(id) : new ResourceLocation("tfc", id);
-        net.minecraft.world.level.block.Block b = ForgeRegistries.BLOCKS.getValue(rl);
+        ResourceLocation rl = id.contains(":") ? ResourceLocation.parse(id) :
+                ResourceLocation.fromNamespaceAndPath("tfc", id);
+        net.minecraft.world.level.block.Block b = BuiltInRegistries.BLOCK.get(rl);
         if (b == null || b == net.minecraft.world.level.block.Blocks.AIR) return Optional.empty();
         return Optional.of(PhantasiaBlockInfo.fromBlockState(b.defaultBlockState()));
     }
@@ -65,7 +66,7 @@ public class TFCMultiblockProvider implements IPhantasiaMultiblockProvider {
 
     @Override
     public boolean isControllerBlock(net.minecraft.world.level.block.state.BlockState state) {
-        ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+        ResourceLocation rl = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         if (rl == null || !"tfc".equals(rl.getNamespace())) return false;
         return switch (rl.getPath()) {
             case "bloomery", "blast_furnace", "charcoal_forge", "firepit", "pit_kiln" -> true;
@@ -75,7 +76,7 @@ public class TFCMultiblockProvider implements IPhantasiaMultiblockProvider {
 
     @Override
     public boolean isPartBlock(net.minecraft.world.level.block.state.BlockState state) {
-        ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+        ResourceLocation rl = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         if (rl == null || !"tfc".equals(rl.getNamespace())) return false;
         return switch (rl.getPath()) {
             case "bloomery", "blast_furnace", "charcoal_forge", "firepit", "pit_kiln", "bellows", "rock/bricks/granite", "rock/bricks/basalt", "rock/bricks/rhyolite", "rock/cobblestone/granite", "log_pile" -> true;
@@ -126,7 +127,7 @@ public class TFCMultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new TFCSceneDefinition(
-                new ResourceLocation("tfc", "bloomery"),
+                ResourceLocation.fromNamespaceAndPath("tfc", "bloomery"),
                 "Bloomery",
                 "tfc:bloomery",
                 shape, script);
@@ -181,7 +182,7 @@ public class TFCMultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new TFCSceneDefinition(
-                new ResourceLocation("tfc", "blast_furnace"),
+                ResourceLocation.fromNamespaceAndPath("tfc", "blast_furnace"),
                 "Blast Furnace",
                 "tfc:blast_furnace",
                 shape, script);
@@ -228,7 +229,7 @@ public class TFCMultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new TFCSceneDefinition(
-                new ResourceLocation("tfc", "charcoal_forge"),
+                ResourceLocation.fromNamespaceAndPath("tfc", "charcoal_forge"),
                 "Charcoal Forge",
 
                 "tfc:metal/tuyere/wrought_iron",
@@ -284,7 +285,7 @@ public class TFCMultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new TFCSceneDefinition(
-                new ResourceLocation("tfc", "pit_kiln"),
+                ResourceLocation.fromNamespaceAndPath("tfc", "pit_kiln"),
                 "Pit Kiln",
 
                 "tfc:ceramic/unfired_bowl",

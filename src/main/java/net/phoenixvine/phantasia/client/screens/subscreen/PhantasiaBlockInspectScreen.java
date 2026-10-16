@@ -5,15 +5,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.screens.PhantasiaSceneScreen;
 import net.phoenixvine.phantasia.common.data.pattern.PhantasiaLoadedPattern;
 import net.phoenixvine.phantasia.common.data.variant.PhantasiaVariantState;
@@ -27,6 +27,10 @@ import static net.phoenixvine.phantasia.utils.PhantasiaThemeUtils.*;
 
 @OnlyIn(Dist.CLIENT)
 public class PhantasiaBlockInspectScreen extends Screen {
+    @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    }
+
 
     private final BlockPos pos;
     private final PhantasiaLoadedPattern pattern;
@@ -61,7 +65,9 @@ public class PhantasiaBlockInspectScreen extends Screen {
     private void collectData() {
         ItemStack stack = new ItemStack(state.getBlock().asItem());
         if (!stack.isEmpty()) {
-            infoLines.addAll(stack.getTooltipLines(Minecraft.getInstance().player, TooltipFlag.Default.NORMAL));
+            infoLines.addAll(stack.getTooltipLines(
+                    net.minecraft.world.item.Item.TooltipContext.of(Minecraft.getInstance().level),
+                    Minecraft.getInstance().player, TooltipFlag.Default.NORMAL));
         }
 
         var block = state.getBlock();
@@ -102,7 +108,7 @@ public class PhantasiaBlockInspectScreen extends Screen {
 
         y += 4;
 
-        String id = ForgeRegistries.BLOCKS.getKey(state.getBlock()).toString();
+        String id = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
         for (FormattedCharSequence seq : font.split(Component.literal(id).withStyle(ChatFormatting.ITALIC),
                 leftColWidth)) {
             g.drawString(font, seq, leftCol, y, C_DIM(), false);

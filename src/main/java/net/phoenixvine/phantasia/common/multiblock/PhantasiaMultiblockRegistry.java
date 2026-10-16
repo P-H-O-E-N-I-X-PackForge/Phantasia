@@ -1,10 +1,10 @@
 package net.phoenixvine.phantasia.common.multiblock;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.phoenixvine.phantasia.utils.PhantasiaBlockInfo;
 
 import java.util.ArrayList;
@@ -43,8 +43,9 @@ public final class PhantasiaMultiblockRegistry {
         }
 
         try {
-            ResourceLocation rl = id.contains(":") ? new ResourceLocation(id) : new ResourceLocation("minecraft", id);
-            var block = ForgeRegistries.BLOCKS.getValue(rl);
+            ResourceLocation rl = id.contains(":") ? ResourceLocation.parse(id) :
+                    ResourceLocation.fromNamespaceAndPath("minecraft", id);
+            var block = BuiltInRegistries.BLOCK.get(rl);
             if (block != null && block != Blocks.AIR)
                 return Optional.of(PhantasiaBlockInfo.fromBlockState(block.defaultBlockState()));
         } catch (Exception ignored) {}
@@ -84,7 +85,7 @@ public final class PhantasiaMultiblockRegistry {
         for (IPhantasiaMultiblockProvider p : PROVIDERS) {
             if (!p.isAvailable() || !p.isControllerBlock(state)) continue;
 
-            ResourceLocation key = net.minecraftforge.registries.ForgeRegistries.BLOCKS.getKey(state.getBlock());
+            ResourceLocation key = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock());
             if (key != null) {
                 Optional<IPhantasiaMultiblockDefinition> r = p.resolve(key.toString());
                 if (r.isPresent()) return r;

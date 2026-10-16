@@ -3,11 +3,11 @@ package net.phoenixvine.phantasia.client.screens;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.camera.CameraView;
 import net.phoenixvine.phantasia.client.camera.PhantasiaCamera;
 import net.phoenixvine.phantasia.client.render.PhantasiaTrackedDummyWorld;
@@ -304,9 +304,9 @@ public class PhantasiaItemMicrosceneScreen extends PhantasiaScreen {
     private static net.minecraft.world.item.Item resolveItem(String id) {
         if (id == null || id.isBlank()) return null;
         try {
-            var rl = id.contains(":") ? new net.minecraft.resources.ResourceLocation(id) :
-                    new net.minecraft.resources.ResourceLocation("minecraft", id);
-            var item = ForgeRegistries.ITEMS.getValue(rl);
+            var rl = id.contains(":") ? net.minecraft.resources.ResourceLocation.parse(id) :
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("minecraft", id);
+            var item = BuiltInRegistries.ITEM.get(rl);
             return (item == null || item == net.minecraft.world.item.Items.AIR) ? null : item;
         } catch (Exception e) {
             return null;

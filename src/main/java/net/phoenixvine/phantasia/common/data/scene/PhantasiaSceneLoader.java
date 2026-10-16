@@ -1,6 +1,6 @@
 package net.phoenixvine.phantasia.common.data.scene;
 
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.neoforged.fml.loading.FMLPaths;
 
 import java.io.IOException;
 import java.io.Reader;

@@ -6,8 +6,8 @@ import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.core.particles.ParticleOptions;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -209,8 +209,8 @@ public class PhantasiaParticleEngine {
         try {
             if (ownedQueue.isEmpty()) return;
 
-            com.mojang.blaze3d.vertex.PoseStack poseStack = com.mojang.blaze3d.systems.RenderSystem.getModelViewStack();
-            poseStack.pushPose();
+            org.joml.Matrix4fStack poseStack = com.mojang.blaze3d.systems.RenderSystem.getModelViewStack();
+            poseStack.pushMatrix();
 
             lightTexture.turnOnLightLayer();
             com.mojang.blaze3d.systems.RenderSystem.enableDepthTest();
@@ -219,7 +219,6 @@ public class PhantasiaParticleEngine {
             com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 
             var tesselator = com.mojang.blaze3d.vertex.Tesselator.getInstance();
-            var bb = tesselator.getBuilder();
             var textureManager = mc.getTextureManager();
 
             Quaternionf camRot = camera.rotation();
@@ -234,11 +233,13 @@ public class PhantasiaParticleEngine {
                 if (renderType == ParticleRenderType.NO_RENDER || queue.isEmpty()) continue;
 
                 try {
-                    renderType.begin(bb, textureManager);
+                    com.mojang.blaze3d.vertex.BufferBuilder bb = renderType.begin(tesselator, textureManager);
+                    if (bb == null) continue;
                     for (Particle p : queue) {
                         renderParticleManual(bb, camera, p, partialTick, rx, ry, rz, ux, uy, uz);
                     }
-                    renderType.end(tesselator);
+                    com.mojang.blaze3d.vertex.MeshData mesh = bb.build();
+                    if (mesh != null) com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(mesh);
                 } catch (Exception e) {
                     LOGGER.warn("[Phantasia] particle batch failed: {}", e.getMessage());
                 }
@@ -246,7 +247,7 @@ public class PhantasiaParticleEngine {
 
             lightTexture.turnOffLightLayer();
 
-            poseStack.popPose();
+            poseStack.popMatrix();
             com.mojang.blaze3d.systems.RenderSystem.applyModelViewMatrix();
 
         } catch (Exception e) {
@@ -389,14 +390,14 @@ public class PhantasiaParticleEngine {
             float v0 = sprite.getV0(), v1 = sprite.getV1();
             int light = net.minecraft.client.renderer.LightTexture.FULL_BRIGHT;
 
-            bb.vertex(dx + (-rx - ux) * hw, dy + (-ry - uy) * hw, dz + (-rz - uz) * hw).uv(u1, v1).color(r, g, b, a)
-                    .uv2(light).endVertex();
-            bb.vertex(dx + (-rx + ux) * hw, dy + (-ry + uy) * hw, dz + (-rz + uz) * hw).uv(u1, v0).color(r, g, b, a)
-                    .uv2(light).endVertex();
-            bb.vertex(dx + (rx + ux) * hw, dy + (ry + uy) * hw, dz + (rz + uz) * hw).uv(u0, v0).color(r, g, b, a)
-                    .uv2(light).endVertex();
-            bb.vertex(dx + (rx - ux) * hw, dy + (ry - uy) * hw, dz + (rz - uz) * hw).uv(u0, v1).color(r, g, b, a)
-                    .uv2(light).endVertex();
+            bb.addVertex(dx + (-rx - ux) * hw, dy + (-ry - uy) * hw, dz + (-rz - uz) * hw).setUv(u1, v1)
+                    .setColor(r, g, b, a).setLight(light);
+            bb.addVertex(dx + (-rx + ux) * hw, dy + (-ry + uy) * hw, dz + (-rz + uz) * hw).setUv(u1, v0)
+                    .setColor(r, g, b, a).setLight(light);
+            bb.addVertex(dx + (rx + ux) * hw, dy + (ry + uy) * hw, dz + (rz + uz) * hw).setUv(u0, v0)
+                    .setColor(r, g, b, a).setLight(light);
+            bb.addVertex(dx + (rx - ux) * hw, dy + (ry - uy) * hw, dz + (rz - uz) * hw).setUv(u0, v1)
+                    .setColor(r, g, b, a).setLight(light);
 
         } catch (Exception e) {
             LOGGER.debug("[Phantasia] renderParticleManual: {}", e.getMessage());

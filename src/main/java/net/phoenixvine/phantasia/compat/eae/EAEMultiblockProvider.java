@@ -1,7 +1,7 @@
 package net.phoenixvine.phantasia.compat.eae;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScriptData;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockDefinition;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockProvider;
@@ -50,9 +50,9 @@ public class EAEMultiblockProvider implements IPhantasiaMultiblockProvider {
 
     @Override
     public Optional<PhantasiaBlockInfo> resolveBlock(String id) {
-        ResourceLocation rl = id.contains(":") ? new ResourceLocation(id) :
-                new ResourceLocation("expatternprovider", id);
-        net.minecraft.world.level.block.Block b = ForgeRegistries.BLOCKS.getValue(rl);
+        ResourceLocation rl = id.contains(":") ? ResourceLocation.parse(id) :
+                ResourceLocation.fromNamespaceAndPath("expatternprovider", id);
+        net.minecraft.world.level.block.Block b = BuiltInRegistries.BLOCK.get(rl);
         if (b == null || b == net.minecraft.world.level.block.Blocks.AIR) return Optional.empty();
         return Optional.of(PhantasiaBlockInfo.fromBlockState(b.defaultBlockState()));
     }
@@ -64,7 +64,7 @@ public class EAEMultiblockProvider implements IPhantasiaMultiblockProvider {
 
     @Override
     public boolean isControllerBlock(net.minecraft.world.level.block.state.BlockState state) {
-        ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+        ResourceLocation rl = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         if (rl == null || !"expatternprovider".equals(rl.getNamespace())) return false;
         return switch (rl.getPath()) {
             case "assembler_matrix_frame", "ex_pattern_provider", "oversize_interface" -> true;
@@ -74,7 +74,7 @@ public class EAEMultiblockProvider implements IPhantasiaMultiblockProvider {
 
     @Override
     public boolean isPartBlock(net.minecraft.world.level.block.state.BlockState state) {
-        ResourceLocation rl = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+        ResourceLocation rl = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         if (rl == null || !"expatternprovider".equals(rl.getNamespace())) return false;
         return switch (rl.getPath()) {
             case "assembler_matrix_frame", "assembler_matrix_wall", "assembler_matrix_glass", "assembler_matrix_pattern", "assembler_matrix_crafter", "ex_pattern_provider", "oversize_interface" -> true;
@@ -136,7 +136,7 @@ public class EAEMultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new EAESceneDefinition(
-                new ResourceLocation("expatternprovider", "assembler_matrix"),
+                ResourceLocation.fromNamespaceAndPath("expatternprovider", "assembler_matrix"),
                 "Assembler Matrix",
                 "expatternprovider:assembler_matrix_frame",
                 shape, script);
@@ -174,7 +174,7 @@ public class EAEMultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new EAESceneDefinition(
-                new ResourceLocation("expatternprovider", "ex_pattern_provider"),
+                ResourceLocation.fromNamespaceAndPath("expatternprovider", "ex_pattern_provider"),
                 "Extended Pattern Provider",
                 "expatternprovider:ex_pattern_provider",
                 shape, script);
@@ -213,7 +213,7 @@ public class EAEMultiblockProvider implements IPhantasiaMultiblockProvider {
                 "all"));
 
         return new EAESceneDefinition(
-                new ResourceLocation("expatternprovider", "oversize_interface"),
+                ResourceLocation.fromNamespaceAndPath("expatternprovider", "oversize_interface"),
                 "Oversized Interface",
                 "expatternprovider:oversize_interface",
                 shape, script);

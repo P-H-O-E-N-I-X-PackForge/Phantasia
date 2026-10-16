@@ -10,13 +10,11 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.screens.PhantasiaSceneSelectionScreen;
 
 import java.util.List;
-
-import javax.annotation.Nullable;
 
 public class PhantasiaManualItem extends Item {
 
@@ -39,7 +37,7 @@ public class PhantasiaManualItem extends Item {
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void appendHoverText(ItemStack stack, @Nullable Level level,
+    public void appendHoverText(ItemStack stack, net.minecraft.world.item.Item.TooltipContext context,
                                 List<Component> lines, TooltipFlag flag) {
         lines.add(Component.translatable("item.phantasia.phantasia_manual.tooltip_rightclick")
                 .withStyle(ChatFormatting.GRAY));

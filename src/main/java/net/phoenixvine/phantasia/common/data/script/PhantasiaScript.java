@@ -280,7 +280,7 @@ public class PhantasiaScript {
         if ((expr.startsWith("@ability(") || expr.startsWith("@block(")) && expr.endsWith(")")) {
             String val = expr.substring(expr.indexOf('(') + 1, expr.length() - 1).trim().toLowerCase(Locale.ROOT);
             return localPred(state -> {
-                net.minecraft.resources.ResourceLocation key = net.minecraftforge.registries.ForgeRegistries.BLOCKS
+                net.minecraft.resources.ResourceLocation key = net.minecraft.core.registries.BuiltInRegistries.BLOCK
                         .getKey(state.getBlock());
                 return key != null && key.toString().toLowerCase(Locale.ROOT).contains(val);
             });
@@ -288,7 +288,7 @@ public class PhantasiaScript {
 
         String keyword = expr.toLowerCase(Locale.ROOT);
         return localPred(state -> {
-            net.minecraft.resources.ResourceLocation key = net.minecraftforge.registries.ForgeRegistries.BLOCKS
+            net.minecraft.resources.ResourceLocation key = net.minecraft.core.registries.BuiltInRegistries.BLOCK
                     .getKey(state.getBlock());
             return key != null && key.toString().toLowerCase(Locale.ROOT).contains(keyword);
         });

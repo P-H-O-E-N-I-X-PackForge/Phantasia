@@ -6,9 +6,8 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.screens.PhantasiaScreen;
 
 import org.lwjgl.glfw.GLFW;
@@ -22,6 +21,10 @@ import static net.phoenixvine.phantasia.utils.PhantasiaThemeUtils.*;
 
 @OnlyIn(Dist.CLIENT)
 public class GTRecipePickerScreen extends Screen {
+    @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    }
+
 
     private static final int ROW_H = 16;
     private static final int HEADER_H = 30;
@@ -78,8 +81,8 @@ public class GTRecipePickerScreen extends Screen {
         try {
             var level = Minecraft.getInstance().level;
             if (level != null) {
-                for (Recipe<?> r : level.getRecipeManager().getRecipes()) {
-                    ResourceLocation id = r.getId();
+                for (net.minecraft.world.item.crafting.RecipeHolder<?> r : level.getRecipeManager().getRecipes()) {
+                    ResourceLocation id = r.id();
                     if ("gtceu".equals(id.getNamespace())) {
                         out.add(id.toString());
                     }
@@ -186,7 +189,7 @@ public class GTRecipePickerScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         scrollOffset = Math.max(0, scrollOffset - (int) Math.signum(delta));
         return true;
     }

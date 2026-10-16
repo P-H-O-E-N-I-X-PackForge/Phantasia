@@ -8,9 +8,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.model.data.ModelData;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.model.data.ModelData;
 import net.phoenixvine.phantasia.client.render.PhantasiaTrackedDummyWorld;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockDefinition;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockShape;
@@ -55,26 +55,23 @@ public class IEMultiblockDefinition implements IPhantasiaMultiblockDefinition {
 
     private final Map<BlockPos, BlockState> savedStates = new HashMap<>();
 
-    @SuppressWarnings({ "deprecation", "DataFlowIssue" })
-    private static final net.minecraft.world.level.block.entity.BlockEntityType<?> DUMMY_BE_TYPE = net.minecraft.world.level.block.entity.BlockEntityType.Builder
-            .of((pos, state) -> null)
-            .build(null);
-
     @SuppressWarnings("deprecation")
     private static final class ModelOffsetBE extends BlockEntity {
 
         private final ModelData modelData;
 
         ModelOffsetBE(BlockPos pos, BlockState state, BlockPos submodelOffset) {
-            super(null, pos, state);
+            // A block entity needs a type; borrow a vanilla one, since a new type cannot be created once registries
+            // freeze, and accept any block state.
+            super(net.minecraft.world.level.block.entity.BlockEntityType.SIGN, pos, state);
             this.modelData = ModelData.builder()
                     .with(IEProperties.Model.SUBMODEL_OFFSET, submodelOffset)
                     .build();
         }
 
         @Override
-        public net.minecraft.world.level.block.entity.BlockEntityType<?> getType() {
-            return DUMMY_BE_TYPE;
+        public boolean isValidBlockState(BlockState state) {
+            return true;
         }
 
         @Override

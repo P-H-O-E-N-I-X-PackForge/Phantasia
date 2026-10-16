@@ -1,10 +1,10 @@
 package net.phoenixvine.phantasia.client.compat;
 
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
-import me.jellysquid.mods.sodium.client.render.texture.SpriteUtil;
+import org.embeddedt.embeddium.api.render.texture.SpriteUtil;
 
 @OnlyIn(Dist.CLIENT)
 public final class EmbeddiumCompat {

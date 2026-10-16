@@ -100,28 +100,28 @@ public class ArsNouveauMultiblockProvider implements IPhantasiaMultiblockProvide
         List<ArsNouveauStaticDefinition> list = new ArrayList<>();
 
         list.add(new ArsNouveauStaticDefinition(
-                new ResourceLocation("ars_nouveau", "basic_spell_turret"),
+                ResourceLocation.fromNamespaceAndPath("ars_nouveau", "basic_spell_turret"),
                 "Basic Spell Turret",
                 () -> new ItemStack(BlockRegistry.BASIC_SPELL_TURRET.get()),
                 () -> ArsNouveauLayoutBuilder.spellTurretBase(BlockRegistry.BASIC_SPELL_TURRET.get()),
                 ArsNouveauStaticScripts::basicSpellTurret,
                 recoilHandler()));
         list.add(new ArsNouveauStaticDefinition(
-                new ResourceLocation("ars_nouveau", "enchanted_spell_turret"),
+                ResourceLocation.fromNamespaceAndPath("ars_nouveau", "enchanted_spell_turret"),
                 "Enchanted Spell Turret",
                 () -> new ItemStack(BlockRegistry.ENCHANTED_SPELL_TURRET.get()),
                 () -> ArsNouveauLayoutBuilder.spellTurretBase(BlockRegistry.ENCHANTED_SPELL_TURRET.get()),
                 ArsNouveauStaticScripts::enchantedSpellTurret,
                 recoilHandler()));
         list.add(new ArsNouveauStaticDefinition(
-                new ResourceLocation("ars_nouveau", "timer_spell_turret"),
+                ResourceLocation.fromNamespaceAndPath("ars_nouveau", "timer_spell_turret"),
                 "Timer Spell Turret",
                 () -> new ItemStack(BlockRegistry.TIMER_SPELL_TURRET.get()),
                 () -> ArsNouveauLayoutBuilder.spellTurretBase(BlockRegistry.TIMER_SPELL_TURRET.get()),
                 ArsNouveauStaticScripts::timerSpellTurret,
                 recoilHandler()));
         list.add(new ArsNouveauStaticDefinition(
-                new ResourceLocation("ars_nouveau", "rotating_spell_turret"),
+                ResourceLocation.fromNamespaceAndPath("ars_nouveau", "rotating_spell_turret"),
                 "Rotating Spell Turret",
                 () -> new ItemStack(BlockRegistry.ROTATING_TURRET.get()),
                 () -> ArsNouveauLayoutBuilder.spellTurretBase(BlockRegistry.ROTATING_TURRET.get()),
@@ -129,7 +129,7 @@ public class ArsNouveauMultiblockProvider implements IPhantasiaMultiblockProvide
                 rotatingHandler()));
 
         list.add(new ArsNouveauStaticDefinition(
-                new ResourceLocation("ars_nouveau", "wixie_cauldron"),
+                ResourceLocation.fromNamespaceAndPath("ars_nouveau", "wixie_cauldron"),
                 "Wixie Cauldron",
                 () -> new ItemStack(BlockRegistry.WIXIE_CAULDRON.get()),
                 ArsNouveauLayoutBuilder::wixieCauldronBase,
@@ -137,7 +137,7 @@ public class ArsNouveauMultiblockProvider implements IPhantasiaMultiblockProvide
                 sourceConsumerHandler()));
 
         list.add(new ArsNouveauStaticDefinition(
-                new ResourceLocation("ars_nouveau", "bookwyrm"),
+                ResourceLocation.fromNamespaceAndPath("ars_nouveau", "bookwyrm"),
                 "Bookwyrm",
                 () -> new ItemStack(ItemsRegistry.BOOKWYRM_CHARM.get()),
                 ArsNouveauLayoutBuilder::bookwyrmBase,
@@ -148,7 +148,7 @@ public class ArsNouveauMultiblockProvider implements IPhantasiaMultiblockProvide
                                 ModEntities.ENTITY_BOOKWYRM_TYPE.get().create(level))));
 
         list.add(new ArsNouveauStaticDefinition(
-                new ResourceLocation("ars_nouveau", "drygmy"),
+                ResourceLocation.fromNamespaceAndPath("ars_nouveau", "drygmy"),
                 "Drygmy",
                 () -> new ItemStack(ItemsRegistry.DRYGMY_CHARM.get()),
                 ArsNouveauLayoutBuilder::drygmyBase,
@@ -158,7 +158,7 @@ public class ArsNouveauMultiblockProvider implements IPhantasiaMultiblockProvide
                         (level, l2w) -> spawnEntity(level, l2w,
                                 ModEntities.ENTITY_DRYGMY.get().create(level))));
         list.add(new ArsNouveauStaticDefinition(
-                new ResourceLocation("ars_nouveau", "whirlisprig"),
+                ResourceLocation.fromNamespaceAndPath("ars_nouveau", "whirlisprig"),
                 "Whirlisprig",
                 () -> new ItemStack(ItemsRegistry.WHIRLISPRIG_CHARM.get()),
                 ArsNouveauLayoutBuilder::whirlisprigBase,
@@ -168,7 +168,7 @@ public class ArsNouveauMultiblockProvider implements IPhantasiaMultiblockProvide
                         (level, l2w) -> spawnEntity(level, l2w,
                                 ModEntities.WHIRLISPRIG_TYPE.get().create(level))));
         list.add(new ArsNouveauStaticDefinition(
-                new ResourceLocation("ars_nouveau", "starbuncle"),
+                ResourceLocation.fromNamespaceAndPath("ars_nouveau", "starbuncle"),
                 "Starbuncle",
                 () -> new ItemStack(ItemsRegistry.STARBUNCLE_CHARM.get()),
                 ArsNouveauLayoutBuilder::starbuncleBase,
@@ -179,7 +179,7 @@ public class ArsNouveauMultiblockProvider implements IPhantasiaMultiblockProvide
                                 ModEntities.STARBUNCLE_TYPE.get().create(level))));
 
         list.add(new ArsNouveauStaticDefinition(
-                new ResourceLocation("ars_nouveau", "ritual_brazier"),
+                ResourceLocation.fromNamespaceAndPath("ars_nouveau", "ritual_brazier"),
                 "Ritual Brazier",
                 () -> new ItemStack(BlockRegistry.RITUAL_BLOCK.get()),
                 ArsNouveauLayoutBuilder::ritualBrazierBase,
@@ -189,35 +189,35 @@ public class ArsNouveauMultiblockProvider implements IPhantasiaMultiblockProvide
 
         ArsNouveauStaticDefinition.SceneTickHandler sourcelinkFill = sourcelinkFillHandler();
         list.add(new ArsNouveauStaticDefinition(
-                new ResourceLocation("ars_nouveau", "agronomic_sourcelink"),
+                ResourceLocation.fromNamespaceAndPath("ars_nouveau", "agronomic_sourcelink"),
                 "Agronomic Sourcelink",
                 () -> new ItemStack(BlockRegistry.AGRONOMIC_SOURCELINK.get()),
                 () -> ArsNouveauLayoutBuilder.sourcelinkBase(BlockRegistry.AGRONOMIC_SOURCELINK.get()),
                 ArsNouveauStaticScripts::agronomicSourcelink,
                 sourcelinkFill));
         list.add(new ArsNouveauStaticDefinition(
-                new ResourceLocation("ars_nouveau", "volcanic_sourcelink"),
+                ResourceLocation.fromNamespaceAndPath("ars_nouveau", "volcanic_sourcelink"),
                 "Volcanic Sourcelink",
                 () -> new ItemStack(BlockRegistry.VOLCANIC_BLOCK.get()),
                 () -> ArsNouveauLayoutBuilder.sourcelinkBase(BlockRegistry.VOLCANIC_BLOCK.get()),
                 ArsNouveauStaticScripts::volcanicSourcelink,
                 sourcelinkFill));
         list.add(new ArsNouveauStaticDefinition(
-                new ResourceLocation("ars_nouveau", "vitalic_sourcelink"),
+                ResourceLocation.fromNamespaceAndPath("ars_nouveau", "vitalic_sourcelink"),
                 "Vitalic Sourcelink",
                 () -> new ItemStack(BlockRegistry.VITALIC_BLOCK.get()),
                 () -> ArsNouveauLayoutBuilder.sourcelinkBase(BlockRegistry.VITALIC_BLOCK.get()),
                 ArsNouveauStaticScripts::vitalicSourcelink,
                 sourcelinkFill));
         list.add(new ArsNouveauStaticDefinition(
-                new ResourceLocation("ars_nouveau", "mycelial_sourcelink"),
+                ResourceLocation.fromNamespaceAndPath("ars_nouveau", "mycelial_sourcelink"),
                 "Mycelial Sourcelink",
                 () -> new ItemStack(BlockRegistry.MYCELIAL_BLOCK.get()),
                 () -> ArsNouveauLayoutBuilder.sourcelinkBase(BlockRegistry.MYCELIAL_BLOCK.get()),
                 ArsNouveauStaticScripts::mycelialSourcelink,
                 sourcelinkFill));
         list.add(new ArsNouveauStaticDefinition(
-                new ResourceLocation("ars_nouveau", "alchemical_sourcelink"),
+                ResourceLocation.fromNamespaceAndPath("ars_nouveau", "alchemical_sourcelink"),
                 "Alchemical Sourcelink",
                 () -> new ItemStack(BlockRegistry.ALCHEMICAL_BLOCK.get()),
                 () -> ArsNouveauLayoutBuilder.sourcelinkBase(BlockRegistry.ALCHEMICAL_BLOCK.get()),
@@ -443,7 +443,7 @@ public class ArsNouveauMultiblockProvider implements IPhantasiaMultiblockProvide
     private static void placeRitualTablet(PhantasiaTrackedDummyWorld level,
                                           Map<BlockPos, BlockPos> localToWorld,
                                           String recipeId) {
-        ResourceLocation ritualId = new ResourceLocation(recipeId);
+        ResourceLocation ritualId = ResourceLocation.parse(recipeId);
         if (!RitualRegistry.getRitualMap().containsKey(ritualId)) return;
         for (BlockPos worldPos : localToWorld.values()) {
             BlockEntity be = level.getBlockEntity(worldPos);

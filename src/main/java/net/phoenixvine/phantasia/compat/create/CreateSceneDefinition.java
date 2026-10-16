@@ -1,13 +1,13 @@
 package net.phoenixvine.phantasia.compat.create;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.phoenixvine.phantasia.client.render.PhantasiaTrackedDummyWorld;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScriptData;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockDefinition;
@@ -39,7 +39,7 @@ public class CreateSceneDefinition implements IPhantasiaMultiblockDefinition {
     public CreateSceneDefinition(String path, String displayName, String iconBlock,
                                  Supplier<PhantasiaBlockInfo[][][]> blocksSupplier,
                                  @Nullable PhantasiaScriptData scriptData) {
-        this.id = new ResourceLocation("create", path);
+        this.id = ResourceLocation.fromNamespaceAndPath("create", path);
         this.displayName = displayName;
         this.iconBlock = iconBlock;
         this.blocksSupplier = blocksSupplier;
@@ -65,7 +65,7 @@ public class CreateSceneDefinition implements IPhantasiaMultiblockDefinition {
     @Override
     public ItemStack getIcon() {
         if (cachedIcon == null) {
-            Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(iconBlock));
+            Block block = BuiltInRegistries.BLOCK.get(ResourceLocation.parse(iconBlock));
             cachedIcon = block != null && block != Blocks.AIR ? new ItemStack(block) :
                     new ItemStack(Items.CRAFTING_TABLE);
         }

@@ -11,8 +11,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.camera.CameraView;
 import net.phoenixvine.phantasia.client.camera.PhantasiaCamera;
 import net.phoenixvine.phantasia.client.render.PhantasiaTrackedDummyWorld;
@@ -33,6 +33,10 @@ import static net.phoenixvine.phantasia.utils.PhantasiaThemeUtils.*;
 
 @OnlyIn(Dist.CLIENT)
 public class PhantasiaCustomEditorScreen extends Screen {
+    @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    }
+
 
     private static final int PANEL_W = 160;
     private static final int CELL_SIZE = 16;
@@ -150,7 +154,7 @@ public class PhantasiaCustomEditorScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float partialTick) {
-        renderBackground(g);
+        renderBackground(g, mx, my, partialTick);
 
         int panelX = this.width - PANEL_W - 4;
         int previewW = panelX - 4;
@@ -356,13 +360,13 @@ public class PhantasiaCustomEditorScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         int panelX = this.width - PANEL_W - 4;
         if (mx < panelX && camera != null) {
             camera.zoom(delta > 0 ? 0.9f : 1.1f, 2f, 300f);
             return true;
         }
-        return super.mouseScrolled(mx, my, delta);
+        return super.mouseScrolled(mx, my, 0.0, delta);
     }
 
     @Override

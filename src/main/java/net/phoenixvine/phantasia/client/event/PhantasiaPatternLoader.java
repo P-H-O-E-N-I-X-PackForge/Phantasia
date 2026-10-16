@@ -1,8 +1,8 @@
 package net.phoenixvine.phantasia.client.event;
 
 import net.minecraft.core.BlockPos;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockShape;
 import net.phoenixvine.phantasia.utils.PhantasiaBlockInfo;
 

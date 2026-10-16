@@ -3,7 +3,7 @@ package net.phoenixvine.phantasia.common;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import javax.annotation.Nullable;
 
@@ -162,8 +162,8 @@ public record PhantasiaParticleEffect(
                              net.minecraft.util.RandomSource random) {
         if (particleId == null) return;
         try {
-            var rl = new net.minecraft.resources.ResourceLocation(particleId);
-            var type = ForgeRegistries.PARTICLE_TYPES.getValue(rl);
+            var rl = net.minecraft.resources.ResourceLocation.parse(particleId);
+            var type = BuiltInRegistries.PARTICLE_TYPE.get(rl);
             if (!(type instanceof SimpleParticleType spt)) return;
             for (int i = 0; i < count; i++) {
                 double ox = (random.nextDouble() - 0.5) * spread;

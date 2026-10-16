@@ -2,12 +2,12 @@ package net.phoenixvine.phantasia.client.web;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraftforge.client.model.data.ModelData;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.client.model.data.ModelData;
 import net.phoenixvine.phantasia.client.render.PhantasiaTrackedDummyWorld;
 import net.phoenixvine.phantasia.common.data.guides.PhantasiaGuideData;
 import net.phoenixvine.phantasia.common.data.guides.PhantasiaGuideRegistry;
@@ -197,14 +197,14 @@ public class PhantasiaWebExport {
 
         for (String blockId : blockIds) {
             try {
-                ResourceLocation rl = new ResourceLocation(blockId);
+                ResourceLocation rl = ResourceLocation.parse(blockId);
                 String ns = rl.getNamespace();
                 String id = rl.getPath();
 
                 Path bsPath = assetsBase.resolve(ns).resolve("blockstates").resolve(id + ".json");
                 if (Files.exists(bsPath)) continue;
 
-                Block block = ForgeRegistries.BLOCKS.getValue(rl);
+                Block block = BuiltInRegistries.BLOCK.get(rl);
                 if (block == null) continue;
 
                 BlockState defaultState = block.defaultBlockState();
@@ -250,7 +250,7 @@ public class PhantasiaWebExport {
             block.addProperty("y", pos.getY());
             block.addProperty("z", pos.getZ());
 
-            var rl = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+            var rl = BuiltInRegistries.BLOCK.getKey(state.getBlock());
             String blockStr = rl != null ? rl.toString() : "minecraft:stone";
             block.addProperty("block", blockStr);
             seenBlockIds.add(blockStr);
@@ -300,7 +300,7 @@ public class PhantasiaWebExport {
                     block.addProperty("y", y);
                     block.addProperty("z", z);
 
-                    var rl = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+                    var rl = BuiltInRegistries.BLOCK.getKey(state.getBlock());
                     String blockStr = rl != null ? rl.toString() : "minecraft:stone";
                     block.addProperty("block", blockStr);
                     seenBlockIds.add(blockStr);

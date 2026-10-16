@@ -1,28 +1,20 @@
-buildscript {
-    repositories {
-        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-    }
-}
-
 plugins {
-    id "idea"
-    id "eclipse"
-    id "maven-publish"
-    id 'net.neoforged.moddev.legacyforge' version '2.0.91'
+    id 'java-library'
+    id 'maven-publish'
+    id 'idea'
+    id 'net.neoforged.moddev' version '2.0.143'
     id 'com.diffplug.spotless' version '7.0.2'
 }
 
-sourceSets {
-    main.resources {
-        srcDir 'src/generated/resources'
-    }
-    test {
-        java.srcDirs = ['src/test/java']
-    }
+tasks.named('wrapper', Wrapper).configure {
+    distributionType = Wrapper.DistributionType.BIN
+}
+
+version = mod_version
+group = maven_group
+
+sourceSets.main.resources {
+    srcDir 'src/generated/resources'
 }
 
 repositories {
@@ -30,96 +22,109 @@ repositories {
     mavenCentral()
     maven {
         name = 'GTCEu Maven'
-        url = 'https://maven.gtceu.com'
+        url = 'https://maven.gtceu.com/'
         content {
             includeGroup 'com.gregtechceu.gtceu'
+            includeGroup 'brachy.modularui'
         }
     }
     maven {
-        name = 'ModMaven (AE2)'
-        url = 'https://modmaven.dev'
+        name = 'ParchmentMC'
+        url = 'https://maven.parchmentmc.org'
+    }
+    maven {
+        name = 'BlameJared Maven'
+        url = 'https://maven.blamejared.com/'
+    }
+    maven {
+        name = 'Devos Snapshot Maven'
+        url = 'https://mvn.devos.one/snapshots/'
         content {
-            includeGroup 'appeng'
+            includeGroup 'com.tterrag.registrate'
         }
     }
     maven {
-        name = "Modrinth"
-        url = "https://api.modrinth.com/maven"
-        content { includeGroup "maven.modrinth" }
-    }
-    maven {
-        name = "TerraformersMC"
-        url = "https://maven.terraformersmc.com/"
-    }
-    maven {
-        name 'FirstDarkDev'
-        url "https://maven.firstdark.dev/snapshots/"
-    }
-    maven {
-        url = "https://maven.tterrag.com/"
+        name = 'ModMaven'
+        url = 'https://modmaven.dev/'
         content {
-            includeGroup("com.tterrag.registrate")
+            includeGroup 'org.appliedenergistics'
         }
     }
     maven {
-        name = "BlameJared"
-        url = "https://maven.blamejared.com/"
+        name = 'Create Maven'
+        url = 'https://maven.createmod.net/'
     }
     maven {
-        url = "https://maven.theillusivec4.top/"
-    }
-    maven {
-        url "https://cursemaven.com/"
+        name = 'Sleeping Town'
+        url = 'https://repo.sleeping.town/'
         content {
-            includeGroup "curse.maven"
+            includeGroup 'dev.emi'
         }
     }
     maven {
-        url = "https://thedarkcolour.github.io/KotlinForForge/"
-    }
-    flatDir {
-        dir 'libs'
+        name = 'Repsy Toma Maven'
+        url = 'https://repo.repsy.io/mvn/toma/public/'
+        content {
+            includeGroup 'dev.toma.configuration'
+        }
     }
     maven {
-        url "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/"
+        name = 'CurseMaven'
+        url = 'https://cursemaven.com/'
+        content {
+            includeGroup 'curse.maven'
+        }
+    }
+    maven {
+        name = 'Modrinth Maven'
+        url = 'https://api.modrinth.com/maven'
+        content {
+            includeGroup 'maven.modrinth'
+        }
+    }
+    maven {
+        name = 'TheIllusiveC4 Maven'
+        url = 'https://maven.theillusivec4.top/'
+    }
+    maven {
+        name = 'GeckoLib'
+        url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+    }
+    maven {
+        name = 'Repsy'
+        url = uri('https://repo.repsy.io/mvn/user75142941/phoenixsuite')
     }
 }
 
-version = mod_version
-group = maven_group
-base { archivesName = archives_base_name }
-java { sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17 }
+base {
+    archivesName = archives_base_name
+}
 
-legacyForge {
-    version = project.minecraft_version + '-' + project.forge_version
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    version = project.neo_version
 
     parchment {
-        mappingsVersion = project.mapping_version
-        minecraftVersion = project.minecraft_version
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
     }
 
+    accessTransformers.from('src/main/resources/META-INF/accesstransformer.cfg')
+
     runs {
-        configureEach {
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-            logLevel = org.slf4j.event.Level.DEBUG
-        }
         client {
             client()
-            sourceSet = sourceSets.main
-            programArguments.addAll('--refresh-dependencies')
-            systemProperty('forge.enabledGameTestNamespaces', project.mod_id)
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
         server {
             server()
-            sourceSet = sourceSets.main
-            systemProperty('forge.enabledGameTestNamespaces', project.mod_id)
-            programArguments.addAll('--nogui', '--world', 'world-extra')
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
-        data {
-            data()
-            sourceSet = sourceSets.main
-            programArguments.addAll('--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath())
-            programArguments.addAll('--existing-mod', 'gtceu')
+        configureEach {
+            systemProperty 'neoforge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
         }
     }
 
@@ -130,167 +135,120 @@ legacyForge {
     }
 }
 
-// Fixed to mirror your working phoenixcore manifest setup
-jar {
-    manifest {
-        attributes([
-                "MixinConfigs": "phantasia.mixins.json"
-        ])
-    }
-    finalizedBy 'reobfJar'
-}
-
-// Uses explicit string configurations to prevent dynamic evaluation failures
-mixin {
-    add sourceSets.main, 'mixins.phantasia.refmap.json'
-    config 'phantasia.mixins.json'
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
 }
 
 apply from: "$rootDir/gradle/scripts/spotless.gradle"
 
 dependencies {
-    compileOnly("org.jetbrains:annotations:26.0.1")
+    compileOnly 'org.jetbrains:annotations:26.0.2'
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
 
-    // Mixin Processor
-    annotationProcessor('org.spongepowered:mixin:0.8.5:processor')
-
-    // JEI, EMI, Jade
-    modCompileOnly("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}")
-    modCompileOnly("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}")
-    modRuntimeOnly("mezz.jei:jei-${minecraft_version}-forge:${jei_version}")
-    modRuntimeOnly("dev.emi:emi-forge:${emi_version}+${minecraft_version}")
-    modImplementation("dev.emi:emi-forge:${emi_version}+${minecraft_version}")
-    modRuntimeOnly("curse.maven:jade-324717:5390389")
-
-    modImplementation 'local:spritekit-1.0-SNAPSHOT'
-
-    // Phoenix Wiki - jar-in-jar'd shared theme system (net.phoenixvine.wiki.theme.PhoenixTheme)
-    // and markdown/wiki engine (net.phoenixvine.wiki.PhoenixWikiAPI) - the same theme choice this
-    // library holds is shared with every other Phoenixvine mod that also embeds it. After changing
-    // anything in that project, run `./gradlew publishToPhantasia` there to refresh libs/phoenix_wiki-*.jar.
-    jarJar(modImplementation("local:phoenix_wiki:0.1.0"))
-
-    // GregTech and dependencies
-    modCompileOnly("com.gregtechceu.gtceu:gtceu-${minecraft_version}:${gtceu_version}:slim") { transitive = false }
-    modRuntimeOnly("com.gregtechceu.gtceu:gtceu-${minecraft_version}:${gtceu_version}:slim") { transitive = false }
-
-
-    modCompileOnly("curse.maven:ars-nouveau-401955:${ars_nouveau_file_id}") { transitive = false }
-    modRuntimeOnly("curse.maven:ars-nouveau-401955:${ars_nouveau_file_id}") { transitive = false }
-
-    modCompileOnly("curse.maven:immersive-engineering-231951:${ie_file_id}") { transitive = false }
-    modRuntimeOnly("curse.maven:immersive-engineering-231951:${ie_file_id}") { transitive = false }
-
-    modCompileOnly("curse.maven:applied-energistics-2-223794:7148487") { transitive = false }
-    modRuntimeOnly("curse.maven:applied-energistics-2-223794:7148487") { transitive = false }
-
-    modCompileOnly("curse.maven:terrafirmacraft-302973:${tfc_file_id}") { transitive = false }
-    modRuntimeOnly("curse.maven:terrafirmacraft-302973:${tfc_file_id}") { transitive = false }
-
-    modCompileOnly("curse.maven:extended-ae-892005:${eae_file_id}") { transitive = false }
-    modRuntimeOnly("curse.maven:extended-ae-892005:${eae_file_id}") { transitive = false }
-
-    modCompileOnly("curse.maven:glodium-957920:5226922") { transitive = false }
-    modRuntimeOnly("curse.maven:glodium-957920:5226922") { transitive = false }
-
-    modCompileOnly("maven.modrinth:advancedae:${aae_version}") { transitive = false }
-    modRuntimeOnly("maven.modrinth:advancedae:${aae_version}") { transitive = false }
-
-    modCompileOnly("curse.maven:immersive-petroleum-268250:7512547") { transitive = false }
-    modRuntimeOnly("curse.maven:immersive-petroleum-268250:7512547") { transitive = false }
-
-    modCompileOnly("curse.maven:create-328085:${create_file_id}") { transitive = false }
-    modRuntimeOnly("curse.maven:create-328085:${create_file_id}") { transitive = false }
-
-
-    modCompileOnly("curse.maven:guideme-1173950:7127447")
-    modRuntimeOnly("curse.maven:guideme-1173950:7127447")
-
-
-    modCompileOnly("curse.maven:patchouli-306770:7731017")
-    modRuntimeOnly("curse.maven:patchouli-306770:7731017")
-
-    modCompileOnly "software.bernie.geckolib:geckolib-neoforge-1.20.1:${geckolib_version}"
-    modRuntimeOnly "software.bernie.geckolib:geckolib-neoforge-1.20.1:${geckolib_version}"
-    modCompileOnly "top.theillusivec4.curios:curios-forge:${curios_version}"
-    modRuntimeOnly "top.theillusivec4.curios:curios-forge:${curios_version}"
-
-  //  modCompileOnly "curse.maven:multiblocked2-1104057:7415529"
-  //  modRuntimeOnly "curse.maven:multiblocked2-1104057:7415529"
-
-    modCompileOnly("com.lowdragmc.ldlib:ldlib-forge-${minecraft_version}:${ldlib_version}") { transitive = false }
-    modRuntimeOnly("com.lowdragmc.ldlib:ldlib-forge-${minecraft_version}:${ldlib_version}") { transitive = false }
-    modCompileOnly("com.tterrag.registrate:Registrate:${registrate_version}")
-    modRuntimeOnly("com.tterrag.registrate:Registrate:${registrate_version}")
-    modImplementation("dev.toma.configuration:configuration-forge-${minecraft_version}:${configuration_version}")
-
-    // Your working core dependency
-    modCompileOnly("curse.maven:phoenixcore-1355504:8100682")
-
-    // Embeddium Development Environment Client
-    modRuntimeOnly("org.embeddedt:embeddium-1.20.1:0.3.31-beta.53+mc1.20.1") { transitive = false }
-    modCompileOnly("org.embeddedt:embeddium-1.20.1:0.3.31-beta.53+mc1.20.1") { transitive = false }
-
-
-    modRuntimeOnly("curse.maven:ai-improvements-233019:4578262")
-
-    boolean isServerRun = gradle.startParameter.taskNames.any { it.toLowerCase().contains("server") } ||
-            System.getProperty("forge.run.target") == "server"
-
-    if (!isServerRun) {
-        modRuntimeOnly("curse.maven:oculus-581495:6020952")
-        modCompileOnly("curse.maven:oculus-581495:6020952")
+    // Phoenix suite
+    jarJar(implementation("net.phoenixvine.wiki:neoforge:${phoenix_wiki_version}")) {
+        version { strictly "[${phoenix_wiki_version},)"; prefer phoenix_wiki_version }
     }
 
-    modCompileOnly("curse.maven:ai-improvements-233019:4578262")
+    // GregTech 8 and what it needs at runtime
+    compileOnly("com.gregtechceu.gtceu:gtceu-${minecraft_version}:${gtm_version}") { transitive = false }
+    compileOnly("brachy.modularui:modularui-mc${minecraft_version}:${mui_version}") { transitive = false }
+    compileOnly "com.tterrag.registrate:Registrate:${registrate_version}"
+    localRuntime "com.gregtechceu.gtceu:gtceu-${minecraft_version}:${gtm_version}"
+    localRuntime "brachy.modularui:modularui-mc${minecraft_version}:${mui_version}"
+    localRuntime "com.tterrag.registrate:Registrate:${registrate_version}"
 
+    compileOnly "dev.toma.configuration:configuration-${minecraft_version}:${configuration_version}"
+    compileOnly("com.hollingsworth.ars_nouveau:ars_nouveau-${minecraft_version}:${ars_version}") { transitive = false }
+    compileOnly "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
+    compileOnly "org.appliedenergistics:appliedenergistics2:${ae2_version}"
+    compileOnly("blusunrize.immersiveengineering:ImmersiveEngineering:${ie_version}") { transitive = false }
+    compileOnly("maven.modrinth:embeddium:${embeddium_version}") { transitive = false }
+    compileOnly "dev.emi:emi-neoforge:${emi_version}+${minecraft_version}"
+    localRuntime("com.simibubi.create:create-${minecraft_version}:${create_version}") { transitive = false }
+    localRuntime "net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}"
+    localRuntime "dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"
+    localRuntime("maven.modrinth:embeddium:${embeddium_version}") { transitive = false }
+    localRuntime("maven.modrinth:terrafirmacraft:${tfc_version}") { transitive = false }
+    localRuntime("maven.modrinth:patchouli:${patchouli_version}") { transitive = false }
+    localRuntime("maven.modrinth:immersivepetroleum:${ip_version}") { transitive = false }
+    localRuntime("maven.modrinth:extended-ae:${eae_version}") { transitive = false }
+    localRuntime("maven.modrinth:advancedae:${aae_version}") { transitive = false }
+    localRuntime("maven.modrinth:glodium:${glodium_version}") { transitive = false }
+    localRuntime("blusunrize.immersiveengineering:ImmersiveEngineering:${ie_version}") { transitive = false }
+    localRuntime "org.appliedenergistics:appliedenergistics2:${ae2_version}"
+    localRuntime "org.appliedenergistics:guideme:${guideme_version}"
+    localRuntime("com.hollingsworth.ars_nouveau:ars_nouveau-${minecraft_version}:${ars_version}") { transitive = false }
+    localRuntime "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
+    localRuntime "top.theillusivec4.curios:curios-neoforge:${curios_version}"
+    localRuntime "dev.emi:emi-neoforge:${emi_version}+${minecraft_version}"
 
-
-
-    // lombok
-    compileOnly 'org.projectlombok:lombok:1.18.24'
-    annotationProcessor 'org.projectlombok:lombok:1.18.24'
-
-    // Unit testing (pure-Java; no Minecraft context needed for data model tests)
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     testImplementation 'com.google.code.gson:gson:2.10.1'
-    testImplementation 'org.projectlombok:lombok:1.18.24'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
+}
 
-
-
+sourceSets {
+    test {
+        java.srcDirs = ['src/test/java']
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+    }
 }
 
 tasks.named('processResources', ProcessResources).configure {
-    var properties = [
-            "mod_license": mod_license,
-            "mod_id": mod_id,
-            "version": version,
-            "mod_name": mod_name,
-            "mod_url": mod_url,
-            "mod_author": mod_author,
-            "forge_version": forge_version.split("\\.")[0],
-            "minecraft_version": minecraft_version,
-            "gtceu_version": gtceu_version,
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_author             : mod_author,
+            mod_url                : mod_url,
     ]
-    inputs.properties(properties)
-
-    filesMatching("META-INF/mods.toml") {
-        expand properties + [project: project]
+    inputs.properties replaceProperties
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand replaceProperties
     }
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.encoding = "UTF-8"
-    options.release.set(17)
-    options.compilerArgs << "-Aquiet=true"
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-Xmaxerrs' << '5000'
 }
 
 tasks.named('test', Test) {
     useJUnitPlatform()
-    testClassesDirs = sourceSets.test.output.classesDirs
-    classpath = sourceSets.test.runtimeClasspath
+}
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            artifactId = base.archivesName.get()
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = 'Repsy'
+            url = uri('https://repo.repsy.io/mvn/user75142941/phoenixsuite')
+            credentials {
+                username = project.findProperty('repsyUsername') ?: System.getenv('REPSY_USERNAME')
+                password = project.findProperty('repsyPassword') ?: System.getenv('REPSY_PASSWORD')
+            }
+        }
+    }
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
 }
 
 // ── Phantasia Web Export ──────────────────────────────────────────────────────

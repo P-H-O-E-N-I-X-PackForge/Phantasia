@@ -4,14 +4,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.screens.PhantasiaGuideScreen;
 import net.phoenixvine.phantasia.common.data.guides.PhantasiaGuideData;
 import net.phoenixvine.phantasia.common.data.guides.PhantasiaGuideData.PageData;
@@ -31,6 +31,10 @@ import static net.phoenixvine.phantasia.utils.PhantasiaThemeUtils.*;
 
 @OnlyIn(Dist.CLIENT)
 public class PhantasiaGuideEditorScreen extends Screen {
+    @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    }
+
 
     private static final int TOP_H = 22;
     private static final int ROW_H = 18;
@@ -1222,7 +1226,7 @@ public class PhantasiaGuideEditorScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         int previewW = width - rightWidth;
         if (mx < previewW) {
 
@@ -1290,9 +1294,9 @@ public class PhantasiaGuideEditorScreen extends Screen {
     private static ItemStack resolveStack(PhantasiaSceneData.ItemConditionData it) {
         if (it.item == null || it.item.isBlank()) return ItemStack.EMPTY;
         try {
-            ResourceLocation rl = it.item.contains(":") ? new ResourceLocation(it.item) :
-                    new ResourceLocation("minecraft", it.item);
-            Item item = ForgeRegistries.ITEMS.getValue(rl);
+            ResourceLocation rl = it.item.contains(":") ? ResourceLocation.parse(it.item) :
+                    ResourceLocation.fromNamespaceAndPath("minecraft", it.item);
+            Item item = BuiltInRegistries.ITEM.get(rl);
             return (item == null || item == Items.AIR) ? ItemStack.EMPTY : new ItemStack(item, Math.max(1, it.count));
         } catch (Exception e) {
             return ItemStack.EMPTY;
@@ -1310,6 +1314,10 @@ public class PhantasiaGuideEditorScreen extends Screen {
     }
 
     private static class RegistrySearchScreen extends Screen {
+    @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    }
+
 
         private final Screen parent;
         private final String titleText;
@@ -1393,7 +1401,7 @@ public class PhantasiaGuideEditorScreen extends Screen {
         }
 
         @Override
-        public boolean mouseScrolled(double mx, double my, double delta) {
+        public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
             this.scrollOffset = Math.max(0, Math.min(filteredElements.size() - 1, this.scrollOffset - (int) delta));
             return true;
         }

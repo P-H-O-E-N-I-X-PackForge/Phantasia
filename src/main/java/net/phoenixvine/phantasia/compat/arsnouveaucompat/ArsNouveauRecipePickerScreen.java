@@ -6,8 +6,8 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScriptData;
 import net.phoenixvine.phantasia.common.multisetup.IPhantasiaSetupRecipe;
 import net.phoenixvine.phantasia.common.multisetup.PhantasiaMultiSetupRegistry;
@@ -24,6 +24,10 @@ import static net.phoenixvine.phantasia.utils.PhantasiaThemeUtils.*;
 
 @OnlyIn(Dist.CLIENT)
 public class ArsNouveauRecipePickerScreen extends Screen {
+    @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    }
+
 
     private static final int AN_BLUE = 0xFF5B6EFF;
     private static final int ROW_H = 16;
@@ -249,7 +253,7 @@ public class ArsNouveauRecipePickerScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         scrollOffset = Math.max(0, scrollOffset - (int) Math.signum(delta));
         return true;
     }

@@ -1,6 +1,7 @@
 package net.phoenixvine.phantasia.compat.aae;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -13,7 +14,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.phoenixvine.phantasia.client.render.PhantasiaTrackedDummyWorld;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScriptData;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockDefinition;
@@ -66,11 +66,11 @@ public class AAESceneDefinition implements IPhantasiaMultiblockDefinition {
 
     @Override
     public ItemStack getIcon() {
-        ResourceLocation rl = iconId.contains(":") ? new ResourceLocation(iconId) :
-                new ResourceLocation("advanced_ae", iconId);
-        Item item = ForgeRegistries.ITEMS.getValue(rl);
+        ResourceLocation rl = iconId.contains(":") ? ResourceLocation.parse(iconId) :
+                ResourceLocation.fromNamespaceAndPath("advanced_ae", iconId);
+        Item item = BuiltInRegistries.ITEM.get(rl);
         if (item != null && item != Items.AIR) return new ItemStack(item);
-        Block b = ForgeRegistries.BLOCKS.getValue(rl);
+        Block b = BuiltInRegistries.BLOCK.get(rl);
         if (b != null && b != Blocks.AIR) {
             ItemStack s = new ItemStack(b);
             if (!s.isEmpty()) return s;
@@ -139,7 +139,7 @@ public class AAESceneDefinition implements IPhantasiaMultiblockDefinition {
     }
 
     static PhantasiaBlockInfo aae(String blockId) {
-        Block b = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("advanced_ae", blockId));
+        Block b = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("advanced_ae", blockId));
         if (b == null || b == Blocks.AIR) {
             net.phoenixvine.phantasia.Phantasia.LOGGER.warn("[Phantasia/AAE] Block not found: advanced_ae:{}", blockId);
             return PhantasiaBlockInfo.EMPTY;
@@ -148,7 +148,7 @@ public class AAESceneDefinition implements IPhantasiaMultiblockDefinition {
     }
 
     static PhantasiaBlockInfo ae2(String blockId) {
-        Block b = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("ae2", blockId));
+        Block b = BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("ae2", blockId));
         if (b == null || b == Blocks.AIR) {
             net.phoenixvine.phantasia.Phantasia.LOGGER.warn("[Phantasia/AAE] Block not found: ae2:{}", blockId);
             return PhantasiaBlockInfo.EMPTY;

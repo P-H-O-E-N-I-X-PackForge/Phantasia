@@ -3,15 +3,15 @@ package net.phoenixvine.phantasia.client.screens;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.screens.editors.PhantasiaGuideEditorScreen;
 import net.phoenixvine.phantasia.client.screens.editors.PhantasiaSceneEditorScreen;
 import net.phoenixvine.phantasia.common.data.guides.PhantasiaGuideData;
@@ -565,7 +565,7 @@ public class PhantasiaGuideScreen extends PhantasiaScreen {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         int areaH = height - NAV_H - TOP_BAR_H;
         int maxScroll = Math.max(0, lastContentH - (areaH - 28));
         scrollY = Mth.clamp(scrollY - (int) (delta * 14), 0, maxScroll);
@@ -640,7 +640,7 @@ public class PhantasiaGuideScreen extends PhantasiaScreen {
         try {
             ResourceLocation rl = it.item.contains(":") ? ResourceLocation.parse(it.item) :
                     ResourceLocation.fromNamespaceAndPath("minecraft", it.item);
-            Item item = ForgeRegistries.ITEMS.getValue(rl);
+            Item item = BuiltInRegistries.ITEM.get(rl);
             return (item == null || item == Items.AIR) ? ItemStack.EMPTY : new ItemStack(item, Math.max(1, it.count));
         } catch (Exception e) {
             return ItemStack.EMPTY;

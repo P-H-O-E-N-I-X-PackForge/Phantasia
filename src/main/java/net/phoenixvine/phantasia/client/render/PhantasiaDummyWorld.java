@@ -36,8 +36,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.ticks.LevelTickAccess;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.lang.ref.WeakReference;
 import java.util.Collections;
@@ -269,10 +269,10 @@ public class PhantasiaDummyWorld extends Level {
     public void levelEvent(@Nullable Player player, int type, BlockPos pos, int data) {}
 
     @Override
-    public void gameEvent(GameEvent event, Vec3 pos, GameEvent.Context ctx) {}
+    public void gameEvent(Holder<GameEvent> event, Vec3 pos, GameEvent.Context ctx) {}
 
     @Override
-    public void gameEvent(@Nullable Entity entity, GameEvent event, BlockPos pos) {}
+    public void gameEvent(@Nullable Entity entity, Holder<GameEvent> event, BlockPos pos) {}
 
     @Override
     public void addParticle(ParticleOptions data, double x, double y, double z, double vx, double vy, double vz) {}
@@ -290,18 +290,44 @@ public class PhantasiaDummyWorld extends Level {
                                          double vy, double vz) {}
 
     @Override
-    public int getFreeMapId() {
-        return 0;
+    public net.minecraft.world.level.saveddata.maps.MapId getFreeMapId() {
+        return new net.minecraft.world.level.saveddata.maps.MapId(0);
     }
 
     @Override
     @Nullable
-    public MapItemSavedData getMapData(String name) {
+    public MapItemSavedData getMapData(net.minecraft.world.level.saveddata.maps.MapId id) {
         return null;
     }
 
     @Override
-    public void setMapData(String id, MapItemSavedData data) {}
+    public void setMapData(net.minecraft.world.level.saveddata.maps.MapId id, MapItemSavedData data) {}
+
+    @Override
+    public net.minecraft.world.TickRateManager tickRateManager() {
+        return getProxy().tickRateManager();
+    }
+
+    @Override
+    public net.minecraft.world.item.alchemy.PotionBrewing potionBrewing() {
+        return getProxy().potionBrewing();
+    }
+
+    @Override
+    public void setDayTimeFraction(float dayTimeFraction) {}
+
+    @Override
+    public float getDayTimeFraction() {
+        return getProxy().getDayTimeFraction();
+    }
+
+    @Override
+    public float getDayTimePerTick() {
+        return getProxy().getDayTimePerTick();
+    }
+
+    @Override
+    public void setDayTimePerTick(float dayTimePerTick) {}
 
     @Override
     public void destroyBlockProgress(int breakerId, BlockPos pos, int progress) {}

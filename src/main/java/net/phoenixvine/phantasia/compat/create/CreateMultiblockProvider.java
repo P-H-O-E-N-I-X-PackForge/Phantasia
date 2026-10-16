@@ -65,8 +65,8 @@ public class CreateMultiblockProvider implements IPhantasiaMultiblockProvider {
 
     @Override
     public Optional<IPhantasiaMultiblockDefinition> resolve(String machineId) {
-        ResourceLocation rl = machineId.contains(":") ? new ResourceLocation(machineId) :
-                new ResourceLocation("create", machineId);
+        ResourceLocation rl = machineId.contains(":") ? ResourceLocation.parse(machineId) :
+                ResourceLocation.fromNamespaceAndPath("create", machineId);
         return definitions.stream().filter(d -> d.getId().equals(rl)).findFirst();
     }
 

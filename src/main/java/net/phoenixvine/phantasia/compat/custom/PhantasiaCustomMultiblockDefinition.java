@@ -1,13 +1,13 @@
 package net.phoenixvine.phantasia.compat.custom;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.phoenixvine.phantasia.client.render.PhantasiaTrackedDummyWorld;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScriptData;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockDefinition;
@@ -42,7 +42,7 @@ public class PhantasiaCustomMultiblockDefinition implements IPhantasiaMultiblock
     public ResourceLocation getId() {
         String id = layout.id;
         if (id == null || !id.contains(":")) id = "phantasia:" + (id != null ? id : "unnamed");
-        return new ResourceLocation(id);
+        return ResourceLocation.parse(id);
     }
 
     @Override
@@ -53,15 +53,15 @@ public class PhantasiaCustomMultiblockDefinition implements IPhantasiaMultiblock
     @Override
     public ItemStack getIcon() {
         if (layout.iconBlock != null && !layout.iconBlock.isBlank()) {
-            ResourceLocation rl = new ResourceLocation(layout.iconBlock);
-            Item item = ForgeRegistries.ITEMS.getValue(rl);
+            ResourceLocation rl = ResourceLocation.parse(layout.iconBlock);
+            Item item = BuiltInRegistries.ITEM.get(rl);
             if (item != null && item != Items.AIR) return new ItemStack(item);
-            Block block = ForgeRegistries.BLOCKS.getValue(rl);
+            Block block = BuiltInRegistries.BLOCK.get(rl);
             if (block != null && block != Blocks.AIR) return new ItemStack(block);
         }
 
         for (String blockStr : layout.blocks.values()) {
-            Block b = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(
+            Block b = BuiltInRegistries.BLOCK.get(ResourceLocation.parse(
                     blockStr.contains("[") ? blockStr.substring(0, blockStr.indexOf('[')) : blockStr));
             if (b != null && b != Blocks.AIR) return new ItemStack(b);
         }

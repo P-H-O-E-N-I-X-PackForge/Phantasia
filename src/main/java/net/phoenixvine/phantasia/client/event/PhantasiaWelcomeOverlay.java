@@ -2,11 +2,11 @@ package net.phoenixvine.phantasia.client.event;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderGuiOverlayEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
 import net.phoenixvine.phantasia.Phantasia;
 import net.phoenixvine.phantasia.client.screens.PhantasiaGuideScreen;
 import net.phoenixvine.phantasia.common.data.guides.PhantasiaGuideData;
@@ -15,7 +15,7 @@ import net.phoenixvine.wiki.theme.PhoenixTheme;
 
 import java.io.File;
 
-@Mod.EventBusSubscriber(modid = Phantasia.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Phantasia.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public final class PhantasiaWelcomeOverlay {
 
     private PhantasiaWelcomeOverlay() {}
@@ -53,8 +53,8 @@ public final class PhantasiaWelcomeOverlay {
     }
 
     @SubscribeEvent
-    public static void onTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !active) return;
+    public static void onTick(ClientTickEvent.Post event) {
+        if (!active) return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen != null) {
@@ -103,7 +103,7 @@ public final class PhantasiaWelcomeOverlay {
     }
 
     @SubscribeEvent
-    public static void onRender(RenderGuiOverlayEvent.Pre event) {
+    public static void onRender(RenderGuiLayerEvent.Pre event) {
         if (!active) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen != null) return;

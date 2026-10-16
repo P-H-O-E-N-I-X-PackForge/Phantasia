@@ -1,14 +1,20 @@
 package net.phoenixvine.phantasia.compat.gtceu;
 
-import com.gregtechceu.gtceu.api.blockentity.MetaMachineBlockEntity;
+import com.gregtechceu.gtceu.api.block.ActiveBlock;
+import com.gregtechceu.gtceu.api.data.RotationState;
 import com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition;
-import com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart;
+import com.gregtechceu.gtceu.api.machine.WorkableTieredMachine;
 import com.gregtechceu.gtceu.api.machine.multiblock.MultiblockControllerMachine;
-import com.gregtechceu.gtceu.api.machine.multiblock.PartAbility;
 import com.gregtechceu.gtceu.api.machine.multiblock.WorkableMultiblockMachine;
-import com.gregtechceu.gtceu.api.machine.trait.RecipeLogic;
+import com.gregtechceu.gtceu.api.machine.trait.recipe.RecipeLogic;
+import com.gregtechceu.gtceu.api.multiblock.pattern.BlockPattern;
+import com.gregtechceu.gtceu.api.multiblock.pattern.ExpandablePattern;
+import com.gregtechceu.gtceu.api.multiblock.pattern.IBlockPattern;
+import com.gregtechceu.gtceu.api.multiblock.util.AbstractStructureHelper;
+import com.gregtechceu.gtceu.api.multiblock.util.BlockInfo;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -22,11 +28,24 @@ import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockShape;
 import net.phoenixvine.phantasia.utils.PhantasiaBlockInfo;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Supplier;
 
+/** {@link IPhantasiaMultiblockDefinition} for the reworked GregTech 8.x API. */
 public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GTCEuMultiblockDefinition.class);
@@ -38,10 +57,6 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
         this.definition = definition;
     }
 
-    public MultiblockMachineDefinition getDefinition() {
-        return definition;
-    }
-
     @Override
     public ResourceLocation getId() {
         return definition.getId();
@@ -50,12 +65,15 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
     @Override
     public List<IPhantasiaMultiblockShape> getMatchingShapes() {
         if (cachedShapes == null) {
-            List<IPhantasiaMultiblockShape> shapes = new ArrayList<>();
-            var gtShapes = definition.getMatchingShapes();
-            if (gtShapes != null) {
-                for (var s : gtShapes) shapes.add(new GTCEuMultiblockShape(s));
+            PhantasiaBlockInfo[][][] blocks = null;
+            try {
+                blocks = previewBlocks(definition);
+            } catch (Exception e) {
+                LOGGER.warn("[Phantasia] Could not build the preview shape of {}: {}", definition.getId(),
+                        e.toString());
             }
-            cachedShapes = Collections.unmodifiableList(shapes);
+            final PhantasiaBlockInfo[][][] shape = blocks;
+            cachedShapes = shape == null ? List.of() : List.of((IPhantasiaMultiblockShape) () -> shape);
         }
         return cachedShapes;
     }
@@ -85,44 +103,26 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
 
     @Override
     public void onShapeLoaded(PhantasiaTrackedDummyWorld level, BlockPos origin,
-                              Map<BlockPos, PhantasiaBlockInfo> blockMap,
-                              Map<BlockPos, BlockPos> localToWorld) {
-        List<IMultiPart> parts = new ArrayList<>();
+                              Map<BlockPos, PhantasiaBlockInfo> blockMap, Map<BlockPos, BlockPos> localToWorld) {
         MultiblockControllerMachine controller = null;
-
         for (BlockPos wp : localToWorld.values()) {
             try {
-                var be = level.getBlockEntity(wp);
-                if (!(be instanceof MetaMachineBlockEntity mmbe)) continue;
-                var machine = mmbe.getMetaMachine();
-                if (machine instanceof MultiblockControllerMachine ctrl && controller == null) {
+                if (level.getBlockEntity(wp) instanceof MultiblockControllerMachine ctrl) {
                     controller = ctrl;
-                } else if (machine instanceof IMultiPart part) {
-                    parts.add(part);
+                    break;
                 }
             } catch (Exception ignored) {}
         }
-
         if (controller == null) return;
 
         final MultiblockControllerMachine ctrl = controller;
-        final List<IMultiPart> partsCopy = List.copyOf(parts);
         RenderSystem.recordRenderCall(() -> {
             try {
-                var mState = ctrl.getMultiblockState();
-                if (mState != null) {
-                    mState.setError(null);
-                    mState.getMatchContext().set("parts", new HashSet<>(partsCopy));
-                }
-                ctrl.getPatternLock().lock();
-                try {
-                    ctrl.onStructureFormed();
-                } finally {
-                    ctrl.getPatternLock().unlock();
-                }
-                LOGGER.debug("[Phantasia] onStructureFormed simulated for {}", definition.getId());
+                ctrl.checkAndFormStructure();
+                LOGGER.debug("[Phantasia] Structure check run for {}", definition.getId());
             } catch (Exception e) {
-                LOGGER.error("[Phantasia] onStructureFormed failed for {}: {}", definition.getId(), e.getMessage(), e);
+                LOGGER.error("[Phantasia] Forming the structure failed for {}: {}", definition.getId(),
+                        e.getMessage(), e);
             }
         });
     }
@@ -132,155 +132,122 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
         if (level == null) return;
         try {
             for (var be : level.blockEntities.values()) {
-                if (!(be instanceof MetaMachineBlockEntity mmbe)) continue;
-                var machine = mmbe.getMetaMachine();
-                if (!(machine instanceof WorkableMultiblockMachine workable)) continue;
+                if (!(be instanceof WorkableMultiblockMachine workable)) continue;
                 RecipeLogic logic = workable.getRecipeLogic();
-                if (logic != null) {
-                    logic.setStatus(working ? RecipeLogic.Status.WORKING : RecipeLogic.Status.IDLE);
-                }
+                if (logic != null) logic.setStatus(working ? RecipeLogic.Status.WORKING : RecipeLogic.Status.IDLE);
                 return;
             }
         } catch (Exception ignored) {}
     }
 
     @Override
-    public void applyWorkingState(PhantasiaTrackedDummyWorld level,
-                                  java.util.Set<net.minecraft.core.BlockPos> positions,
-                                  java.util.Map<net.minecraft.core.BlockPos, net.phoenixvine.phantasia.utils.PhantasiaBlockInfo> blockMap,
-                                  boolean working) {
+    public void applyWorkingState(PhantasiaTrackedDummyWorld level, Set<BlockPos> positions,
+                                  Map<BlockPos, PhantasiaBlockInfo> blockMap, boolean working) {
         if (level == null) return;
 
         try {
             for (var entry : level.blockEntities.entrySet()) {
                 if (!positions.contains(entry.getKey())) continue;
-                if (!(entry.getValue() instanceof MetaMachineBlockEntity mmbe)) continue;
-                var machine = mmbe.getMetaMachine();
                 RecipeLogic logic = null;
-                if (machine instanceof WorkableMultiblockMachine wm) {
+                if (entry.getValue() instanceof WorkableMultiblockMachine wm) {
                     logic = wm.getRecipeLogic();
-                } else if (machine instanceof com.gregtechceu.gtceu.api.machine.WorkableTieredMachine wt) {
+                } else if (entry.getValue() instanceof WorkableTieredMachine wt) {
                     logic = wt.getRecipeLogic();
                 }
-                if (logic != null)
-                    logic.setStatus(working ? RecipeLogic.Status.WORKING : RecipeLogic.Status.IDLE);
+                if (logic != null) logic.setStatus(working ? RecipeLogic.Status.WORKING : RecipeLogic.Status.IDLE);
             }
         } catch (Throwable ignored) {}
 
         for (var e : blockMap.entrySet()) {
-            net.minecraft.core.BlockPos worldPos = e.getKey();
+            BlockPos worldPos = e.getKey();
             if (!positions.contains(worldPos)) continue;
-            net.minecraft.world.level.block.state.BlockState original = e.getValue().getBlockState();
+            BlockState original = e.getValue().getBlockState();
             if (original == null || original.isAir()) continue;
             try {
-                net.minecraft.world.level.block.state.BlockState current = level.getBlockState(worldPos);
+                BlockState current = level.getBlockState(worldPos);
                 if (current == null || current.isAir()) continue;
-                net.minecraft.world.level.block.state.BlockState next = null;
-                if (current.getBlock() instanceof com.gregtechceu.gtceu.api.block.ActiveBlock ab) {
+                BlockState next = null;
+                if (current.getBlock() instanceof ActiveBlock ab) {
                     next = ab.changeActive(current, working);
-                } else if (original.getBlock() instanceof com.gregtechceu.gtceu.api.block.ActiveBlock ab) {
+                } else if (original.getBlock() instanceof ActiveBlock ab) {
                     next = ab.changeActive(current, working);
                 }
                 if (next != null && next != current)
-                    level.renderedBlocks.put(worldPos,
-                            net.phoenixvine.phantasia.utils.PhantasiaBlockInfo.fromBlockState(next));
+                    level.renderedBlocks.put(worldPos, PhantasiaBlockInfo.fromBlockState(next));
             } catch (Throwable ignored) {}
         }
     }
 
     @Override
-    public List<PhantasiaVariantGroup> detectProviderVariants(PhantasiaScriptData data,
-                                                              PhantasiaLoadedPattern pattern,
-                                                              String machinePrefix,
-                                                              Set<String> explicitIds) {
+    public List<PhantasiaVariantGroup> detectProviderVariants(PhantasiaScriptData data, PhantasiaLoadedPattern pattern,
+                                                              String machinePrefix, Set<String> explicitIds) {
         return new ArrayList<>(detectPredicateVariants(machinePrefix, pattern, explicitIds));
     }
 
-    private List<PhantasiaVariantGroup> detectPredicateVariants(
-                                                                String machinePrefix, PhantasiaLoadedPattern pattern,
+    /**
+     * Finds positions whose predicate accepts more than one kind of block (a casing or a hatch, any tier of a
+     * hatch, ...) and offers them as swappable variant groups. The predicate at each preview position comes from
+     * GregTech's own structure helper, so it matches what the machine's pattern really allows there.
+     */
+    private List<PhantasiaVariantGroup> detectPredicateVariants(String machinePrefix, PhantasiaLoadedPattern pattern,
                                                                 Set<String> excludeIds) {
-        com.gregtechceu.gtceu.api.pattern.BlockPattern blockPattern;
-        try {
-            var factory = definition.getPatternFactory();
-            if (factory == null) return List.of();
-            blockPattern = factory.get();
-            if (blockPattern == null) return List.of();
-        } catch (Exception e) {
-            return List.of();
-        }
-
-        com.gregtechceu.gtceu.api.pattern.TraceabilityPredicate[][][] grid;
-        try {
-            var f = com.gregtechceu.gtceu.api.pattern.BlockPattern.class.getDeclaredField("blockMatches");
-            f.setAccessible(true);
-            grid = (com.gregtechceu.gtceu.api.pattern.TraceabilityPredicate[][][]) f.get(blockPattern);
-        } catch (Exception e) {
-            return List.of();
-        }
+        Preview preview = buildPreview(definition);
+        if (preview == null) return List.of();
 
         Map<String, List<BlockPos>> sigToLocal = new LinkedHashMap<>();
-
         Map<String, List<PhantasiaBlockInfo[]>> sigToCandidates = new LinkedHashMap<>();
 
-        for (int x = 0; x < grid.length; x++) {
-            if (grid[x] == null) continue;
-            for (int y = 0; y < grid[x].length; y++) {
-                if (grid[x][y] == null) continue;
-                for (int z = 0; z < grid[x][y].length; z++) {
-                    var tp = grid[x][y][z];
-                    if (tp == null || tp.common == null || tp.common.size() < 2) continue;
+        for (Map.Entry<BlockPos, BlockInfo> entry : preview.raw().entrySet()) {
+            BlockInfo placed = entry.getValue();
+            if (placed == null || placed.isAir()) continue;
+            BlockPos at = entry.getKey();
 
-                    List<PhantasiaBlockInfo[]> componentCandidates = new ArrayList<>();
-                    boolean valid = true;
-                    for (var sp : tp.common) {
-                        if (sp.candidates == null) {
-                            valid = false;
-                            break;
-                        }
-                        PhantasiaBlockInfo[] cands;
-                        try {
-                            com.lowdragmc.lowdraglib.utils.BlockInfo[] rawCands = sp.candidates.get();
-                            if (rawCands == null) {
-                                valid = false;
-                                break;
-                            }
-                            cands = new PhantasiaBlockInfo[rawCands.length];
-                            for (int ci = 0; ci < rawCands.length; ci++) {
-                                cands[ci] = rawCands[ci] != null ?
-                                        PhantasiaBlockInfo.fromBlockState(rawCands[ci].getBlockState()) :
-                                        PhantasiaBlockInfo.EMPTY;
-                            }
-                        } catch (Exception ex) {
-                            valid = false;
-                            break;
-                        }
-                        if (cands == null || cands.length == 0) {
-                            valid = false;
-                            break;
-                        }
-                        componentCandidates.add(cands);
-                    }
-                    if (!valid || componentCandidates.size() < 2) continue;
-
-                    List<String> sigParts = new ArrayList<>();
-                    for (PhantasiaBlockInfo[] cands : componentCandidates) {
-                        List<String> ids = new ArrayList<>();
-                        for (PhantasiaBlockInfo bi : cands) {
-                            if (bi == null || bi.getBlockState() == null) continue;
-                            var rl = net.minecraftforge.registries.ForgeRegistries.BLOCKS
-                                    .getKey(bi.getBlockState().getBlock());
-                            if (rl != null) ids.add(rl.toString());
-                        }
-                        Collections.sort(ids);
-                        sigParts.add(String.join(",", ids));
-                    }
-                    Collections.sort(sigParts);
-                    String sig = String.join("|", sigParts);
-
-                    sigToLocal.computeIfAbsent(sig, k -> new ArrayList<>()).add(new BlockPos(x, y, z));
-                    sigToCandidates.putIfAbsent(sig, componentCandidates);
-                }
+            List<List<BlockInfo>> candidates;
+            try {
+                var predicate = preview.helper().getPredicateFromPos(preview.pattern(), at, preview.front(),
+                        preview.up(), false);
+                if (predicate == null) continue;
+                candidates = predicate.getCandidates();
+            } catch (Exception e) {
+                continue;
             }
+            if (candidates == null || candidates.size() < 2) continue;
+
+            List<PhantasiaBlockInfo[]> componentCandidates = new ArrayList<>();
+            boolean valid = true;
+            for (List<BlockInfo> component : candidates) {
+                if (component == null || component.isEmpty()) {
+                    valid = false;
+                    break;
+                }
+                PhantasiaBlockInfo[] cands = new PhantasiaBlockInfo[component.size()];
+                for (int ci = 0; ci < cands.length; ci++) {
+                    BlockInfo bi = component.get(ci);
+                    cands[ci] = bi != null ? PhantasiaBlockInfo.fromBlockState(bi.getBlockState()) :
+                            PhantasiaBlockInfo.EMPTY;
+                }
+                componentCandidates.add(cands);
+            }
+            if (!valid) continue;
+
+            List<String> sigParts = new ArrayList<>();
+            for (PhantasiaBlockInfo[] cands : componentCandidates) {
+                List<String> ids = new ArrayList<>();
+                for (PhantasiaBlockInfo bi : cands) {
+                    if (bi == null || bi.getBlockState() == null) continue;
+                    var rl = net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                            .getKey(bi.getBlockState().getBlock());
+                    if (rl != null) ids.add(rl.toString());
+                }
+                Collections.sort(ids);
+                sigParts.add(String.join(",", ids));
+            }
+            Collections.sort(sigParts);
+            String sig = String.join("|", sigParts);
+
+            BlockPos local = at.subtract(preview.min());
+            sigToLocal.computeIfAbsent(sig, k -> new ArrayList<>()).add(local);
+            sigToCandidates.putIfAbsent(sig, componentCandidates);
         }
 
         List<PhantasiaVariantGroup> result = new ArrayList<>();
@@ -355,80 +322,9 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
         return result;
     }
 
-    private static List<PhantasiaVariantGroup> detectPartAbilityGroups(
-                                                                       String machinePrefix,
-                                                                       Map<Block, List<BlockPos>> loadedBlockToWorldPos,
-                                                                       PhantasiaLoadedPattern pattern,
-                                                                       Set<String> excludeIds) {
-        List<PhantasiaVariantGroup> result = new ArrayList<>();
-
-        record AbilitySpec(PartAbility ability, String id, String label,
-                           PhantasiaVariantGroup.Category category, int minTier, int maxTier) {}
-
-        List<AbilitySpec> specs = List.of(
-                new AbilitySpec(PartAbility.INPUT_ENERGY, "energy_hatch_in", "Energy Hatch (Input)",
-                        PhantasiaVariantGroup.Category.HATCHES_BUSES, 0, 13),
-                new AbilitySpec(PartAbility.OUTPUT_ENERGY, "energy_hatch_out", "Energy Hatch (Output)",
-                        PhantasiaVariantGroup.Category.HATCHES_BUSES, 0, 13),
-                new AbilitySpec(PartAbility.IMPORT_FLUIDS, "fluid_hatch_in", "Fluid Hatch (Input)",
-                        PhantasiaVariantGroup.Category.HATCHES_BUSES, 0, 13),
-                new AbilitySpec(PartAbility.EXPORT_FLUIDS, "fluid_hatch_out", "Fluid Hatch (Output)",
-                        PhantasiaVariantGroup.Category.HATCHES_BUSES, 0, 13),
-                new AbilitySpec(PartAbility.IMPORT_ITEMS, "item_bus_in", "Item Bus (Input)",
-                        PhantasiaVariantGroup.Category.HATCHES_BUSES, 0, 13),
-                new AbilitySpec(PartAbility.EXPORT_ITEMS, "item_bus_out", "Item Bus (Output)",
-                        PhantasiaVariantGroup.Category.HATCHES_BUSES, 0, 13),
-                new AbilitySpec(PartAbility.MUFFLER, "muffler_hatch", "Muffler Hatch",
-                        PhantasiaVariantGroup.Category.MUFFLERS, 0, 13));
-
-        for (AbilitySpec spec : specs) {
-            if (excludeIds.contains(spec.id())) continue;
-
-            List<BlockState> tierStates = new ArrayList<>();
-            List<String> tierLabels = new ArrayList<>();
-            try {
-                Block[] abilityBlocks = spec.ability()
-                        .getBlockRange(spec.minTier(), spec.maxTier())
-                        .toArray(Block[]::new);
-                for (Block b : abilityBlocks) {
-                    if (b == null) continue;
-                    BlockState st = b.defaultBlockState();
-                    tierStates.add(st);
-                    tierLabels.add(PhantasiaVariantGroup.blockDisplayName(st));
-                }
-            } catch (Exception ignored) {
-                continue;
-            }
-
-            if (tierStates.size() < 2) continue;
-
-            Map<BlockPos, Integer> posMap = new HashMap<>();
-            int defaultIdx = 0;
-            boolean found = false;
-            for (int ti = 0; ti < tierStates.size(); ti++) {
-                List<BlockPos> positions = loadedBlockToWorldPos.get(tierStates.get(ti).getBlock());
-                if (positions == null || positions.isEmpty()) continue;
-                for (BlockPos wp : positions) posMap.put(wp, ti);
-                if (!found) {
-                    defaultIdx = ti;
-                    found = true;
-                }
-            }
-            if (posMap.isEmpty()) continue;
-
-            result.add(PhantasiaVariantGroup.create(
-                    machinePrefix + "::" + spec.id(), spec.label(), spec.category(),
-                    true, tierStates, tierLabels, posMap, defaultIdx));
-        }
-
-        return result;
-    }
-
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof GTCEuMultiblockDefinition other)) return false;
-        return definition.equals(other.definition);
+        return this == o || (o instanceof GTCEuMultiblockDefinition other && definition.equals(other.definition));
     }
 
     @Override
@@ -439,5 +335,74 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
     @Override
     public String toString() {
         return "GTCEuMultiblockDefinition[" + definition.getId() + "]";
+    }
+
+    /** The machine's default pattern laid out as GregTech's own preview does, plus what is needed to query it. */
+    private record Preview(PhantasiaBlockInfo[][][] blocks, Map<BlockPos, BlockInfo> raw, BlockPos min,
+                           AbstractStructureHelper helper, IBlockPattern pattern, Direction front, Direction up) {}
+
+    /**
+     * Lays the machine's default pattern out the way GregTech's own preview does: minimum repetitions for repeatable
+     * slices, smallest bounds for expandable patterns, controller facing its default direction.
+     */
+    public static PhantasiaBlockInfo[][][] previewBlocks(MultiblockMachineDefinition definition) {
+        Preview preview = buildPreview(definition);
+        return preview == null ? null : preview.blocks();
+    }
+
+    private static Preview buildPreview(MultiblockMachineDefinition definition) {
+        Supplier<IBlockPattern> supplier = definition.getStructurePatterns().get("default");
+        if (supplier == null) {
+            if (definition.getStructurePatterns().isEmpty()) return null;
+            supplier = definition.getStructurePatterns().values().iterator().next();
+        }
+        IBlockPattern pattern = supplier.get();
+        if (pattern == null) return null;
+
+        AbstractStructureHelper helper;
+        if (pattern instanceof BlockPattern blockPattern) {
+            Int2IntMap repeats = new Int2IntArrayMap();
+            var slices = blockPattern.getSlices();
+            for (int i = 0; i < slices.length; i++) repeats.put(i, slices[i].getMinRepeats());
+            helper = AbstractStructureHelper.blockPattern(repeats);
+        } else if (pattern instanceof ExpandablePattern expandable) {
+            IntList dims = new IntArrayList();
+            expandable.getBoundsConstraints().apply().stream().mapToInt(c -> c.leftInt()).forEach(dims::add);
+            helper = AbstractStructureHelper.expandable(dims);
+        } else {
+            return null;
+        }
+
+        RotationState rotation = definition.getRotationState();
+        Direction front = rotation.defaultDirection;
+        Direction up = rotation == RotationState.Y_AXIS ? Direction.NORTH : Direction.UP;
+        if (front.getAxis().isVertical() && up.getAxis().isVertical()) up = Direction.NORTH;
+
+        Map<BlockPos, BlockInfo> blocks = new HashMap<>();
+        helper.populate(blocks, pattern, new Long2ObjectOpenHashMap<>(), front, up, false);
+        if (blocks.isEmpty()) return null;
+
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
+        for (BlockPos p : blocks.keySet()) {
+            minX = Math.min(minX, p.getX());
+            minY = Math.min(minY, p.getY());
+            minZ = Math.min(minZ, p.getZ());
+            maxX = Math.max(maxX, p.getX());
+            maxY = Math.max(maxY, p.getY());
+            maxZ = Math.max(maxZ, p.getZ());
+        }
+
+        BlockPos min = new BlockPos(minX, minY, minZ);
+        PhantasiaBlockInfo[][][] out = new PhantasiaBlockInfo[maxX - minX + 1][maxY - minY + 1][maxZ - minZ + 1];
+        for (var column : out) for (var row : column) java.util.Arrays.fill(row, PhantasiaBlockInfo.EMPTY);
+        for (var entry : blocks.entrySet()) {
+            BlockInfo info = entry.getValue();
+            if (info == null || info.isAir()) continue;
+            BlockPos p = entry.getKey();
+            out[p.getX() - minX][p.getY() - minY][p.getZ() - minZ] = PhantasiaBlockInfo
+                    .fromBlockState(info.getBlockState());
+        }
+        return new Preview(out, blocks, min, helper, pattern, front, up);
     }
 }

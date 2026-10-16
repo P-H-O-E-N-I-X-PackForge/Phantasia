@@ -3,15 +3,15 @@ package net.phoenixvine.phantasia.client;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterClientCommandsEvent;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.phoenixvine.phantasia.Phantasia;
 import net.phoenixvine.phantasia.client.event.PhantasiaClientEvents;
 import net.phoenixvine.phantasia.client.screens.*;
@@ -23,23 +23,21 @@ import net.phoenixvine.phantasia.common.data.script.PhantasiaScriptLoader;
 import net.phoenixvine.wiki.client.suite.SuiteHudBar;
 import net.phoenixvine.wiki.theme.PhoenixTheme;
 
-@Mod.EventBusSubscriber(modid = Phantasia.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Phantasia.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class PhantasiaClient {
 
     private PhantasiaClient() {}
 
     public static void init(IEventBus modBus) {
-        MinecraftForge.EVENT_BUS.register(PhantasiaKeybind.class);
-        MinecraftForge.EVENT_BUS.register(PhantasiaClientEvents.class);
-        MinecraftForge.EVENT_BUS.register(PhantasiaClientCommands.class);
+        NeoForge.EVENT_BUS.register(PhantasiaKeybind.class);
+        NeoForge.EVENT_BUS.register(PhantasiaClientEvents.class);
+        NeoForge.EVENT_BUS.register(PhantasiaClientCommands.class);
     }
 
     public static class VocalVibrancyClientTick {
 
         @SubscribeEvent
-        public static void onClientTick(TickEvent.ClientTickEvent event) {
-            if (event.phase != TickEvent.Phase.END) return;
-        }
+        public static void onClientTick(ClientTickEvent.Post event) {}
     }
 
     public static class PhantasiaClientCommands {
@@ -97,8 +95,9 @@ public class PhantasiaClient {
         }
     }
 
-    private static final net.minecraft.resources.ResourceLocation PHANTASIA_ICON = new net.minecraft.resources.ResourceLocation(
-            "minecraft", "textures/item/knowledge_book.png");
+    private static final net.minecraft.resources.ResourceLocation PHANTASIA_ICON = net.minecraft.resources.ResourceLocation
+            .fromNamespaceAndPath(
+                    "minecraft", "textures/item/knowledge_book.png");
 
     @SubscribeEvent
     public static void onClientSetup(final FMLClientSetupEvent event) {

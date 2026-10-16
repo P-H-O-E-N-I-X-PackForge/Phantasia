@@ -3,7 +3,7 @@ package net.phoenixvine.phantasia.compat.custom;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.neoforged.fml.loading.FMLPaths;
 import net.phoenixvine.phantasia.Phantasia;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockDefinition;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockProvider;
@@ -79,8 +79,8 @@ public class PhantasiaCustomProvider implements IPhantasiaMultiblockProvider {
 
     @Override
     public Optional<IPhantasiaMultiblockDefinition> resolve(String machineId) {
-        ResourceLocation rl = machineId.contains(":") ? new ResourceLocation(machineId) :
-                new ResourceLocation("phantasia", machineId);
+        ResourceLocation rl = machineId.contains(":") ? ResourceLocation.parse(machineId) :
+                ResourceLocation.fromNamespaceAndPath("phantasia", machineId);
         return Optional.ofNullable(loaded.get(rl));
     }
 
