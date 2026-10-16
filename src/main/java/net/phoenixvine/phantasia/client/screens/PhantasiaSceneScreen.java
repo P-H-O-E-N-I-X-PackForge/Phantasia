@@ -40,7 +40,7 @@ import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockShape;
 import net.phoenixvine.phantasia.common.multiblock.PhantasiaMultiblockRegistry;
 import net.phoenixvine.phantasia.compat.arsnouveaucompat.ArsNouveauScriptEditorScreen;
 import net.phoenixvine.phantasia.configs.PhantasiaConfigs;
-import net.phoenixvine.phantasia.integration.emi.PhantasiaEmiPlugin;
+import net.phoenixvine.phantasia.integration.emi.EmiCompat;
 import net.phoenixvine.phantasia.utils.PhantasiaBlockInfo;
 import net.phoenixvine.phantasia.utils.PhantasiaThemeUtils;
 import net.phoenixvine.phantasia.utils.PhantasiaUIUtils;
@@ -1549,7 +1549,7 @@ public class PhantasiaSceneScreen extends Screen {
         regIconBtn(g, mx, my, px + 10, y, pw - 20, 16, "🔍", "Block List",
                 false, this::openBlockFilterScreen);
         y += 20;
-        if (PhantasiaEmiPlugin.EMI_PRESENT) {
+        if (EmiCompat.EMI_PRESENT) {
             regIconBtn(g, mx, my, px + 10, y, pw - 20, 16, "\uD83E\uDDEE", "Materials",
                     false, this::openMaterialCostScreen);
             y += 20;

@@ -4,14 +4,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.screens.editors.PhantasiaGuideEditorScreen;
 import net.phoenixvine.phantasia.client.screens.editors.PhantasiaSceneEditorScreen;
 import net.phoenixvine.phantasia.client.tutorial.PhantasiaTutorials;
@@ -213,9 +213,9 @@ public class PhantasiaSceneSelectionScreen extends PhantasiaScreen {
         int w = font.width(label) + 16;
         boolean act = (activeTab == tab);
         boolean hov = isOver(mx, my, x, y, w, TAB_H);
-        g.fill(x, y, x + w, y + TAB_H, act ? C_BTN_HOV() : (hov ? C_BTN_HOV() : C_BTN()));
+        g.fill(x, y, x + w, y + TAB_H, hov && !act ? C_BTN_HOV() : C_BTN());
         if (act) g.fill(x, y + TAB_H - 2, x + w, y + TAB_H, C_ACCENT());
-        g.drawString(font, label, x + 8, y + 4, act ? C_ACCENT() : C_DIM(), false);
+        g.drawString(font, label, x + 8, y + 4, act ? C_ACCENT() : (hov ? C_TEXT() : C_DIM()), false);
     }
 
     @Nullable
@@ -255,7 +255,7 @@ public class PhantasiaSceneSelectionScreen extends PhantasiaScreen {
         boolean allHov = isOver(mx, my, startX, py, maxW, 12);
         g.fill(startX, py, startX + maxW, py + 12, allSel ? C_BTN_ACT() : (allHov ? C_BTN_HOV() : C_BTN()));
         if (allSel) g.fill(startX, py, startX + 2, py + 12, C_ACCENT());
-        g.drawString(font, allLabel, startX + 6, py + 2, allSel ? C_ACCENT() : C_TEXT(), false);
+        g.drawString(font, allLabel, startX + 6, py + 2, C_TEXT(), false);
         py += 16;
 
         int hidden = 0;
@@ -269,7 +269,7 @@ public class PhantasiaSceneSelectionScreen extends PhantasiaScreen {
             boolean hov = isOver(mx, my, startX, py, maxW, 12);
             g.fill(startX, py, startX + maxW, py + 12, sel ? C_BTN_ACT() : (hov ? C_BTN_HOV() : C_BTN()));
             if (sel) g.fill(startX, py, startX + 2, py + 12, C_ACCENT());
-            g.drawString(font, label, startX + 6, py + 2, sel ? C_ACCENT() : C_TEXT(), false);
+            g.drawString(font, label, startX + 6, py + 2, C_TEXT(), false);
             py += 16;
         }
         if (hidden > 0) {
@@ -463,9 +463,9 @@ public class PhantasiaSceneSelectionScreen extends PhantasiaScreen {
 
         String iconRes = scene.iconItem != null ? scene.iconItem : "minecraft:chest";
         ResourceLocation rl = iconRes.contains(":") ?
-                new ResourceLocation(iconRes) :
-                new ResourceLocation("minecraft", iconRes);
-        Item item = ForgeRegistries.ITEMS.getValue(rl);
+                ResourceLocation.parse(iconRes) :
+                ResourceLocation.fromNamespaceAndPath("minecraft", iconRes);
+        Item item = BuiltInRegistries.ITEM.get(rl);
         if (item == null || item == Items.AIR) item = Items.CHEST;
 
         ItemStack stack = new ItemStack(item);
@@ -598,9 +598,9 @@ public class PhantasiaSceneSelectionScreen extends PhantasiaScreen {
         String iconRes = guide.iconItem != null ? guide.iconItem : "minecraft:book";
         try {
             net.minecraft.resources.ResourceLocation rl = iconRes.contains(":") ?
-                    new net.minecraft.resources.ResourceLocation(iconRes) :
-                    new net.minecraft.resources.ResourceLocation("minecraft", iconRes);
-            net.minecraft.world.item.Item item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(rl);
+                    net.minecraft.resources.ResourceLocation.parse(iconRes) :
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("minecraft", iconRes);
+            net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(rl);
             if (item == null || item == net.minecraft.world.item.Items.AIR)
                 item = net.minecraft.world.item.Items.BOOK;
             int iconSize = 32;
@@ -1250,7 +1250,7 @@ public class PhantasiaSceneSelectionScreen extends PhantasiaScreen {
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double scrollX, double delta) {
         if (activeTab == Tab.SETTINGS) {
             int panelYScreen = HEADER_H + SEARCH_H - 4;
             int panelH = this.height - panelYScreen - FOOTER_H - 4;
@@ -1369,10 +1369,10 @@ public class PhantasiaSceneSelectionScreen extends PhantasiaScreen {
 
             ResourceLocation iconRL = null;
             try {
-                iconRL = new ResourceLocation(seq.iconItem);
+                iconRL = ResourceLocation.parse(seq.iconItem);
             } catch (Exception ignored) {}
             if (iconRL != null) {
-                Item iconItem = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(iconRL);
+                Item iconItem = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(iconRL);
                 if (iconItem != null && iconItem != Items.AIR)
                     g.renderItem(new ItemStack(iconItem), cx + 4, cy + 4);
             }

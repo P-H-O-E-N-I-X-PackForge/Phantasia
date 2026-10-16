@@ -15,15 +15,15 @@ public class PhantasiaThemeUtils {
     }
 
     public static int C_BTN() {
-        return PhoenixTheme.current().btn.getColor();
+        return PhoenixTheme.current().panel.getColor();
     }
 
     public static int C_BTN_HOV() {
-        return PhoenixTheme.current().btnHover.getColor();
+        return PhoenixTheme.current().accent.getColor();
     }
 
     public static int C_BTN_ACT() {
-        return PhoenixTheme.current().btnActive.getColor();
+        return PhoenixTheme.current().activeColor.getColor();
     }
 
     public static int C_TEXT() {
@@ -35,11 +35,11 @@ public class PhantasiaThemeUtils {
     }
 
     public static int C_TL_BG() {
-        return PhoenixTheme.current().timelineBg.getColor();
+        return PhoenixTheme.current().header.getColor();
     }
 
     public static int C_WARN() {
-        return PhoenixTheme.current().warn.getColor();
+        return PhoenixTheme.current().activeColor.getColor();
     }
 
     public static int C_ACCENT() {
@@ -47,15 +47,15 @@ public class PhantasiaThemeUtils {
     }
 
     public static int C_PROG() {
-        return PhoenixTheme.current().progress.getColor();
+        return PhoenixTheme.current().done.getColor();
     }
 
     public static int C_HILIGHT() {
-        return PhoenixTheme.current().highlight.getColor();
+        return PhoenixTheme.current().activeColor.getColor();
     }
 
     public static int C_BORDER() {
-        return PhoenixTheme.current().textDim.getColor();
+        return PhoenixTheme.current().border.getColor();
     }
 
     public static int C_BAR() {
@@ -63,33 +63,32 @@ public class PhantasiaThemeUtils {
     }
 
     public static int C_RED() {
-        return PhoenixTheme.current().warn.getColor();
+        return PhoenixTheme.current().activeColor.getColor();
     }
 
     public static int C_SEL() {
-        return PhoenixTheme.current().highlight.getColor();
+        return PhoenixTheme.current().activeColor.getColor();
     }
 
     public static int C_BTN_H() {
-        return PhoenixTheme.current().btnHover.getColor();
+        return PhoenixTheme.current().accent.getColor();
     }
 
     public static int C_CYCLE() {
-        return PhoenixTheme.current().highlight.getColor();
+        return PhoenixTheme.current().activeColor.getColor();
     }
 
     public static int C_ORANGE() {
-        return PhoenixTheme.current().warn.getColor();
+        return PhoenixTheme.current().activeColor.getColor();
     }
 
     public static int C_GREEN() {
-        return PhoenixTheme.current().progress.getColor();
+        return PhoenixTheme.current().done.getColor();
     }
 
     public static void drawThemedBtn(GuiGraphics g, Font font, int x, int y, int w, int h, String label, boolean hov,
                                      int baseColor) {
         if (!label.isEmpty()) {
-
             int minRequiredW = font.width(label) + 2;
             if (minRequiredW > w) {
                 w = minRequiredW;
@@ -114,7 +113,7 @@ public class PhantasiaThemeUtils {
 
     private static void drawModernBtn(GuiGraphics g, Font font, int x, int y, int w, int h, String label, boolean hov,
                                       int baseColor, PhoenixTheme t) {
-        g.fill(x, y, x + w, y + h, hov ? t.btnHover.getColor() : baseColor);
+        g.fill(x, y, x + w, y + h, hov ? t.accent.getColor() : baseColor);
         if (hov) {
             int accent = t.accent.getColor();
             g.fill(x, y, x + w, y + 1, accent);
@@ -135,7 +134,7 @@ public class PhantasiaThemeUtils {
 
         int fill = hov ? 0xFF8B8B8B : 0xFF707070;
 
-        if (baseColor == PhoenixTheme.current().btnActive.getColor()) {
+        if (baseColor == PhoenixTheme.current().activeColor.getColor()) {
             fill = 0xFF4A4A4A;
         }
         g.fill(x + 1, y + 1, x + w - 1, y + h - 1, fill);

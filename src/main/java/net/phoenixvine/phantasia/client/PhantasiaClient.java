@@ -20,6 +20,7 @@ import net.phoenixvine.phantasia.common.PhantasiaKeybind;
 import net.phoenixvine.phantasia.common.data.guides.PhantasiaGuideLoader;
 import net.phoenixvine.phantasia.common.data.scene.PhantasiaSceneLoader;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScriptLoader;
+import net.phoenixvine.wiki.client.suite.SuiteHudBar;
 import net.phoenixvine.wiki.theme.PhoenixTheme;
 
 @Mod.EventBusSubscriber(modid = Phantasia.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
@@ -96,6 +97,9 @@ public class PhantasiaClient {
         }
     }
 
+    private static final net.minecraft.resources.ResourceLocation PHANTASIA_ICON = new net.minecraft.resources.ResourceLocation(
+            "minecraft", "textures/item/knowledge_book.png");
+
     @SubscribeEvent
     public static void onClientSetup(final FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
@@ -106,6 +110,18 @@ public class PhantasiaClient {
             PhantasiaGuideLoader.load();
 
             PhoenixTheme.loadThemes();
+            // Lets the suite's shared/per-mod theme toggle (see PhoenixTheme#setSharedMode) tell this
+            // mod's own code apart from every other Phoenix mod's when they call the no-arg theme
+            // accessors -- see PhoenixTheme#resolveCallerModId.
+            PhoenixTheme.registerMod("net.phoenixvine.phantasia", Phantasia.MOD_ID);
+
+            SuiteHudBar.register(
+                    Phantasia.MOD_ID,
+                    SuiteHudBar.PRIORITY_PHANTASIA,
+                    PHANTASIA_ICON,
+                    Component.literal("Phantasia"),
+                    () -> Minecraft.getInstance().setScreen(
+                            new PhantasiaSceneSelectionScreen(Minecraft.getInstance().screen)));
 
             var resourceManager = Minecraft.getInstance().getResourceManager();
         });
