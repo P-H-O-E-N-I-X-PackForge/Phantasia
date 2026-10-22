@@ -472,6 +472,8 @@ public final class PhantasiaWorldRenderer {
         long tPre = System.nanoTime();
         tickAlpha();
 
+        if (world.consumeModelsChanged()) fullBakeNeeded = true;
+
         if (backReady) swapFullBuffers();
         if (overlayReady) swapOverlayBuffers();
 
@@ -557,7 +559,7 @@ public final class PhantasiaWorldRenderer {
             totalEntityTimeNs += (System.nanoTime() - _p3ent);
 
             long _p3dyn = System.nanoTime();
-            
+
             totalDynRendererTimeNs += (System.nanoTime() - _p3dyn);
 
             long _p3flush = System.nanoTime();
@@ -886,7 +888,8 @@ public final class PhantasiaWorldRenderer {
                 tinted.setAlpha(alpha);
                 ps.pushPose();
                 ps.translate(pos.getX(), pos.getY(), pos.getZ());
-                brd.renderBatched(state, pos, world, ps, tinted, true, random, modelData(brd, world, pos, state), layer);
+                brd.renderBatched(state, pos, world, ps, tinted, true, random, modelData(brd, world, pos, state),
+                        layer);
                 ps.popPose();
                 tinted.resetTint();
             }
@@ -1704,7 +1707,8 @@ public final class PhantasiaWorldRenderer {
     private static boolean canRenderInLayer(BlockRenderDispatcher brd, BlockState state, BlockPos pos,
                                             net.minecraft.world.level.BlockAndTintGetter world,
                                             RenderType layer, RandomSource random) {
-        return brd.getBlockModel(state).getRenderTypes(state, random, modelData(brd, world, pos, state)).contains(layer);
+        return brd.getBlockModel(state).getRenderTypes(state, random, modelData(brd, world, pos, state))
+                .contains(layer);
     }
 
     private static void gluLookAt(org.joml.Matrix4f mv,

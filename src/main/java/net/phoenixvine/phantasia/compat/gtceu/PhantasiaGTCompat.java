@@ -14,12 +14,11 @@ import java.util.function.Supplier;
 
 public final class PhantasiaGTCompat {
 
-    /** Phantasia's own GregTech registrations; the name of each entry is the dimension it describes. */
     private static final DeferredRegister<DimensionMarker> DIMENSION_MARKERS = DeferredRegister
             .create(GTRegistries.DIMENSION_MARKERS, Phantasia.MOD_ID);
 
     static {
-        // The preview dimension is a tier 3 dimension for recipes that check one (see PhantasiaTestingRecipes).
+
         DIMENSION_MARKERS.register("scene", (Supplier<DimensionMarker>) () -> new DimensionMarker(3,
                 () -> Items.DIAMOND_BLOCK, Component.translatable("phantasia.dimension.scene.name")));
     }

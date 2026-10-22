@@ -61,8 +61,6 @@ public class IEMultiblockDefinition implements IPhantasiaMultiblockDefinition {
         private final ModelData modelData;
 
         ModelOffsetBE(BlockPos pos, BlockState state, BlockPos submodelOffset) {
-            // A block entity needs a type; borrow a vanilla one, since a new type cannot be created once registries
-            // freeze, and accept any block state.
             super(net.minecraft.world.level.block.entity.BlockEntityType.SIGN, pos, state);
             this.modelData = ModelData.builder()
                     .with(IEProperties.Model.SUBMODEL_OFFSET, submodelOffset)

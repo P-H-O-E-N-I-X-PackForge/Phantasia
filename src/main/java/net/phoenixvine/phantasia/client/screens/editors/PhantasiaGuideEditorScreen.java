@@ -31,10 +31,9 @@ import static net.phoenixvine.phantasia.utils.PhantasiaThemeUtils.*;
 
 @OnlyIn(Dist.CLIENT)
 public class PhantasiaGuideEditorScreen extends Screen {
-    @Override
-    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-    }
 
+    @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {}
 
     private static final int TOP_H = 22;
     private static final int ROW_H = 18;
@@ -1314,10 +1313,9 @@ public class PhantasiaGuideEditorScreen extends Screen {
     }
 
     private static class RegistrySearchScreen extends Screen {
-    @Override
-    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-    }
 
+        @Override
+        public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {}
 
         private final Screen parent;
         private final String titleText;

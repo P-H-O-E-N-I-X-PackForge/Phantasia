@@ -26,12 +26,10 @@ public final class PhantasiaArsCompat {
         if (provider != null) provider.invalidateAll();
     }
 
-    /** Whether {@code be} is an Ars Nouveau source jar. */
     public static boolean isSourceJar(net.minecraft.world.level.block.entity.BlockEntity be) {
         return be instanceof com.hollingsworth.arsnouveau.common.block.tile.SourceJarTile;
     }
 
-    /** Fills an Ars Nouveau source jar; does nothing for any other block entity. */
     public static void setSource(net.minecraft.world.level.block.entity.BlockEntity be, int amount) {
         if (be instanceof com.hollingsworth.arsnouveau.common.block.tile.SourceJarTile jar) jar.setSource(amount);
     }

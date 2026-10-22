@@ -45,7 +45,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
-/** {@link IPhantasiaMultiblockDefinition} for the reworked GregTech 8.x API. */
 public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GTCEuMultiblockDefinition.class);
@@ -118,13 +117,31 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
         final MultiblockControllerMachine ctrl = controller;
         RenderSystem.recordRenderCall(() -> {
             try {
-                ctrl.checkAndFormStructure();
+                formStructure(ctrl);
                 LOGGER.debug("[Phantasia] Structure check run for {}", definition.getId());
             } catch (Exception e) {
                 LOGGER.error("[Phantasia] Forming the structure failed for {}: {}", definition.getId(),
                         e.getMessage(), e);
             }
         });
+    }
+
+    /**
+     * Forms the controller in the scene. GregTech 8's own {@code checkAndFormStructure()} returns at once unless the
+     * level is a server level, and the scene's level is a client one, so this runs the same check and form steps it
+     * is made of (minus the saved-data bookkeeping, which a scene has no use for).
+     */
+    private static void formStructure(MultiblockControllerMachine ctrl) {
+        for (String name : ctrl.getStructureNames()) {
+            var state = ctrl.checkStructurePattern(name);
+            if (state != null && state.getState().isValid()) {
+                ctrl.formStructure(name);
+            } else {
+                LOGGER.warn(
+                        "[Phantasia] {} did not pass its structure check in the scene ({}): it will render unformed",
+                        ctrl.getDefinition().getId(), state == null ? "no pattern" : state.getState());
+            }
+        }
     }
 
     @Override
@@ -184,11 +201,6 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
         return new ArrayList<>(detectPredicateVariants(machinePrefix, pattern, explicitIds));
     }
 
-    /**
-     * Finds positions whose predicate accepts more than one kind of block (a casing or a hatch, any tier of a
-     * hatch, ...) and offers them as swappable variant groups. The predicate at each preview position comes from
-     * GregTech's own structure helper, so it matches what the machine's pattern really allows there.
-     */
     private List<PhantasiaVariantGroup> detectPredicateVariants(String machinePrefix, PhantasiaLoadedPattern pattern,
                                                                 Set<String> excludeIds) {
         Preview preview = buildPreview(definition);
@@ -337,14 +349,9 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
         return "GTCEuMultiblockDefinition[" + definition.getId() + "]";
     }
 
-    /** The machine's default pattern laid out as GregTech's own preview does, plus what is needed to query it. */
     private record Preview(PhantasiaBlockInfo[][][] blocks, Map<BlockPos, BlockInfo> raw, BlockPos min,
                            AbstractStructureHelper helper, IBlockPattern pattern, Direction front, Direction up) {}
 
-    /**
-     * Lays the machine's default pattern out the way GregTech's own preview does: minimum repetitions for repeatable
-     * slices, smallest bounds for expandable patterns, controller facing its default direction.
-     */
     public static PhantasiaBlockInfo[][][] previewBlocks(MultiblockMachineDefinition definition) {
         Preview preview = buildPreview(definition);
         return preview == null ? null : preview.blocks();

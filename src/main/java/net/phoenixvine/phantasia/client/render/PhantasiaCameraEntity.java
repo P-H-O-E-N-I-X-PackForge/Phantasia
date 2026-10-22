@@ -15,7 +15,6 @@ public final class PhantasiaCameraEntity extends Entity {
 
     @Override
     public net.minecraft.world.entity.EntityDimensions getDimensions(net.minecraft.world.entity.Pose pose) {
-        // The camera sits exactly at the entity position, so the eye height is zero.
         return super.getDimensions(pose).withEyeHeight(0f);
     }
 
