@@ -557,7 +557,7 @@ public final class PhantasiaWorldRenderer {
             totalEntityTimeNs += (System.nanoTime() - _p3ent);
 
             long _p3dyn = System.nanoTime();
-            // GregTech 8 machines render through their block entities, which are already drawn above.
+            
             totalDynRendererTimeNs += (System.nanoTime() - _p3dyn);
 
             long _p3flush = System.nanoTime();
@@ -886,7 +886,7 @@ public final class PhantasiaWorldRenderer {
                 tinted.setAlpha(alpha);
                 ps.pushPose();
                 ps.translate(pos.getX(), pos.getY(), pos.getZ());
-                brd.renderBatched(state, pos, world, ps, tinted, true, random, world.getModelData(pos), layer);
+                brd.renderBatched(state, pos, world, ps, tinted, true, random, modelData(brd, world, pos, state), layer);
                 ps.popPose();
                 tinted.resetTint();
             }
@@ -1555,7 +1555,7 @@ public final class PhantasiaWorldRenderer {
             BlockState state = world.getBlockState(pos);
             ps.pushPose();
             ps.translate(pos.getX(), pos.getY(), pos.getZ());
-            brd.renderBatched(state, pos, world, ps, tinted, true, random, world.getModelData(pos), layer);
+            brd.renderBatched(state, pos, world, ps, tinted, true, random, modelData(brd, world, pos, state), layer);
             ps.popPose();
             tinted.resetTint();
             if (state.isRandomlyTicking() || state.getBlock() instanceof net.minecraft.world.level.block.EntityBlock) {
@@ -1606,7 +1606,6 @@ public final class PhantasiaWorldRenderer {
         }
     }
 
-    /** A mesh with one zero-area quad: 1.21 cannot build an empty mesh, and a stale VBO must still be overwritten. */
     private static com.mojang.blaze3d.vertex.MeshData degenerateMesh(com.mojang.blaze3d.vertex.ByteBufferBuilder owner) {
         BufferBuilder bb = new BufferBuilder(owner, VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
         for (int i = 0; i < 4; i++) {
@@ -1686,17 +1685,26 @@ public final class PhantasiaWorldRenderer {
     private record BakedLayer(com.mojang.blaze3d.vertex.MeshData mesh,
                               com.mojang.blaze3d.vertex.ByteBufferBuilder owner) {
 
-        /** Frees a layer that was baked but will not be uploaded. */
         void release() {
             mesh.close();
             owner.close();
         }
     }
 
+    /**
+     * The model data a chunk compile would hand the model: the model gets to add its own (GregTech connected-texture
+     * models put the level and position in it, which is how they look at neighbouring blocks).
+     */
+    private static net.neoforged.neoforge.client.model.data.ModelData modelData(BlockRenderDispatcher brd,
+                                                                                net.minecraft.world.level.BlockAndTintGetter world,
+                                                                                BlockPos pos, BlockState state) {
+        return brd.getBlockModel(state).getModelData(world, pos, state, world.getModelData(pos));
+    }
+
     private static boolean canRenderInLayer(BlockRenderDispatcher brd, BlockState state, BlockPos pos,
                                             net.minecraft.world.level.BlockAndTintGetter world,
                                             RenderType layer, RandomSource random) {
-        return brd.getBlockModel(state).getRenderTypes(state, random, world.getModelData(pos)).contains(layer);
+        return brd.getBlockModel(state).getRenderTypes(state, random, modelData(brd, world, pos, state)).contains(layer);
     }
 
     private static void gluLookAt(org.joml.Matrix4f mv,
