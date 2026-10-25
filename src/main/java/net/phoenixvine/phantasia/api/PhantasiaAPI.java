@@ -71,7 +71,7 @@ public final class PhantasiaAPI {
     public static void openForMachine(String machineId, Screen parent) {
         Optional<IPhantasiaMultiblockDefinition> def = PhantasiaMultiblockRegistry.resolve(machineId);
         if (def.isEmpty()) {
-            LOGGER.warn("[PhantasiaAPI] openForMachine: unknown machine id '{}' — screen not opened.", machineId);
+            LOGGER.warn("[PhantasiaAPI] openForMachine: unknown machine id '{}'. screen not opened.", machineId);
             return;
         }
         Minecraft.getInstance().setScreen(new PhantasiaSceneScreen(def.get(), parent));
