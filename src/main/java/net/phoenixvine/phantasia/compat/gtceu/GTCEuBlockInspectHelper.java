@@ -34,7 +34,7 @@ public final class GTCEuBlockInspectHelper {
                                 .withStyle(ChatFormatting.GOLD))
                         .withStyle(ChatFormatting.GRAY));
                 infoLines.add(Component.translatable("spec.phantasia.material",
-                        Component.literal(type.getMaterial().getName())
+                        Component.literal(type.getMaterial().getRegisteredName())
                                 .withStyle(ChatFormatting.WHITE))
                         .withStyle(ChatFormatting.GRAY));
                 infoLines.add(Component.translatable("spec.phantasia.energy_discount",

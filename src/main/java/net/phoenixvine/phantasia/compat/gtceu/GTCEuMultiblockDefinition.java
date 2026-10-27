@@ -358,40 +358,37 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
     }
 
     private static Preview buildPreview(MultiblockMachineDefinition definition) {
-        Supplier<IBlockPattern> supplier = definition.getStructurePatterns().get("default");
-        if (supplier == null) {
-            if (definition.getStructurePatterns().isEmpty()) return null;
-            supplier = definition.getStructurePatterns().values().iterator().next();
-        }
-        IBlockPattern pattern = supplier.get();
-        if (pattern == null) return null;
-
-        AbstractStructureHelper helper;
-        if (pattern instanceof BlockPattern blockPattern) {
-            Int2IntMap repeats = new Int2IntArrayMap();
-            var slices = blockPattern.getSlices();
-            for (int i = 0; i < slices.length; i++) repeats.put(i, slices[i].getMinRepeats());
-            helper = AbstractStructureHelper.blockPattern(repeats);
-        } else if (pattern instanceof ExpandablePattern expandable) {
-            IntList dims = new IntArrayList();
-            expandable.getBoundsConstraints().apply().stream().mapToInt(c -> c.leftInt()).forEach(dims::add);
-            helper = AbstractStructureHelper.expandable(dims);
-        } else {
-            return null;
-        }
+        Map<String, Supplier<IBlockPattern>> patterns = definition.getStructurePatterns();
+        if (patterns.isEmpty()) return null;
 
         RotationState rotation = definition.getRotationState();
         Direction front = rotation.defaultDirection;
         Direction up = rotation == RotationState.Y_AXIS ? Direction.NORTH : Direction.UP;
         if (front.getAxis().isVertical() && up.getAxis().isVertical()) up = Direction.NORTH;
 
-        Map<BlockPos, BlockInfo> blocks = new HashMap<>();
-        helper.populate(blocks, pattern, new Long2ObjectOpenHashMap<>(), front, up, false);
-        if (blocks.isEmpty()) return null;
+        // Use "default" as the primary pattern for the Preview record's metadata fields
+        Supplier<IBlockPattern> primarySupplier = patterns.getOrDefault("default",
+                patterns.values().iterator().next());
+        IBlockPattern primaryPattern = primarySupplier.get();
+        if (primaryPattern == null) return null;
+
+        AbstractStructureHelper primaryHelper = makeHelper(primaryPattern);
+        if (primaryHelper == null) return null;
+
+        // Merge blocks from all patterns (default + all substructures)
+        Map<BlockPos, BlockInfo> allBlocks = new HashMap<>();
+        for (Supplier<IBlockPattern> supplier : patterns.values()) {
+            IBlockPattern pat = supplier.get();
+            if (pat == null) continue;
+            AbstractStructureHelper h = makeHelper(pat);
+            if (h == null) continue;
+            h.populate(allBlocks, pat, new Long2ObjectOpenHashMap<>(), front, up, false);
+        }
+        if (allBlocks.isEmpty()) return null;
 
         int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
         int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
-        for (BlockPos p : blocks.keySet()) {
+        for (BlockPos p : allBlocks.keySet()) {
             minX = Math.min(minX, p.getX());
             minY = Math.min(minY, p.getY());
             minZ = Math.min(minZ, p.getZ());
@@ -403,13 +400,27 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
         BlockPos min = new BlockPos(minX, minY, minZ);
         PhantasiaBlockInfo[][][] out = new PhantasiaBlockInfo[maxX - minX + 1][maxY - minY + 1][maxZ - minZ + 1];
         for (var column : out) for (var row : column) java.util.Arrays.fill(row, PhantasiaBlockInfo.EMPTY);
-        for (var entry : blocks.entrySet()) {
+        for (var entry : allBlocks.entrySet()) {
             BlockInfo info = entry.getValue();
             if (info == null || info.isAir()) continue;
             BlockPos p = entry.getKey();
             out[p.getX() - minX][p.getY() - minY][p.getZ() - minZ] = PhantasiaBlockInfo
                     .fromBlockState(info.getBlockState());
         }
-        return new Preview(out, blocks, min, helper, pattern, front, up);
+        return new Preview(out, allBlocks, min, primaryHelper, primaryPattern, front, up);
+    }
+
+    private static AbstractStructureHelper makeHelper(IBlockPattern pattern) {
+        if (pattern instanceof BlockPattern blockPattern) {
+            Int2IntMap repeats = new Int2IntArrayMap();
+            var slices = blockPattern.getSlices();
+            for (int i = 0; i < slices.length; i++) repeats.put(i, slices[i].getMinRepeats());
+            return AbstractStructureHelper.blockPattern(repeats);
+        } else if (pattern instanceof ExpandablePattern expandable) {
+            IntList dims = new IntArrayList();
+            expandable.getBoundsConstraints().apply().stream().mapToInt(c -> c.leftInt()).forEach(dims::add);
+            return AbstractStructureHelper.expandable(dims);
+        }
+        return null;
     }
 }
