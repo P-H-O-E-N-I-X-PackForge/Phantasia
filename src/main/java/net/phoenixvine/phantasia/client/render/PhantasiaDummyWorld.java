@@ -10,10 +10,12 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.AbortableIterationConsumer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.biome.Biome;
@@ -33,11 +35,15 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.minecraft.world.level.storage.WritableLevelData;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.ticks.LevelTickAccess;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
 import java.util.Collections;
@@ -84,6 +90,54 @@ public class PhantasiaDummyWorld extends Level {
             l = Minecraft.getInstance().level;
         }
         return l;
+    }
+
+    @Override
+    public @NotNull BlockHitResult clip(ClipContext ctx) {
+        Vec3 from = ctx.getFrom(), to = ctx.getTo();
+        Vec3 d = to.subtract(from);
+        if (d.lengthSqr() < 1e-12) return missResult(ctx);
+
+        int x = Mth.floor(from.x), y = Mth.floor(from.y), z = Mth.floor(from.z);
+        int sx = (int) Math.signum(d.x), sy = (int) Math.signum(d.y), sz = (int) Math.signum(d.z);
+
+        double inf = Double.POSITIVE_INFINITY;
+        double tdx = sx != 0 ? Math.abs(1.0 / d.x) : inf;
+        double tdy = sy != 0 ? Math.abs(1.0 / d.y) : inf;
+        double tdz = sz != 0 ? Math.abs(1.0 / d.z) : inf;
+        double tx = sx > 0 ? (x + 1 - from.x) / d.x : sx < 0 ? (from.x - x) / -d.x : inf;
+        double ty = sy > 0 ? (y + 1 - from.y) / d.y : sy < 0 ? (from.y - y) / -d.y : inf;
+        double tz = sz > 0 ? (z + 1 - from.z) / d.z : sz < 0 ? (from.z - z) / -d.z : inf;
+
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int i = 0; i < 1024; i++) {
+            pos.set(x, y, z);
+            BlockState state = getBlockState(pos);
+            if (!state.isAir()) {
+                VoxelShape shape = ctx.getBlockShape(state, this, pos);
+                BlockHitResult hit = shape.clip(from, to, pos.immutable());
+                if (hit != null) return hit;
+            }
+            double t = Math.min(tx, Math.min(ty, tz));
+            if (t > 1.0) break;
+            if (t == tx) {
+                x += sx;
+                tx += tdx;
+            } else if (t == ty) {
+                y += sy;
+                ty += tdy;
+            } else {
+                z += sz;
+                tz += tdz;
+            }
+        }
+        return missResult(ctx);
+    }
+
+    private static BlockHitResult missResult(ClipContext ctx) {
+        Vec3 d = ctx.getFrom().subtract(ctx.getTo());
+        return BlockHitResult.miss(ctx.getTo(), Direction.getNearest(d.x, d.y, d.z),
+                BlockPos.containing(ctx.getTo()));
     }
 
     @Override

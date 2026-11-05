@@ -1208,72 +1208,76 @@ public final class PhantasiaWorldRenderer {
         }
 
         bakeFuture = BAKE_POOL.submit(() -> {
-            fullBakeStartNs = System.nanoTime();
-            lastBakeBlockCount = snapshot.size();
-            Minecraft mc = Minecraft.getInstance();
-            BlockRenderDispatcher brd = mc.getBlockRenderer();
-            RandomSource random = RandomSource.createNewThreadLocalInstance();
-            ModelBlockRenderer.enableCaching();
-
-            PhantasiaVariantState vs = PhantasiaVariantState.get();
-            Map<BlockPos, PhantasiaBlockInfo> variantSaved = applyVariants(vs, snapshot);
-            Map<BlockPos, PhantasiaBlockInfo> hiddenSaved = maskHiddenBlocks(snapshot);
-
-            Map<RenderType, List<BlockPos>> solidBuckets = new HashMap<>(LAYER_COUNT);
-            Map<RenderType, List<BlockPos>> fluidBuckets = new HashMap<>(LAYER_COUNT);
-            bucket(brd, random, snapshot, solidBuckets, fluidBuckets);
-
-            Set<BlockPos> animatedBack = new HashSet<>();
-            BakedLayer[] baked = new BakedLayer[LAYER_COUNT];
-            boolean fullBakeDone = false;
             try {
-                for (int i = 0; i < LAYER_COUNT; i++) {
-                    if (Thread.interrupted()) return;
-                    RenderType layer = LAYERS.get(i);
-                    List<BlockPos> solid = solidBuckets.getOrDefault(layer, List.of());
-                    List<BlockPos> fluid = fluidBuckets.getOrDefault(layer, List.of());
-                    if (solid.isEmpty() && fluid.isEmpty()) {
-                        baked[i] = null;
-                        continue;
+                fullBakeStartNs = System.nanoTime();
+                lastBakeBlockCount = snapshot.size();
+                Minecraft mc = Minecraft.getInstance();
+                BlockRenderDispatcher brd = mc.getBlockRenderer();
+                RandomSource random = RandomSource.createNewThreadLocalInstance();
+                ModelBlockRenderer.enableCaching();
+
+                PhantasiaVariantState vs = PhantasiaVariantState.get();
+                Map<BlockPos, PhantasiaBlockInfo> variantSaved = applyVariants(vs, snapshot);
+                Map<BlockPos, PhantasiaBlockInfo> hiddenSaved = maskHiddenBlocks(snapshot);
+
+                Map<RenderType, List<BlockPos>> solidBuckets = new HashMap<>(LAYER_COUNT);
+                Map<RenderType, List<BlockPos>> fluidBuckets = new HashMap<>(LAYER_COUNT);
+                bucket(brd, random, snapshot, solidBuckets, fluidBuckets);
+
+                Set<BlockPos> animatedBack = new HashSet<>();
+                BakedLayer[] baked = new BakedLayer[LAYER_COUNT];
+                boolean fullBakeDone = false;
+                try {
+                    for (int i = 0; i < LAYER_COUNT; i++) {
+                        if (Thread.interrupted()) return;
+                        RenderType layer = LAYERS.get(i);
+                        List<BlockPos> solid = solidBuckets.getOrDefault(layer, List.of());
+                        List<BlockPos> fluid = fluidBuckets.getOrDefault(layer, List.of());
+                        if (solid.isEmpty() && fluid.isEmpty()) {
+                            baked[i] = null;
+                            continue;
+                        }
+                        baked[i] = bakeLayerToBuffer(brd, random, layer, solid, fluid, animatedBack);
+                        if (baked[i] == null) return;
                     }
-                    baked[i] = bakeLayerToBuffer(brd, random, layer, solid, fluid, animatedBack);
-                    if (baked[i] == null) return;
-                }
-                fullBakeDone = true;
-            } finally {
-                ModelBlockRenderer.clearCache();
-                restoreVariants(hiddenSaved);
-                restoreVariants(variantSaved);
+                    fullBakeDone = true;
+                } finally {
+                    ModelBlockRenderer.clearCache();
+                    restoreVariants(hiddenSaved);
+                    restoreVariants(variantSaved);
 
-                if (!fullBakeDone) {
-                    for (BakedLayer bl : baked) if (bl != null) bl.release();
-                    return;
-                }
-            }
-
-            pendingUploads.set(LAYER_COUNT);
-            for (int i = 0; i < LAYER_COUNT; i++) {
-                final int fi = i;
-                final BakedLayer bl = baked[fi];
-                RenderSystem.recordRenderCall(() -> {
-                    if (closed) {
-                        pendingUploads.decrementAndGet();
+                    if (!fullBakeDone) {
+                        for (BakedLayer bl : baked) if (bl != null) bl.release();
                         return;
                     }
-                    if (bl != null) uploadToVBO(back[fi], bl);
-                    else uploadEmptyVBO(back[fi], LAYERS.get(fi));
-                    if (pendingUploads.decrementAndGet() == 0) backReady = true;
-                });
+                }
+
+                pendingUploads.set(LAYER_COUNT);
+                for (int i = 0; i < LAYER_COUNT; i++) {
+                    final int fi = i;
+                    final BakedLayer bl = baked[fi];
+                    RenderSystem.recordRenderCall(() -> {
+                        if (closed) {
+                            pendingUploads.decrementAndGet();
+                            return;
+                        }
+                        if (bl != null) uploadToVBO(back[fi], bl);
+                        else uploadEmptyVBO(back[fi], LAYERS.get(fi));
+                        if (pendingUploads.decrementAndGet() == 0) backReady = true;
+                    });
+                }
+                backAnimatedPositions = animatedBack;
+                Set<BlockPos> tes = new HashSet<>();
+                for (BlockPos pos : snapshot) {
+                    if (Thread.interrupted()) return;
+                    BlockEntity be = world.getBlockEntity(pos);
+                    if (be != null && mc.getBlockEntityRenderDispatcher().getRenderer(be) != null)
+                        tes.add(pos);
+                }
+                backTileEntities = tes;
+            } catch (Throwable bakeError) {
+                LOGGER.error("[Phantasia] Baking the scene failed", bakeError);
             }
-            backAnimatedPositions = animatedBack;
-            Set<BlockPos> tes = new HashSet<>();
-            for (BlockPos pos : snapshot) {
-                if (Thread.interrupted()) return;
-                BlockEntity be = world.getBlockEntity(pos);
-                if (be != null && mc.getBlockEntityRenderDispatcher().getRenderer(be) != null)
-                    tes.add(pos);
-            }
-            backTileEntities = tes;
         });
     }
 
@@ -1289,147 +1293,151 @@ public final class PhantasiaWorldRenderer {
         List<BlockPos> ordered = new ArrayList<>(snapshot);
 
         bakeFuture = BAKE_POOL.submit(() -> {
-            fullBakeStartNs = System.nanoTime();
-            lastBakeBlockCount = snapshot.size();
-
-            Minecraft mc = Minecraft.getInstance();
-            BlockRenderDispatcher brd = mc.getBlockRenderer();
-            RandomSource random = RandomSource.createNewThreadLocalInstance();
-
-            PhantasiaVariantState vs = PhantasiaVariantState.get();
-            Map<BlockPos, PhantasiaBlockInfo> variantSaved = applyVariants(vs, snapshot);
-            Map<BlockPos, PhantasiaBlockInfo> hiddenSaved = maskHiddenBlocks(snapshot);
-
-            Set<BlockPos> animatedBack = new HashSet<>();
-            Set<BlockPos> tesBack = new HashSet<>();
-
             try {
-                int total = ordered.size();
-                int chunkStart = 0;
+                fullBakeStartNs = System.nanoTime();
+                lastBakeBlockCount = snapshot.size();
 
-                while (chunkStart < total) {
-                    if (Thread.interrupted()) return;
+                Minecraft mc = Minecraft.getInstance();
+                BlockRenderDispatcher brd = mc.getBlockRenderer();
+                RandomSource random = RandomSource.createNewThreadLocalInstance();
 
-                    int chunkEnd = Math.min(chunkStart + STREAMING_CHUNK_SIZE, total);
-                    List<BlockPos> chunk = ordered.subList(chunkStart, chunkEnd);
+                PhantasiaVariantState vs = PhantasiaVariantState.get();
+                Map<BlockPos, PhantasiaBlockInfo> variantSaved = applyVariants(vs, snapshot);
+                Map<BlockPos, PhantasiaBlockInfo> hiddenSaved = maskHiddenBlocks(snapshot);
 
-                    ModelBlockRenderer.enableCaching();
-                    Map<RenderType, List<BlockPos>> solidBuckets = new HashMap<>(LAYER_COUNT);
-                    Map<RenderType, List<BlockPos>> fluidBuckets = new HashMap<>(LAYER_COUNT);
-                    bucket(brd, random, new HashSet<>(chunk), solidBuckets, fluidBuckets);
+                Set<BlockPos> animatedBack = new HashSet<>();
+                Set<BlockPos> tesBack = new HashSet<>();
 
-                    BakedLayer[] baked = new BakedLayer[LAYER_COUNT];
-                    boolean chunkDone = false;
-                    try {
-                        for (int i = 0; i < LAYER_COUNT; i++) {
-                            if (Thread.interrupted()) return;
-                            RenderType layer = LAYERS.get(i);
-                            List<BlockPos> solid = solidBuckets.getOrDefault(layer, List.of());
-                            List<BlockPos> fluid = fluidBuckets.getOrDefault(layer, List.of());
-                            if (solid.isEmpty() && fluid.isEmpty()) {
-                                baked[i] = null;
-                                continue;
+                try {
+                    int total = ordered.size();
+                    int chunkStart = 0;
+
+                    while (chunkStart < total) {
+                        if (Thread.interrupted()) return;
+
+                        int chunkEnd = Math.min(chunkStart + STREAMING_CHUNK_SIZE, total);
+                        List<BlockPos> chunk = ordered.subList(chunkStart, chunkEnd);
+
+                        ModelBlockRenderer.enableCaching();
+                        Map<RenderType, List<BlockPos>> solidBuckets = new HashMap<>(LAYER_COUNT);
+                        Map<RenderType, List<BlockPos>> fluidBuckets = new HashMap<>(LAYER_COUNT);
+                        bucket(brd, random, new HashSet<>(chunk), solidBuckets, fluidBuckets);
+
+                        BakedLayer[] baked = new BakedLayer[LAYER_COUNT];
+                        boolean chunkDone = false;
+                        try {
+                            for (int i = 0; i < LAYER_COUNT; i++) {
+                                if (Thread.interrupted()) return;
+                                RenderType layer = LAYERS.get(i);
+                                List<BlockPos> solid = solidBuckets.getOrDefault(layer, List.of());
+                                List<BlockPos> fluid = fluidBuckets.getOrDefault(layer, List.of());
+                                if (solid.isEmpty() && fluid.isEmpty()) {
+                                    baked[i] = null;
+                                    continue;
+                                }
+                                baked[i] = bakeLayerToBuffer(brd, random, layer, solid, fluid, animatedBack);
+                                if (baked[i] == null) return;
                             }
-                            baked[i] = bakeLayerToBuffer(brd, random, layer, solid, fluid, animatedBack);
-                            if (baked[i] == null) return;
+                            chunkDone = true;
+                        } finally {
+                            ModelBlockRenderer.clearCache();
+                            if (!chunkDone) {
+                                for (BakedLayer bl : baked) if (bl != null) bl.release();
+                            }
                         }
-                        chunkDone = true;
-                    } finally {
-                        ModelBlockRenderer.clearCache();
-                        if (!chunkDone) {
-                            for (BakedLayer bl : baked) if (bl != null) bl.release();
+
+                        for (BlockPos pos : chunk) {
+                            BlockEntity be = world.getBlockEntity(pos);
+                            if (be != null && mc.getBlockEntityRenderDispatcher().getRenderer(be) != null)
+                                tesBack.add(pos);
                         }
+
+                        final BakedLayer[] bakedFinal = baked;
+                        final int chunkEndFinal = chunkEnd;
+
+                        RenderSystem.recordRenderCall(() -> {
+                            if (closed) return;
+                            VertexBuffer[] chunkVBOs = new VertexBuffer[LAYER_COUNT];
+                            for (int i = 0; i < LAYER_COUNT; i++) {
+                                chunkVBOs[i] = new VertexBuffer(VertexBuffer.Usage.STATIC);
+                                if (bakedFinal[i] != null) uploadToVBO(chunkVBOs[i], bakedFinal[i]);
+                                else uploadEmptyVBO(chunkVBOs[i], LAYERS.get(i));
+                            }
+                            streamChunks.add(chunkVBOs);
+                            streamChunksReady = streamChunks.size();
+                            streamingProgress = chunkEndFinal;
+                        });
+
+                        chunkStart = chunkEnd;
                     }
 
-                    for (BlockPos pos : chunk) {
-                        BlockEntity be = world.getBlockEntity(pos);
-                        if (be != null && mc.getBlockEntityRenderDispatcher().getRenderer(be) != null)
-                            tesBack.add(pos);
-                    }
+                    backAnimatedPositions = animatedBack;
+                    backTileEntities = tesBack;
 
-                    final BakedLayer[] bakedFinal = baked;
-                    final int chunkEndFinal = chunkEnd;
+                } finally {
+                    restoreVariants(hiddenSaved);
+                    restoreVariants(variantSaved);
 
-                    RenderSystem.recordRenderCall(() -> {
-                        if (closed) return;
-                        VertexBuffer[] chunkVBOs = new VertexBuffer[LAYER_COUNT];
-                        for (int i = 0; i < LAYER_COUNT; i++) {
-                            chunkVBOs[i] = new VertexBuffer(VertexBuffer.Usage.STATIC);
-                            if (bakedFinal[i] != null) uploadToVBO(chunkVBOs[i], bakedFinal[i]);
-                            else uploadEmptyVBO(chunkVBOs[i], LAYERS.get(i));
+                }
+
+                ModelBlockRenderer.enableCaching();
+                PhantasiaVariantState vs2 = PhantasiaVariantState.get();
+                Map<BlockPos, PhantasiaBlockInfo> vs2saved = applyVariants(vs2, snapshot);
+                Map<BlockPos, PhantasiaBlockInfo> hidSaved2 = maskHiddenBlocks(snapshot);
+
+                Map<RenderType, List<BlockPos>> solidB = new HashMap<>(LAYER_COUNT);
+                Map<RenderType, List<BlockPos>> fluidB = new HashMap<>(LAYER_COUNT);
+                bucket(brd, random, snapshot, solidB, fluidB);
+
+                Set<BlockPos> animatedBack2 = new HashSet<>();
+                BakedLayer[] finalBaked = new BakedLayer[LAYER_COUNT];
+                boolean consolidateDone = false;
+                try {
+                    for (int i = 0; i < LAYER_COUNT; i++) {
+                        if (Thread.interrupted()) return;
+                        RenderType layer = LAYERS.get(i);
+                        List<BlockPos> solid = solidB.getOrDefault(layer, List.of());
+                        List<BlockPos> fluid = fluidB.getOrDefault(layer, List.of());
+                        if (solid.isEmpty() && fluid.isEmpty()) {
+                            finalBaked[i] = null;
+                            continue;
                         }
-                        streamChunks.add(chunkVBOs);
-                        streamChunksReady = streamChunks.size();
-                        streamingProgress = chunkEndFinal;
-                    });
-
-                    chunkStart = chunkEnd;
-                }
-
-                backAnimatedPositions = animatedBack;
-                backTileEntities = tesBack;
-
-            } finally {
-                restoreVariants(hiddenSaved);
-                restoreVariants(variantSaved);
-
-            }
-
-            ModelBlockRenderer.enableCaching();
-            PhantasiaVariantState vs2 = PhantasiaVariantState.get();
-            Map<BlockPos, PhantasiaBlockInfo> vs2saved = applyVariants(vs2, snapshot);
-            Map<BlockPos, PhantasiaBlockInfo> hidSaved2 = maskHiddenBlocks(snapshot);
-
-            Map<RenderType, List<BlockPos>> solidB = new HashMap<>(LAYER_COUNT);
-            Map<RenderType, List<BlockPos>> fluidB = new HashMap<>(LAYER_COUNT);
-            bucket(brd, random, snapshot, solidB, fluidB);
-
-            Set<BlockPos> animatedBack2 = new HashSet<>();
-            BakedLayer[] finalBaked = new BakedLayer[LAYER_COUNT];
-            boolean consolidateDone = false;
-            try {
-                for (int i = 0; i < LAYER_COUNT; i++) {
-                    if (Thread.interrupted()) return;
-                    RenderType layer = LAYERS.get(i);
-                    List<BlockPos> solid = solidB.getOrDefault(layer, List.of());
-                    List<BlockPos> fluid = fluidB.getOrDefault(layer, List.of());
-                    if (solid.isEmpty() && fluid.isEmpty()) {
-                        finalBaked[i] = null;
-                        continue;
+                        finalBaked[i] = bakeLayerToBuffer(brd, random, layer, solid, fluid, animatedBack2);
                     }
-                    finalBaked[i] = bakeLayerToBuffer(brd, random, layer, solid, fluid, animatedBack2);
-                }
-                consolidateDone = true;
-            } finally {
-                ModelBlockRenderer.clearCache();
-                restoreVariants(hidSaved2);
-                restoreVariants(vs2saved);
+                    consolidateDone = true;
+                } finally {
+                    ModelBlockRenderer.clearCache();
+                    restoreVariants(hidSaved2);
+                    restoreVariants(vs2saved);
 
-                if (!consolidateDone) {
+                    if (!consolidateDone) {
 
-                    for (BakedLayer bl : finalBaked) if (bl != null) bl.release();
-                    return;
-                }
-            }
-
-            pendingUploads.set(LAYER_COUNT);
-            for (int i = 0; i < LAYER_COUNT; i++) {
-                final int fi = i;
-                final BakedLayer bl = finalBaked[fi];
-                RenderSystem.recordRenderCall(() -> {
-                    if (closed) {
-                        pendingUploads.decrementAndGet();
+                        for (BakedLayer bl : finalBaked) if (bl != null) bl.release();
                         return;
                     }
-                    if (bl != null) uploadToVBO(back[fi], bl);
-                    else uploadEmptyVBO(back[fi], LAYERS.get(fi));
-                    if (pendingUploads.decrementAndGet() == 0) {
-                        streamingProgress = streamingTotal;
-                        backReady = true;
-                    }
-                });
+                }
+
+                pendingUploads.set(LAYER_COUNT);
+                for (int i = 0; i < LAYER_COUNT; i++) {
+                    final int fi = i;
+                    final BakedLayer bl = finalBaked[fi];
+                    RenderSystem.recordRenderCall(() -> {
+                        if (closed) {
+                            pendingUploads.decrementAndGet();
+                            return;
+                        }
+                        if (bl != null) uploadToVBO(back[fi], bl);
+                        else uploadEmptyVBO(back[fi], LAYERS.get(fi));
+                        if (pendingUploads.decrementAndGet() == 0) {
+                            streamingProgress = streamingTotal;
+                            backReady = true;
+                        }
+                    });
+                }
+                backAnimatedPositions = animatedBack2;
+            } catch (Throwable bakeError) {
+                LOGGER.error("[Phantasia] Baking the scene failed", bakeError);
             }
-            backAnimatedPositions = animatedBack2;
         });
     }
 
@@ -1445,64 +1453,68 @@ public final class PhantasiaWorldRenderer {
         fullVisibleSnapshot.addAll(baseplatePositions);
 
         bakeFuture = BAKE_POOL.submit(() -> {
-            Minecraft mc = Minecraft.getInstance();
-            BlockRenderDispatcher brd = mc.getBlockRenderer();
-            RandomSource random = RandomSource.createNewThreadLocalInstance();
-            ModelBlockRenderer.enableCaching();
-
-            PhantasiaVariantState vs = PhantasiaVariantState.get();
-            Map<BlockPos, PhantasiaBlockInfo> variantSaved = applyVariants(vs, valid);
-            Map<BlockPos, PhantasiaBlockInfo> hiddenSaved = maskHiddenBlocks(fullVisibleSnapshot);
-
-            Map<RenderType, List<BlockPos>> solidBuckets = new HashMap<>(LAYER_COUNT);
-            Map<RenderType, List<BlockPos>> fluidBuckets = new HashMap<>(LAYER_COUNT);
-            bucket(brd, random, valid, solidBuckets, fluidBuckets);
-
-            Map<BlockPos, PhantasiaBlockInfo> activeRevert = pendingActiveStateRevert;
-            if (activeRevert != null) {
-                pendingActiveStateRevert = null;
-                restoreVariants(activeRevert);
-            }
-
-            Set<BlockPos> animatedBack = new HashSet<>();
-            BakedLayer[] baked = new BakedLayer[LAYER_COUNT];
-            boolean partialDone = false;
             try {
-                for (int i = 0; i < LAYER_COUNT; i++) {
-                    if (Thread.interrupted()) return;
-                    RenderType layer = LAYERS.get(i);
-                    List<BlockPos> solid = solidBuckets.getOrDefault(layer, List.of());
-                    List<BlockPos> fluid = fluidBuckets.getOrDefault(layer, List.of());
-                    if (solid.isEmpty() && fluid.isEmpty()) {
-                        baked[i] = null;
-                        continue;
-                    }
-                    baked[i] = bakeLayerToBuffer(brd, random, layer, solid, fluid, animatedBack);
-                }
-                partialDone = true;
-            } finally {
-                ModelBlockRenderer.clearCache();
-                restoreVariants(hiddenSaved);
-                restoreVariants(variantSaved);
+                Minecraft mc = Minecraft.getInstance();
+                BlockRenderDispatcher brd = mc.getBlockRenderer();
+                RandomSource random = RandomSource.createNewThreadLocalInstance();
+                ModelBlockRenderer.enableCaching();
 
-                if (!partialDone) {
-                    for (BakedLayer bl : baked) if (bl != null) bl.release();
-                    return;
+                PhantasiaVariantState vs = PhantasiaVariantState.get();
+                Map<BlockPos, PhantasiaBlockInfo> variantSaved = applyVariants(vs, valid);
+                Map<BlockPos, PhantasiaBlockInfo> hiddenSaved = maskHiddenBlocks(fullVisibleSnapshot);
+
+                Map<RenderType, List<BlockPos>> solidBuckets = new HashMap<>(LAYER_COUNT);
+                Map<RenderType, List<BlockPos>> fluidBuckets = new HashMap<>(LAYER_COUNT);
+                bucket(brd, random, valid, solidBuckets, fluidBuckets);
+
+                Map<BlockPos, PhantasiaBlockInfo> activeRevert = pendingActiveStateRevert;
+                if (activeRevert != null) {
+                    pendingActiveStateRevert = null;
+                    restoreVariants(activeRevert);
                 }
-            }
-            pendingUploads.set(LAYER_COUNT);
-            for (int i = 0; i < LAYER_COUNT; i++) {
-                final int fi = i;
-                final BakedLayer bl = baked[fi];
-                RenderSystem.recordRenderCall(() -> {
-                    if (closed) {
-                        pendingUploads.decrementAndGet();
+
+                Set<BlockPos> animatedBack = new HashSet<>();
+                BakedLayer[] baked = new BakedLayer[LAYER_COUNT];
+                boolean partialDone = false;
+                try {
+                    for (int i = 0; i < LAYER_COUNT; i++) {
+                        if (Thread.interrupted()) return;
+                        RenderType layer = LAYERS.get(i);
+                        List<BlockPos> solid = solidBuckets.getOrDefault(layer, List.of());
+                        List<BlockPos> fluid = fluidBuckets.getOrDefault(layer, List.of());
+                        if (solid.isEmpty() && fluid.isEmpty()) {
+                            baked[i] = null;
+                            continue;
+                        }
+                        baked[i] = bakeLayerToBuffer(brd, random, layer, solid, fluid, animatedBack);
+                    }
+                    partialDone = true;
+                } finally {
+                    ModelBlockRenderer.clearCache();
+                    restoreVariants(hiddenSaved);
+                    restoreVariants(variantSaved);
+
+                    if (!partialDone) {
+                        for (BakedLayer bl : baked) if (bl != null) bl.release();
                         return;
                     }
-                    if (bl != null) uploadToVBO(overlay[fi], bl);
-                    else uploadEmptyVBO(overlay[fi], LAYERS.get(fi));
-                    if (pendingUploads.decrementAndGet() == 0) overlayReady = true;
-                });
+                }
+                pendingUploads.set(LAYER_COUNT);
+                for (int i = 0; i < LAYER_COUNT; i++) {
+                    final int fi = i;
+                    final BakedLayer bl = baked[fi];
+                    RenderSystem.recordRenderCall(() -> {
+                        if (closed) {
+                            pendingUploads.decrementAndGet();
+                            return;
+                        }
+                        if (bl != null) uploadToVBO(overlay[fi], bl);
+                        else uploadEmptyVBO(overlay[fi], LAYERS.get(fi));
+                        if (pendingUploads.decrementAndGet() == 0) overlayReady = true;
+                    });
+                }
+            } catch (Throwable bakeError) {
+                LOGGER.error("[Phantasia] Baking the scene failed", bakeError);
             }
         });
     }
