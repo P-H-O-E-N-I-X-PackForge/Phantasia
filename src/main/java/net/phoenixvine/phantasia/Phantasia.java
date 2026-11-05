@@ -49,6 +49,16 @@ public class Phantasia {
                 net.phoenixvine.phantasia.compat.phoenixcore.PhoenixCoreBlockInspectHelper.register();
             }
 
+            // Scenes that mods and resource packs ship, and every multiblock registered with Patchouli
+            net.phoenixvine.phantasia.compat.pack.PhantasiaPackProvider packs = new net.phoenixvine.phantasia.compat.pack.PhantasiaPackProvider();
+            net.phoenixvine.phantasia.common.multiblock.PhantasiaMultiblockRegistry.register(packs);
+            modEventBus.addListener(
+                    (net.minecraftforge.client.event.RegisterClientReloadListenersEvent e) -> e.registerReloadListener(packs));
+            if (ModList.get().isLoaded("patchouli")) {
+                net.phoenixvine.phantasia.common.multiblock.PhantasiaMultiblockRegistry.register(
+                        new net.phoenixvine.phantasia.compat.patchouli.PatchouliMultiblockProvider());
+            }
+
             if (ModList.get().isLoaded("ars_nouveau")) {
                 PhantasiaArsCompat.init();
             }

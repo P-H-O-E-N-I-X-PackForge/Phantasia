@@ -150,8 +150,23 @@ public class PhantasiaVariantsScreen extends Screen {
         int rowBg = hovered ? 0xFF1A1A2A : 0x00000000;
         g.fill(contentX, rowY, contentX + contentW, rowY + ROW_H, rowBg);
 
-        String label = trunc(group.getLabel(), contentW - DROPDOWN_W - 12);
+        String label = trunc(group.getLabel(), contentW - (group.isToggle() ? 44 : DROPDOWN_W) - 12);
         g.drawString(font, label, contentX + 4, rowY + 7, 0xCCCCCC);
+
+        if (group.isToggle()) {
+            boolean on = variantState.isOn(group);
+            int bw = 44, bx = contentX + contentW - bw, by = rowY + 3, bh = ROW_H - 6;
+            boolean bh2 = isOver(mx, my, bx, by, bw, bh);
+            g.fill(bx, by, bx + bw, by + bh, on ? (bh2 ? 0xFF2E6B3A : 0xFF245530) :
+                    (bh2 ? 0xFF4A2A2A : 0xFF3A2020));
+            PhantasiaThemeUtils.drawBorderRect(g, bx, by, bw, bh, C_BORDER());
+            g.drawCenteredString(font, on ? "ON" : "OFF", bx + bw / 2, by + 3, on ? 0xFF9BE8A8 : 0xFFE89B9B);
+            final String tid = group.getId();
+            final int next = on ? 1 : 0;
+            activeButtons.add(new PhantasiaUIUtils.ButtonAction(bx, by, bw, bh,
+                    () -> variantState.setSelection(tid, next)));
+            return rowY + ROW_H + 2;
+        }
 
         int ddX = contentX + contentW - DROPDOWN_W;
         int ddY = rowY + 3;
