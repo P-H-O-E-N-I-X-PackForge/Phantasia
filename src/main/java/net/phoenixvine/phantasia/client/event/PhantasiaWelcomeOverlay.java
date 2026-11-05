@@ -30,6 +30,8 @@ public final class PhantasiaWelcomeOverlay {
     private static boolean wasClicking = false;
 
     private static int toastX, toastY;
+    /** How much bigger or smaller than its design size the toast is drawn, from the window's GUI width. */
+    private static float toastScale = 1f;
     private static final int TOAST_W = 248;
     private static int TOAST_H = 46;
 
@@ -91,7 +93,8 @@ public final class PhantasiaWelcomeOverlay {
             double sx = rawX[0] * mc.getWindow().getGuiScaledWidth() / mc.getWindow().getScreenWidth();
             double sy = rawY[0] * mc.getWindow().getGuiScaledHeight() / mc.getWindow().getScreenHeight();
 
-            if (sx >= toastX && sx <= toastX + TOAST_W && sy >= toastY && sy <= toastY + TOAST_H) {
+            if (sx >= toastX && sx <= toastX + TOAST_W * toastScale && sy >= toastY &&
+                    sy <= toastY + TOAST_H * toastScale) {
                 active = false;
                 PhantasiaGuideData guide = PhantasiaGuideRegistry.get("phantasia:getting_started");
                 if (guide != null) {
@@ -131,10 +134,15 @@ public final class PhantasiaWelcomeOverlay {
         int contentH = lineH + 3 + instrLines.size() * lineH + 3 + guideLines.size() * lineH;
         TOAST_H = 6 + contentH + 6;
 
-        int tx = sw - TOAST_W - 8;
-        int ty = 8;
-        toastX = tx;
-        toastY = ty;
+        toastScale = Math.max(0.6f, Math.min(2.5f, sw / 560f));
+        int margin = Math.round(8 * toastScale);
+        toastX = sw - Math.round(TOAST_W * toastScale) - margin;
+        toastY = margin;
+        g.pose().pushPose();
+        g.pose().translate(toastX, toastY, 0);
+        g.pose().scale(toastScale, toastScale, 1f);
+        int tx = 0;
+        int ty = 0;
 
         PhoenixTheme theme = PhoenixTheme.current();
         int bgColor = withAlpha(theme.bg.getColor(), (int) (0xDD * alpha));
@@ -160,6 +168,7 @@ public final class PhantasiaWelcomeOverlay {
             g.drawString(font, line, lx, y, dimColor, false);
             y += lineH;
         }
+        g.pose().popPose();
     }
 
     private static int withAlpha(int argb, int a) {
