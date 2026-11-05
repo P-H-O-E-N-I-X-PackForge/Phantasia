@@ -159,7 +159,8 @@ public class PatchouliMultiblockProvider implements IPhantasiaMultiblockProvider
                         maxY = Math.max(maxY, p.getY());
                         maxZ = Math.max(maxZ, p.getZ());
                     }
-                    PhantasiaBlockInfo[][][] g = new PhantasiaBlockInfo[maxX - minX + 1][maxY - minY + 1][maxZ - minZ + 1];
+                    PhantasiaBlockInfo[][][] g = new PhantasiaBlockInfo[maxX - minX + 1][maxY - minY + 1][maxZ - minZ +
+                            1];
                     for (var plane : g) for (var row : plane) Arrays.fill(row, PhantasiaBlockInfo.EMPTY);
                     for (var e : states.entrySet()) {
                         BlockPos p = e.getKey();

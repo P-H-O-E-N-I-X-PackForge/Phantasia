@@ -45,7 +45,8 @@ public class Phantasia {
             net.phoenixvine.phantasia.compat.pack.PhantasiaPackProvider packs = new net.phoenixvine.phantasia.compat.pack.PhantasiaPackProvider();
             net.phoenixvine.phantasia.common.multiblock.PhantasiaMultiblockRegistry.register(packs);
             modEventBus.addListener(
-                    (net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent e) -> e.registerReloadListener(packs));
+                    (net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent e) -> e
+                            .registerReloadListener(packs));
             if (ModList.get().isLoaded("patchouli")) {
                 net.phoenixvine.phantasia.common.multiblock.PhantasiaMultiblockRegistry.register(
                         new net.phoenixvine.phantasia.compat.patchouli.PatchouliMultiblockProvider());

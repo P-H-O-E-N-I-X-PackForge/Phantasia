@@ -475,7 +475,8 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
                         definition.getId(), e.toString());
             }
             Set<BlockPos> ownPositions = new java.util.HashSet<>();
-            for (var e : own.entrySet()) if (e.getValue() != null && !e.getValue().isAir()) ownPositions.add(e.getKey());
+            for (var e : own.entrySet())
+                if (e.getValue() != null && !e.getValue().isAir()) ownPositions.add(e.getKey());
             placedBy.put(named.getKey(), ownPositions);
             allBlocks.putAll(own);
             if (own.isEmpty()) {
