@@ -360,6 +360,11 @@ public class PhantasiaSceneScreen extends Screen {
         script = script.withVariants(definition, p);
         PhantasiaVariantState vs = PhantasiaVariantState.get();
         vs.loadGroups(script.getVariantGroups());
+        vs.setOnToggleCallback(() -> {
+            if (renderer == null || pattern == null) return;
+            this.cacheInitialized = false;
+            applyVisibility();
+        });
         vs.setOnChangeCallback(() -> {
             if (renderer == null || pattern == null) return;
             this.cacheInitialized = false;
@@ -536,6 +541,7 @@ public class PhantasiaSceneScreen extends Screen {
     }
 
     public boolean isBlockVisible(BlockPos local, BlockPos world, PhantasiaScript.Step step) {
+        if (PhantasiaVariantState.get().isToggleHidden(world)) return false;
         if (viewFilter != ViewFilter.ALL) {
             Set<BlockPos> fs = getFilterSet(viewFilter);
             return fs == null || fs.contains(world);
@@ -965,7 +971,7 @@ public class PhantasiaSceneScreen extends Screen {
         positionToVariantGroupCache.clear();
 
         for (var group : script.getVariantGroups()) {
-            if (group == null || group.getPositionBaseIndex() == null) continue;
+            if (group == null || group.isToggle() || group.getPositionBaseIndex() == null) continue;
             for (net.minecraft.core.BlockPos pos : group.getPositionBaseIndex().keySet()) {
                 if (pos != null) {
                     positionToVariantGroupCache.put(pos, group);

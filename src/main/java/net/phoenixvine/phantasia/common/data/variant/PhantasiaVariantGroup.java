@@ -22,8 +22,12 @@ public final class PhantasiaVariantGroup {
 
     private final int forcedDefaultIndex;
 
+    /** A plain on/off switch for a set of positions (a substructure), not a choice between blocks. */
+    private final boolean toggle;
+
     public enum Category {
 
+        SUBSTRUCTURES("Substructures"),
         OPTIONAL("Optional Blocks"),
         HATCHES_BUSES("Hatches & Buses"),
         MUFFLERS("Mufflers"),
@@ -66,6 +70,16 @@ public final class PhantasiaVariantGroup {
                                   List<String> optionLabels,
                                   Map<BlockPos, Integer> positionBaseIndex,
                                   int forcedDefaultIndex) {
+        this(id, label, category, shownByDefault, options, optionLabels, positionBaseIndex, forcedDefaultIndex, false);
+    }
+
+    private PhantasiaVariantGroup(String id, String label, Category category,
+                                  boolean shownByDefault,
+                                  List<BlockState> options,
+                                  List<String> optionLabels,
+                                  Map<BlockPos, Integer> positionBaseIndex,
+                                  int forcedDefaultIndex, boolean toggle) {
+        this.toggle = toggle;
         this.id = id;
         this.label = label;
         this.category = category;
@@ -83,6 +97,18 @@ public final class PhantasiaVariantGroup {
                                                int forcedDefaultIndex) {
         return new PhantasiaVariantGroup(id, label, category, shownByDefault,
                 options, optionLabels, positionBaseIndex, forcedDefaultIndex);
+    }
+
+    /**
+     * A switch that shows or hides the given positions. Option 0 is shown and 1 is hidden, so the selection stored for
+     * it reads like any other group's.
+     */
+    public static PhantasiaVariantGroup createToggle(String id, String label, Set<BlockPos> worldPositions) {
+        Map<BlockPos, Integer> pos = new HashMap<>();
+        for (BlockPos p : worldPositions) pos.put(p, 0);
+        BlockState placeholder = Blocks.AIR.defaultBlockState();
+        return new PhantasiaVariantGroup(id, label, Category.SUBSTRUCTURES, true,
+                List.of(placeholder, placeholder), List.of("Shown", "Hidden"), pos, 0, true);
     }
 
     public boolean hasChoice() {

@@ -171,6 +171,7 @@ dependencies {
     localRuntime "dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"
     localRuntime("maven.modrinth:embeddium:${embeddium_version}") { transitive = false }
     localRuntime("maven.modrinth:terrafirmacraft:${tfc_version}") { transitive = false }
+    compileOnly("maven.modrinth:patchouli:${patchouli_version}") { transitive = false }
     localRuntime("maven.modrinth:patchouli:${patchouli_version}") { transitive = false }
     localRuntime("maven.modrinth:immersivepetroleum:${ip_version}") { transitive = false }
     localRuntime("maven.modrinth:extended-ae:${eae_version}") { transitive = false }

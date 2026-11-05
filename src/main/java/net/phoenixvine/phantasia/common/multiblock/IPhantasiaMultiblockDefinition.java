@@ -79,6 +79,14 @@ public interface IPhantasiaMultiblockDefinition {
         return Collections.emptyList();
     }
 
+    /**
+     * The separately switchable parts of a structure (GregTech 8's substructures), each as the local positions it
+     * places. Empty when the structure is a single piece.
+     */
+    default Map<String, Set<BlockPos>> getSubstructures() {
+        return Collections.emptyMap();
+    }
+
     default boolean shouldAutoDetectVariants() {
         return true;
     }

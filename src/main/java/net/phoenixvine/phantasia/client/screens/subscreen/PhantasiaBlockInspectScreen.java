@@ -47,7 +47,7 @@ public class PhantasiaBlockInspectScreen extends Screen {
         BlockState dynamicState = null;
         if (parent instanceof PhantasiaSceneScreen scene && scene.script != null) {
             for (var group : scene.script.getVariantGroups()) {
-                if (group.getPositionBaseIndex().containsKey(pos)) {
+                if (!group.isToggle() && group.getPositionBaseIndex().containsKey(pos)) {
                     int activeSel = PhantasiaVariantState.get().getSelection(group.getId());
                     if (activeSel >= 0 && activeSel < group.getOptions().size()) {
                         dynamicState = group.getOptions().get(activeSel);

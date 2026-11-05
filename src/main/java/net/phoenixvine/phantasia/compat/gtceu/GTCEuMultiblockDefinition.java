@@ -73,6 +73,15 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
             }
             final PhantasiaBlockInfo[][][] shape = blocks;
             cachedShapes = shape == null ? List.of() : List.of((IPhantasiaMultiblockShape) () -> shape);
+            if (shape != null) {
+                int solid = 0;
+                for (var a : shape) for (var b : a) for (var c : b) {
+                    if (c != null && c.getBlockState() != null && !c.getBlockState().isAir()) solid++;
+                }
+                LOGGER.info("[Phantasia] Preview of {}: {}x{}x{} with {} blocks", definition.getId(), shape.length,
+                        shape.length > 0 ? shape[0].length : 0,
+                        shape.length > 0 && shape[0].length > 0 ? shape[0][0].length : 0, solid);
+            }
         }
         return cachedShapes;
     }
@@ -137,9 +146,40 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
             if (state != null && state.getState().isValid()) {
                 ctrl.formStructure(name);
             } else {
+                StringBuilder why = new StringBuilder();
+                if (state != null) {
+                    for (var err : state.getErrors()) {
+                        why.append(" | ").append(err.getClass().getSimpleName()).append(" at ")
+                                .append(err.getPos());
+                        if (err instanceof com.gregtechceu.gtceu.api.multiblock.error.SinglePredicateError single) {
+                            why.append(" [").append(single.type).append(", found ").append(single.actualCount)
+                                    .append(", wants ").append(single.predMinCount).append("..")
+                                    .append(single.predMaxCount).append(", layer ").append(single.predMinLayerCount)
+                                    .append("..").append(single.predMaxLayerCount).append(", ")
+                                    .append(single.debugName).append("]");
+                        }
+                    }
+                }
+                if (state != null && ctrl.getLevel() != null) {
+                    Map<String, Integer> census = new java.util.TreeMap<>();
+                    Map<String, List<BlockPos>> where = new java.util.TreeMap<>();
+                    BlockPos cp = ctrl.getBlockPos();
+                    for (BlockPos q : BlockPos.betweenClosed(cp.offset(-12, -12, -12), cp.offset(12, 12, 12))) {
+                        BlockState bs = ctrl.getLevel().getBlockState(q);
+                        if (bs.isAir()) continue;
+                        String id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(bs.getBlock())
+                                .toString();
+                        census.merge(id, 1, Integer::sum);
+                        if (bs.getBlock() instanceof com.gregtechceu.gtceu.api.block.MetaMachineBlock) {
+                            where.computeIfAbsent(id, k -> new ArrayList<>()).add(q.immutable());
+                        }
+                    }
+                    LOGGER.warn("[Phantasia] {} scene census around controller {} (facing {}): {} | machines at {}",
+                            ctrl.getDefinition().getId(), cp, ctrl.getFrontFacing(), census, where);
+                }
                 LOGGER.warn(
-                        "[Phantasia] {} did not pass its structure check in the scene ({}): it will render unformed",
-                        ctrl.getDefinition().getId(), state == null ? "no pattern" : state.getState());
+                        "[Phantasia] {} did not pass its structure check ({}) in the scene: it will render unformed{}",
+                        ctrl.getDefinition().getId(), state == null ? "no pattern" : state.getState(), why);
             }
         }
     }
@@ -198,7 +238,39 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
     @Override
     public List<PhantasiaVariantGroup> detectProviderVariants(PhantasiaScriptData data, PhantasiaLoadedPattern pattern,
                                                               String machinePrefix, Set<String> explicitIds) {
-        return new ArrayList<>(detectPredicateVariants(machinePrefix, pattern, explicitIds));
+        List<PhantasiaVariantGroup> result = new ArrayList<>(substructureToggles(machinePrefix, pattern));
+        result.addAll(detectPredicateVariants(machinePrefix, pattern, explicitIds));
+        return result;
+    }
+
+    @Override
+    public Map<String, Set<BlockPos>> getSubstructures() {
+        Preview preview = buildPreview(definition);
+        return preview == null ? Map.of() : preview.substructures();
+    }
+
+    /** One on/off switch per named structure pattern, when the machine has more than one. */
+    private List<PhantasiaVariantGroup> substructureToggles(String machinePrefix, PhantasiaLoadedPattern pattern) {
+        Map<String, Set<BlockPos>> subs = getSubstructures();
+        if (subs.size() < 2) return List.of();
+        List<PhantasiaVariantGroup> out = new ArrayList<>();
+        for (var entry : subs.entrySet()) {
+            Set<BlockPos> world = new java.util.HashSet<>();
+            for (BlockPos local : entry.getValue()) {
+                BlockPos w = pattern.localToWorld.get(local);
+                if (w != null) world.add(w);
+            }
+            if (world.isEmpty()) continue;
+            out.add(PhantasiaVariantGroup.createToggle(machinePrefix + "::sub_" + entry.getKey(),
+                    prettySubstructure(entry.getKey()) + " (" + world.size() + " blocks)", world));
+        }
+        return out.size() < 2 ? List.of() : out;
+    }
+
+    private static String prettySubstructure(String name) {
+        if (name == null || name.isEmpty()) return "Structure";
+        String spaced = name.replace('_', ' ');
+        return Character.toUpperCase(spaced.charAt(0)) + spaced.substring(1);
     }
 
     private List<PhantasiaVariantGroup> detectPredicateVariants(String machinePrefix, PhantasiaLoadedPattern pattern,
@@ -350,7 +422,8 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
     }
 
     private record Preview(PhantasiaBlockInfo[][][] blocks, Map<BlockPos, BlockInfo> raw, BlockPos min,
-                           AbstractStructureHelper helper, IBlockPattern pattern, Direction front, Direction up) {}
+                           AbstractStructureHelper helper, IBlockPattern pattern, Direction front, Direction up,
+                           Map<String, Set<BlockPos>> substructures) {}
 
     public static PhantasiaBlockInfo[][][] previewBlocks(MultiblockMachineDefinition definition) {
         Preview preview = buildPreview(definition);
@@ -359,7 +432,10 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
 
     private static Preview buildPreview(MultiblockMachineDefinition definition) {
         Map<String, Supplier<IBlockPattern>> patterns = definition.getStructurePatterns();
-        if (patterns.isEmpty()) return null;
+        if (patterns.isEmpty()) {
+            LOGGER.warn("[Phantasia] {} has no structure patterns: nothing to preview", definition.getId());
+            return null;
+        }
 
         RotationState rotation = definition.getRotationState();
         Direction front = rotation.defaultDirection;
@@ -370,21 +446,47 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
         Supplier<IBlockPattern> primarySupplier = patterns.getOrDefault("default",
                 patterns.values().iterator().next());
         IBlockPattern primaryPattern = primarySupplier.get();
-        if (primaryPattern == null) return null;
+        if (primaryPattern == null) {
+            LOGGER.warn("[Phantasia] {}: the primary pattern supplier returned null", definition.getId());
+            return null;
+        }
 
         AbstractStructureHelper primaryHelper = makeHelper(primaryPattern);
-        if (primaryHelper == null) return null;
+        if (primaryHelper == null) {
+            LOGGER.warn("[Phantasia] {}: pattern type {} is not supported by the preview", definition.getId(),
+                    primaryPattern.getClass().getName());
+            return null;
+        }
 
         // Merge blocks from all patterns (default + all substructures)
         Map<BlockPos, BlockInfo> allBlocks = new HashMap<>();
-        for (Supplier<IBlockPattern> supplier : patterns.values()) {
-            IBlockPattern pat = supplier.get();
+        Map<String, Set<BlockPos>> placedBy = new LinkedHashMap<>();
+        for (Map.Entry<String, Supplier<IBlockPattern>> named : patterns.entrySet()) {
+            IBlockPattern pat = named.getValue().get();
             if (pat == null) continue;
             AbstractStructureHelper h = makeHelper(pat);
             if (h == null) continue;
-            h.populate(allBlocks, pat, new Long2ObjectOpenHashMap<>(), front, up, false);
+            Map<BlockPos, BlockInfo> own = new HashMap<>();
+            h.populate(own, pat, new Long2ObjectOpenHashMap<>(), front, up, false);
+            try {
+                enforceLimits(h, pat, own, front, up);
+            } catch (Exception e) {
+                LOGGER.warn("[Phantasia] {}: could not enforce the hatch limits of the preview: {}",
+                        definition.getId(), e.toString());
+            }
+            Set<BlockPos> ownPositions = new java.util.HashSet<>();
+            for (var e : own.entrySet()) if (e.getValue() != null && !e.getValue().isAir()) ownPositions.add(e.getKey());
+            placedBy.put(named.getKey(), ownPositions);
+            allBlocks.putAll(own);
+            if (own.isEmpty()) {
+                LOGGER.warn("[Phantasia] {}: a {} pattern placed no blocks (front {}, up {})", definition.getId(),
+                        pat.getClass().getSimpleName(), front, up);
+            }
         }
-        if (allBlocks.isEmpty()) return null;
+        if (allBlocks.isEmpty()) {
+            LOGGER.warn("[Phantasia] {}: no pattern placed any block, the preview is empty", definition.getId());
+            return null;
+        }
 
         int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
         int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
@@ -407,7 +509,73 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
             out[p.getX() - minX][p.getY() - minY][p.getZ() - minZ] = PhantasiaBlockInfo
                     .fromBlockState(info.getBlockState());
         }
-        return new Preview(out, allBlocks, min, primaryHelper, primaryPattern, front, up);
+        Map<String, Set<BlockPos>> localBySub = new LinkedHashMap<>();
+        for (var e : placedBy.entrySet()) {
+            Set<BlockPos> local = new java.util.HashSet<>();
+            for (BlockPos p : e.getValue()) local.add(p.subtract(min));
+            localBySub.put(e.getKey(), local);
+        }
+        return new Preview(out, allBlocks, min, primaryHelper, primaryPattern, front, up, localBySub);
+    }
+
+    /**
+     * GregTech's preview filler can place a limited hatch (one with a maximum count) far more often than its limit
+     * allows, which makes the scene fail its own structure check and render unformed. This walks the placed blocks
+     * in order and swaps any that are over their predicate's maximum for the first unlimited option of the same
+     * position, normally the casing.
+     */
+    private static void enforceLimits(AbstractStructureHelper helper, IBlockPattern pattern,
+                                      Map<BlockPos, BlockInfo> blocks, Direction front, Direction up) {
+        Map<Object, Integer> counts = new java.util.IdentityHashMap<>();
+        List<BlockPos> order = new ArrayList<>(blocks.keySet());
+        order.sort(java.util.Comparator.<BlockPos>comparingInt(q -> q.getX()).thenComparingInt(q -> q.getY())
+                .thenComparingInt(q -> q.getZ()));
+        for (BlockPos at : order) {
+            BlockInfo placed = blocks.get(at);
+            if (placed == null || placed.isAir()) continue;
+            var predicate = helper.getPredicateFromPos(pattern, at, front, up, false);
+            if (predicate == null) continue;
+            List<com.gregtechceu.gtceu.api.multiblock.predicates.BasePredicate> flat = new ArrayList<>();
+            collect(predicate, flat);
+
+            com.gregtechceu.gtceu.api.multiblock.predicates.BasePredicate owner = null;
+            for (var base : flat) {
+                if (base.getCandidates().stream().anyMatch(ci -> ci != null && ci.getBlockState() != null &&
+                        ci.getBlockState().getBlock() == placed.getBlockState().getBlock())) {
+                    owner = base;
+                    break;
+                }
+            }
+            if (placed.getBlockState().getBlock() instanceof com.gregtechceu.gtceu.api.block.MetaMachineBlock) {
+                StringBuilder dbg = new StringBuilder();
+                for (var base : flat) {
+                    dbg.append(base.getClass().getSimpleName()).append("(max ").append(base.getMaxCount())
+                            .append(", min ").append(base.getMinCount()).append(", cands ")
+                            .append(base.getCandidates().size()).append(base == owner ? ", OWNER" : "").append(") ");
+                }
+                LOGGER.info("[Phantasia] limits at {} holding {}: {}", at,
+                        net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(placed.getBlockState().getBlock()),
+                        dbg);
+            }
+            if (owner == null || owner.getMaxCount() < 0) continue;
+            int n = counts.merge(owner, 1, Integer::sum);
+            if (n <= owner.getMaxCount()) continue;
+
+            for (var base : flat) {
+                if (base == owner || base.getMaxCount() >= 0) continue;
+                var first = base.getFirstCandidate();
+                if (first.isPresent() && !first.get().isAir()) {
+                    blocks.put(at, first.get());
+                    break;
+                }
+            }
+        }
+    }
+
+    private static void collect(com.gregtechceu.gtceu.api.multiblock.MultiPredicate predicate,
+                                List<com.gregtechceu.gtceu.api.multiblock.predicates.BasePredicate> out) {
+        out.addAll(predicate.predicates());
+        for (var child : predicate.children()) collect(child, out);
     }
 
     private static AbstractStructureHelper makeHelper(IBlockPattern pattern) {
