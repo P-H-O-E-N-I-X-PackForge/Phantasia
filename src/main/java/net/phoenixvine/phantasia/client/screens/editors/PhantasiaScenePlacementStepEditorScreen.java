@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.phoenixvine.phantasia.client.PhantasiaText;
 import net.phoenixvine.phantasia.client.camera.CameraView;
 import net.phoenixvine.phantasia.client.camera.PhantasiaCamera;
 import net.phoenixvine.phantasia.client.render.PhantasiaTrackedDummyWorld;
@@ -246,7 +247,8 @@ public class PhantasiaScenePlacementStepEditorScreen extends PhantasiaScreen
         String pd = placementIndex < data.placements.size() ? data.placements.get(placementIndex).machine :
                 "#" + placementIndex;
         g.drawCenteredString(font,
-                "Per-Step Config  —  Placement #" + placementIndex + "  " + pd,
+                PhantasiaText.str("ui.phantasia.phantasia_scene_placement_step_editor.per_step_config_placement",
+                        placementIndex, pd),
                 width / 2, (TOP_BAR_H - 8) / 2, C_DIM());
 
         topBtn(g, mx, my, width - 4, "← Back", C_BTN(),
@@ -273,7 +275,9 @@ public class PhantasiaScenePlacementStepEditorScreen extends PhantasiaScreen
 
         int cy = py + 8;
 
-        g.drawString(font, "Step " + (selectedStep + 1) + " / " + data.steps.size() + " override",
+        g.drawString(font,
+                PhantasiaText.str("ui.phantasia.phantasia_scene_placement_step_editor.step_override",
+                        (selectedStep + 1), data.steps.size()),
                 px + 6, cy, C_ACCENT(), false);
         cy += 14;
 

@@ -20,6 +20,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.Phantasia;
 import net.phoenixvine.phantasia.client.screens.editors.PhantasiaCustomEditorScreen;
 import net.phoenixvine.phantasia.compat.custom.PhantasiaCustomLayout;
+import net.phoenixvine.phantasia.utils.PhantasiaLang;
 
 import java.util.List;
 
@@ -46,11 +47,13 @@ public class PhantasiaWandItem extends Item {
 
         if (player != null && player.isShiftKeyDown()) {
             setPos(stack, KEY_POS2, clicked);
-            player.sendSystemMessage(Component.literal("§a[Phantasia] Corner 2 set to §f" + clicked.toShortString()));
+            player.sendSystemMessage(PhantasiaLang.tr("ui.phantasia.phantasia_wand_item.phantasia_corner_2_set_to",
+                    clicked.toShortString()));
         } else {
             setPos(stack, KEY_POS1, clicked);
             if (player != null) player.sendSystemMessage(
-                    Component.literal("§a[Phantasia] Corner 1 set to §f" + clicked.toShortString()));
+                    PhantasiaLang.tr("ui.phantasia.phantasia_wand_item.phantasia_corner_1_set_to",
+                            clicked.toShortString()));
         }
 
         if (player != null) {
@@ -60,9 +63,9 @@ public class PhantasiaWandItem extends Item {
                 int dx = Math.abs(p1.getX() - p2.getX()) + 1;
                 int dy = Math.abs(p1.getY() - p2.getY()) + 1;
                 int dz = Math.abs(p1.getZ() - p2.getZ()) + 1;
-                player.sendSystemMessage(Component.literal(
-                        "§7Selection: §f" + dx + " × " + dy + " × " + dz +
-                                " §7(" + (dx * dy * dz) + " blocks) — §eRight-click air to import"));
+                player.sendSystemMessage(
+                        PhantasiaLang.tr("ui.phantasia.phantasia_wand_item.selection_blocks_right_click_air", dx, dy,
+                                dz, (dx * dy * dz)));
             }
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
@@ -77,8 +80,8 @@ public class PhantasiaWandItem extends Item {
             if (p1 != null && p2 != null) {
                 captureAndOpen(stack, level, player);
             } else {
-                player.sendSystemMessage(Component.literal(
-                        "§c[Phantasia] Set both corners first. Right-click blocks to select."));
+                player.sendSystemMessage(
+                        PhantasiaLang.tr("ui.phantasia.phantasia_wand_item.phantasia_set_both_corners_first"));
             }
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
@@ -96,8 +99,9 @@ public class PhantasiaWandItem extends Item {
 
         long volume = (long) (maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1);
         if (volume > MAX_CAPTURE_BLOCKS) {
-            player.sendSystemMessage(Component.literal(
-                    "§c[Phantasia] Selection too large (" + volume + " blocks, max " + MAX_CAPTURE_BLOCKS + ")."));
+            player.sendSystemMessage(
+                    PhantasiaLang.tr("ui.phantasia.phantasia_wand_item.phantasia_selection_too_large_blocks", volume,
+                            MAX_CAPTURE_BLOCKS));
             return;
         }
 
@@ -119,13 +123,13 @@ public class PhantasiaWandItem extends Item {
         }
 
         if (count == 0) {
-            player.sendSystemMessage(Component.literal(
-                    "§c[Phantasia] Selection contains no non-air blocks."));
+            player.sendSystemMessage(
+                    PhantasiaLang.tr("ui.phantasia.phantasia_wand_item.phantasia_selection_contains_no_non"));
             return;
         }
 
-        player.sendSystemMessage(Component.literal(
-                "§a[Phantasia] Captured §f" + count + " §ablocks — opening editor."));
+        player.sendSystemMessage(
+                PhantasiaLang.tr("ui.phantasia.phantasia_wand_item.phantasia_captured_blocks_opening_editor", count));
         Minecraft.getInstance().setScreen(
                 new PhantasiaCustomEditorScreen(Phantasia.CUSTOM_PROVIDER, layout));
     }
@@ -137,20 +141,23 @@ public class PhantasiaWandItem extends Item {
         BlockPos p1 = getPos(stack, KEY_POS1);
         BlockPos p2 = getPos(stack, KEY_POS2);
 
-        lines.add(Component.literal("§7Right-click block §8— set corner 1").withStyle(ChatFormatting.GRAY));
-        lines.add(Component.literal("§7Shift + right-click §8— set corner 2").withStyle(ChatFormatting.GRAY));
-        lines.add(Component.literal("§7Right-click air §8— import selection").withStyle(ChatFormatting.GRAY));
+        lines.add(PhantasiaLang.tr("ui.phantasia.phantasia_wand_item.right_click_block_set_corner")
+                .withStyle(ChatFormatting.GRAY));
+        lines.add(PhantasiaLang.tr("ui.phantasia.phantasia_wand_item.shift_right_click_set_corner")
+                .withStyle(ChatFormatting.GRAY));
+        lines.add(PhantasiaLang.tr("ui.phantasia.phantasia_wand_item.right_click_air_import_selection")
+                .withStyle(ChatFormatting.GRAY));
         lines.add(Component.empty());
 
         if (p1 != null) {
-            lines.add(Component.literal("§2Corner 1: §a" + p1.toShortString()));
+            lines.add(PhantasiaLang.tr("ui.phantasia.phantasia_wand_item.corner_1", p1.toShortString()));
         } else {
-            lines.add(Component.literal("§8Corner 1: not set"));
+            lines.add(PhantasiaLang.tr("ui.phantasia.phantasia_wand_item.corner_1_not_set"));
         }
         if (p2 != null) {
-            lines.add(Component.literal("§4Corner 2: §c" + p2.toShortString()));
+            lines.add(PhantasiaLang.tr("ui.phantasia.phantasia_wand_item.corner_2", p2.toShortString()));
         } else {
-            lines.add(Component.literal("§8Corner 2: not set"));
+            lines.add(PhantasiaLang.tr("ui.phantasia.phantasia_wand_item.corner_2_not_set"));
         }
     }
 

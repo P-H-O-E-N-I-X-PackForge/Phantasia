@@ -6,6 +6,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.phoenixvine.phantasia.client.PhantasiaText;
 import net.phoenixvine.phantasia.common.data.variant.PhantasiaVariantGroup;
 import net.phoenixvine.phantasia.common.data.variant.PhantasiaVariantState;
 import net.phoenixvine.phantasia.utils.PhantasiaThemeUtils;
@@ -163,7 +164,8 @@ public class PhantasiaVariantsScreen extends Screen {
             g.fill(bx, by, bx + bw, by + bh, on ? (bh2 ? 0xFF2E6B3A : 0xFF245530) :
                     (bh2 ? 0xFF4A2A2A : 0xFF3A2020));
             PhantasiaThemeUtils.drawBorderRect(g, bx, by, bw, bh, C_BORDER());
-            g.drawCenteredString(font, on ? "ON" : "OFF", bx + bw / 2, by + 3, on ? 0xFF9BE8A8 : 0xFFE89B9B);
+            g.drawCenteredString(font, on ? "ON" : PhantasiaText.str("ui.phantasia.phantasia_variants.off"),
+                    bx + bw / 2, by + 3, on ? 0xFF9BE8A8 : 0xFFE89B9B);
             final String tid = group.getId();
             final int next = on ? 1 : 0;
             activeButtons.add(new PhantasiaUIUtils.ButtonAction(bx, by, bw, bh,

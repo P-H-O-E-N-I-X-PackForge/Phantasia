@@ -12,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.phoenixvine.phantasia.client.PhantasiaText;
 import net.phoenixvine.phantasia.client.screens.editors.PhantasiaGuideEditorScreen;
 import net.phoenixvine.phantasia.client.screens.editors.PhantasiaSceneEditorScreen;
 import net.phoenixvine.phantasia.client.tutorial.PhantasiaTutorials;
@@ -631,7 +632,8 @@ public class PhantasiaSceneSelectionScreen extends PhantasiaScreen {
 
         g.fill(cx + 3, btnY, cx + 3 + openW, btnY + btnH, openHov ? C_BTN_HOV() : (hov ? cardBg : buttonIdleBg));
         if (openHov) g.fill(cx + 3, btnY, cx + 3 + openW, btnY + 1, C_ACCENT());
-        g.drawString(font, "📖 Read", cx + 6, btnY + 2, openHov ? C_ACCENT() : (hov ? C_TEXT() : C_DIM()), false);
+        g.drawString(font, PhantasiaText.str("ui.phantasia.phantasia_scene_selection.read"), cx + 6, btnY + 2,
+                openHov ? C_ACCENT() : (hov ? C_TEXT() : C_DIM()), false);
 
         if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.getAbilities().instabuild) {
             int editW = font.width("✏") + 6;
@@ -1389,7 +1391,8 @@ public class PhantasiaSceneSelectionScreen extends PhantasiaScreen {
             for (int li = 0; li < Math.min(descLines.size(), maxDescLines); li++)
                 g.drawString(font, descLines.get(li), cx + 4, ty + li * 10, C_DIM(), false);
 
-            g.drawString(font, seq.slides.size() + " slides", cx + 4, cy + CARD_H - 12, C_DIM(), false);
+            g.drawString(font, PhantasiaText.str("ui.phantasia.phantasia_scene_selection.slides", seq.slides.size()),
+                    cx + 4, cy + CARD_H - 12, C_DIM(), false);
             if (isDev)
                 g.drawString(font, Component.translatable("screen.phantasia.scene_selection.badge_dev").getString(),
                         cx + CARD_W - font.width(

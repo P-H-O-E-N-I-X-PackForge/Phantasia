@@ -6,6 +6,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.phoenixvine.phantasia.client.PhantasiaText;
 import net.phoenixvine.phantasia.client.screens.PhantasiaSceneSelectionScreen;
 import net.phoenixvine.phantasia.common.data.guides.PhantasiaGuideRegistry;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScripts;
@@ -90,8 +91,10 @@ public final class PhantasiaTutorials {
 
         g.fill(0, 0, VW, SEL_HEADER_H, 0xCC0A0A14);
         g.fill(0, SEL_HEADER_H - 2, VW, SEL_HEADER_H, C_ACCENT());
-        g.drawCenteredString(f, "✶ Phantasia", VW / 2, 8, C_ACCENT());
-        g.drawCenteredString(f, "Multiblock machines, scenes, and guides", VW / 2, 20, C_DIM());
+        g.drawCenteredString(f, PhantasiaText.str("screen.phantasia.scene_selection.header"), VW / 2, 8, C_ACCENT());
+        g.drawCenteredString(f,
+                PhantasiaText.str("ui.phantasia.phantasia_tutorials.multiblock_machines_scenes_and_guides"), VW / 2, 20,
+                C_DIM());
 
         int tx = gridX;
         renderMockTab(g, f, tx, 32, "Multiblocks", activeTab == 0);
@@ -109,7 +112,8 @@ public final class PhantasiaTutorials {
         g.fill(gridX, searchY + searchH - 1, gridX + SEL_GRID_W, searchY + searchH, 0xFF333355);
         g.fill(gridX, searchY, gridX + 1, searchY + searchH, 0xFF333355);
         g.fill(gridX + SEL_GRID_W - 1, searchY, gridX + SEL_GRID_W, searchY + searchH, 0xFF333355);
-        g.drawString(f, "Search...", gridX + 4, searchY + 8, 0xFF888888, false);
+        g.drawString(f, PhantasiaText.str("screen.phantasia.scene_selection.search_box"), gridX + 4, searchY + 8,
+                0xFF888888, false);
 
         int cardsY = searchY + searchH + 6;
         if (activeTab == 0) drawMachineCards(g, f, gridX, cardsY);
@@ -121,8 +125,8 @@ public final class PhantasiaTutorials {
         g.fill(0, footerY, VW, VH, 0xCC0A0A14);
         g.fill(0, footerY, VW, footerY + 1, 0x33FFFFFF);
         g.drawCenteredString(f,
-                "ESC to close  •  " + net.phoenixvine.phantasia.client.keybind.PhoenixKeybinds.keyDisplay() +
-                        " near a machine to open directly",
+                PhantasiaText.str("ui.phantasia.phantasia_tutorials.esc_to_close_near_a",
+                        net.phoenixvine.phantasia.client.keybind.PhoenixKeybinds.keyDisplay()),
                 VW / 2, footerY + 9, C_DIM());
     }
 
@@ -192,7 +196,8 @@ public final class PhantasiaTutorials {
             g.fill(cx, cy, cx + SEL_CARD_W, cy + SEL_CARD_H, (0xBB << 24) | (C_PANEL() & 0x00FFFFFF));
             g.fill(cx, cy, cx + SEL_CARD_W, cy + 2, C_BORDER());
             g.drawCenteredString(f, "+", cx + SEL_CARD_W / 2, cy + 24, C_DIM());
-            g.drawCenteredString(f, "+ New Guide", cx + SEL_CARD_W / 2, cy + SEL_CARD_H - 22, C_DIM());
+            g.drawCenteredString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.new_guide"),
+                    cx + SEL_CARD_W / 2, cy + SEL_CARD_H - 22, C_DIM());
         }
 
         var guides = PhantasiaGuideRegistry.all().stream().limit(5).toList();
@@ -228,7 +233,8 @@ public final class PhantasiaTutorials {
                 title = f.plainSubstrByWidth(title, SEL_CARD_W - 8 - f.width("...")) + "...";
             g.drawString(f, title, cx + 4, cy + SEL_CARD_H - 33, C_TEXT(), false);
             int pages = (i < guides.size() && guides.get(i).pages != null) ? guides.get(i).pages.size() : (i + 2);
-            g.drawString(f, pages + " page" + (pages == 1 ? "" : "s"), cx + 4, cy + SEL_CARD_H - 22, C_DIM(), false);
+            g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.page", pages, (pages == 1 ? "" : "s")),
+                    cx + 4, cy + SEL_CARD_H - 22, C_DIM(), false);
         }
     }
 
@@ -245,7 +251,8 @@ public final class PhantasiaTutorials {
             g.fill(cx, cy, cx + SEL_CARD_W, cy + SEL_CARD_H, (0xBB << 24) | (C_PANEL() & 0x00FFFFFF));
             g.fill(cx, cy, cx + SEL_CARD_W, cy + 2, C_BORDER());
             g.drawCenteredString(f, "+", cx + SEL_CARD_W / 2, cy + SEL_CARD_H / 2 - 10, C_DIM());
-            g.drawCenteredString(f, "New Scene", cx + SEL_CARD_W / 2, cy + SEL_CARD_H - 22, C_DIM());
+            g.drawCenteredString(f, PhantasiaText.str("screen.phantasia.scene_selection.btn_new_scene"),
+                    cx + SEL_CARD_W / 2, cy + SEL_CARD_H - 22, C_DIM());
         }
 
         for (int i = 0; i < 5; i++) {
@@ -270,13 +277,15 @@ public final class PhantasiaTutorials {
             if (f.width(title) > SEL_CARD_W - 8)
                 title = f.plainSubstrByWidth(title, SEL_CARD_W - 8 - f.width("...")) + "...";
             g.drawString(f, title, cx + 4, cy + SEL_CARD_H - 34, C_TEXT(), false);
-            g.drawString(f, fallbackMachines[i] + " machines", cx + 4, cy + SEL_CARD_H - 23, C_DIM(), false);
+            g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.machines", fallbackMachines[i]), cx + 4,
+                    cy + SEL_CARD_H - 23, C_DIM(), false);
             g.fill(cx + SEL_CARD_W - 8, cy + 4, cx + SEL_CARD_W - 4, cy + 8, C_GREEN());
         }
     }
 
     private static void drawTutorialCardsSelection(GuiGraphics g, Font f, PhoenixTheme t, int gridX, int startY) {
-        g.drawString(f, "For Players", gridX, startY, C_ACCENT(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.for_players"), gridX, startY, C_ACCENT(),
+                false);
         startY += 12;
         String[][] playerTuts = { { "Getting Started", "Overview" }, { "Understanding Guides", "Guides" },
                 { "Understanding Scripts", "Scripts" } };
@@ -288,7 +297,8 @@ public final class PhantasiaTutorials {
             g.drawString(f, playerTuts[i][1], cx + 4, startY + SEL_CARD_H - 10, C_DIM(), false);
         }
         startY += SEL_CARD_H + SEL_CARD_PAD;
-        g.drawString(f, "For Pack Authors", gridX, startY, C_WARN(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.for_pack_authors"), gridX, startY, C_WARN(),
+                false);
         startY += 12;
         String[][] devTuts = { { "Creating Guides", "Dev" }, { "Writing Scripts", "Dev" },
                 { "Writing Scenes", "Dev" } };
@@ -315,11 +325,13 @@ public final class PhantasiaTutorials {
 
         int bw = f.width("← Back") + 12;
         g.fill(4, 3, 4 + bw, TOP_BAR_H - 3, C_BTN());
-        g.drawString(f, "← Back", 10, (TOP_BAR_H - 8) / 2, C_TEXT(), false);
+        g.drawString(f, PhantasiaText.str("screen.phantasia.scene_selection.btn_back"), 10, (TOP_BAR_H - 8) / 2,
+                C_TEXT(), false);
 
         int ew = f.width("✏ Edit") + 12;
         g.fill(VW - 4 - ew, 3, VW - 4, TOP_BAR_H - 3, C_BTN());
-        g.drawString(f, "✏ Edit", VW - 4 - ew + 6, (TOP_BAR_H - 8) / 2, C_TEXT(), false);
+        g.drawString(f, PhantasiaText.str("screen.phantasia.scene_viewer.btn_edit"), VW - 4 - ew + 6,
+                (TOP_BAR_H - 8) / 2, C_TEXT(), false);
 
         int y = TOP_BAR_H + 14;
 
@@ -338,7 +350,8 @@ public final class PhantasiaTutorials {
         }
 
         if (pageCount > 1) {
-            g.drawString(f, "Page " + (pageIdx + 1) + " of " + pageCount, colX, y, C_DIM(), false);
+            g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.page_of", (pageIdx + 1), pageCount),
+                    colX, y, C_DIM(), false);
             y += f.lineHeight + 5;
         }
         y += 4;
@@ -368,7 +381,8 @@ public final class PhantasiaTutorials {
         boolean hasPrev = pageIdx > 0;
         int prevW = f.width("◄  Prev") + 14;
         g.fill(midX - prevW - 26, bY, midX - 26, bY + bH, hasPrev ? C_BTN() : 0x33111128);
-        g.drawCenteredString(f, "◄  Prev", midX - 26 - prevW / 2, bY + (bH - 8) / 2, hasPrev ? C_TEXT() : C_DIM());
+        g.drawCenteredString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.prev"), midX - 26 - prevW / 2,
+                bY + (bH - 8) / 2, hasPrev ? C_TEXT() : C_DIM());
 
         g.drawCenteredString(f, (pageIdx + 1) + " / " + pageCount, midX, bY + (bH - 8) / 2, C_DIM());
 
@@ -376,7 +390,8 @@ public final class PhantasiaTutorials {
         int nextW = f.width("Next  ►") + 14;
         g.fill(midX + 26, bY, midX + 26 + nextW, bY + bH, hasNext ? C_BTN() : 0x33111128);
         if (hasNext) g.fill(midX + 26, bY, midX + 26 + nextW, bY + 1, C_ACCENT());
-        g.drawCenteredString(f, "Next  ►", midX + 26 + nextW / 2, bY + (bH - 8) / 2,
+        g.drawCenteredString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.next"), midX + 26 + nextW / 2,
+                bY + (bH - 8) / 2,
                 hasNext ? C_ACCENT() : C_DIM());
     }
 
@@ -394,10 +409,12 @@ public final class PhantasiaTutorials {
 
         int backW = f.width("← Back") + 10;
         g.fill(4, 3, 4 + backW, TOP_H - 3, C_BTN());
-        g.drawString(f, "← Back", 9, (TOP_H - 8) / 2, C_TEXT(), false);
+        g.drawString(f, PhantasiaText.str("screen.phantasia.scene_selection.btn_back"), 9, (TOP_H - 8) / 2, C_TEXT(),
+                false);
 
         int titleLabelX = 4 + backW + 8;
-        g.drawString(f, "Title:", titleLabelX, (TOP_H - 8) / 2, C_DIM(), false);
+        g.drawString(f, PhantasiaText.str("screen.phantasia.guide_editor.label_title"), titleLabelX, (TOP_H - 8) / 2,
+                C_DIM(), false);
         int titleBoxX = titleLabelX + f.width("Title:") + 4;
         g.fill(titleBoxX, 3, titleBoxX + 140, TOP_H - 3, 0xFF0A0A14);
         g.fill(titleBoxX, 3, titleBoxX + 140, 4, 0xFF333355);
@@ -405,11 +422,13 @@ public final class PhantasiaTutorials {
 
         int saveW = f.width("💾 Save") + 10;
         g.fill(VW - 4 - saveW, 3, VW - 4, TOP_H - 3, C_BTN());
-        g.drawString(f, "💾 Save", VW - 4 - saveW + 5, (TOP_H - 8) / 2, C_TEXT(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.save"), VW - 4 - saveW + 5, (TOP_H - 8) / 2,
+                C_TEXT(), false);
 
         int prevBtnW = f.width("► Preview") + 10;
         g.fill(VW - 4 - saveW - 4 - prevBtnW, 3, VW - 4 - saveW - 4, TOP_H - 3, C_BTN());
-        g.drawString(f, "► Preview", VW - 4 - saveW - 4 - prevBtnW + 5, (TOP_H - 8) / 2, C_TEXT(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.preview"),
+                VW - 4 - saveW - 4 - prevBtnW + 5, (TOP_H - 8) / 2, C_TEXT(), false);
 
         g.fill(0, TOP_H, previewW, VH, 0xFF070710);
 
@@ -424,7 +443,7 @@ public final class PhantasiaTutorials {
         g.fill(colX - 4, y + hlH - 1, colX + colW + 4, y + hlH, hlFocused ? C_ACCENT() : 0xFF223544);
         g.fill(colX - 4, y, colX - 3, y + hlH, hlFocused ? C_ACCENT() : 0xFF223544);
         g.fill(colX + colW + 3, y, colX + colW + 4, y + hlH, hlFocused ? C_ACCENT() : 0xFF223544);
-        g.drawString(f, "Headline", colX, y + 2, C_DIM(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.headline"), colX, y + 2, C_DIM(), false);
         g.drawString(f, headline != null ? headline : "", colX + 4, y + 14, 0xFFFFFFFF, false);
 
         y += hlH + 8;
@@ -436,7 +455,7 @@ public final class PhantasiaTutorials {
         g.fill(colX - 4, y + bodyH - 1, colX + colW + 4, y + bodyH, bodyFocused ? C_GREEN() : 0xFF1B2B24);
         g.fill(colX - 4, y, colX - 3, y + bodyH, bodyFocused ? C_GREEN() : 0xFF1B2B24);
         g.fill(colX + colW + 3, y, colX + colW + 4, y + bodyH, bodyFocused ? C_GREEN() : 0xFF1B2B24);
-        g.drawString(f, "Text", colX, y + 3, C_DIM(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.text"), colX, y + 3, C_DIM(), false);
         if (bodyText != null) {
             int ty = y + 15;
             for (var line : f.split(net.minecraft.network.chat.Component.literal(bodyText), colW - 8)) {
@@ -449,7 +468,8 @@ public final class PhantasiaTutorials {
         int rpx = previewW + 4;
         g.fill(previewW, TOP_H, VW, VH, C_BG());
 
-        g.drawString(f, "Pages", rpx, TOP_H + 6, C_ACCENT(), false);
+        g.drawString(f, PhantasiaText.str("screen.phantasia.guide_editor.section_pages"), rpx, TOP_H + 6, C_ACCENT(),
+                false);
         String[] pages = { "Page 1", "Page 2", "Page 3" };
         for (int i = 0; i < pages.length; i++) {
             int py = TOP_H + 18 + i * 18;
@@ -461,11 +481,12 @@ public final class PhantasiaTutorials {
 
         int addY = TOP_H + 18 + 3 * 18 + 4;
         g.fill(rpx - 2, addY, VW - 4, addY + 12, C_BTN());
-        g.drawCenteredString(f, "+ Add Page", (rpx - 2 + VW - 4) / 2, addY + 2, C_ACCENT());
+        g.drawCenteredString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.add_page"), (rpx - 2 + VW - 4) / 2,
+                addY + 2, C_ACCENT());
 
         g.fill(rpx - 2, addY + 18, VW - 4, addY + 19, 0x33FFFFFF);
 
-        g.drawString(f, "Items", rpx, addY + 24, C_DIM(), false);
+        g.drawString(f, PhantasiaText.str("screen.phantasia.guide.label_items"), rpx, addY + 24, C_DIM(), false);
     }
 
     private static void drawScriptEditor(GuiGraphics g, Font f, PhoenixTheme t,
@@ -499,30 +520,35 @@ public final class PhantasiaTutorials {
 
         int pvW = f.width("► Preview") + 10;
         g.fill(x, 3, x + pvW, TOP_H - 3, C_BTN());
-        g.drawString(f, "► Preview", x + 5, (TOP_H - 8) / 2, C_DIM(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.preview"), x + 5, (TOP_H - 8) / 2, C_DIM(),
+                false);
         x += pvW + 4;
 
         int camTabW = f.width("🎥 Camera") + 10;
         g.fill(x, 3, x + camTabW, TOP_H - 3, showCamPanel ? C_BTN_ACT() : C_BTN());
         if (showCamPanel) g.fill(x, TOP_H - 3, x + camTabW, TOP_H - 2, C_ACCENT());
-        g.drawString(f, "🎥 Camera", x + 5, (TOP_H - 8) / 2, showCamPanel ? C_ACCENT() : C_DIM(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.camera"), x + 5, (TOP_H - 8) / 2,
+                showCamPanel ? C_ACCENT() : C_DIM(), false);
         x += camTabW + 4;
 
         int scW = f.width("⊙ Start Cam") + 10;
         g.fill(x, 3, x + scW, TOP_H - 3, C_BTN());
-        g.drawString(f, "⊙ Start Cam", x + 5, (TOP_H - 8) / 2, C_DIM(), false);
+        g.drawString(f, PhantasiaText.str("screen.phantasia.script_editor.btn_start_cam"), x + 5, (TOP_H - 8) / 2,
+                C_DIM(), false);
 
         int rx = VW - 4;
         int saveW = f.width("💾 Save") + 10;
         rx -= saveW;
         g.fill(rx, 3, rx + saveW, TOP_H - 3, C_BTN());
         g.fill(rx, TOP_H - 3, rx + saveW, TOP_H - 2, C_GREEN());
-        g.drawString(f, "💾 Save", rx + 5, (TOP_H - 8) / 2, C_GREEN(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.save"), rx + 5, (TOP_H - 8) / 2, C_GREEN(),
+                false);
         rx -= 4;
         int backW = f.width("✕ Back") + 10;
         rx -= backW;
         g.fill(rx, 3, rx + backW, TOP_H - 3, C_BTN());
-        g.drawString(f, "✕ Back", rx + 5, (TOP_H - 8) / 2, C_TEXT(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.back"), rx + 5, (TOP_H - 8) / 2, C_TEXT(),
+                false);
 
         g.fill(0, TOP_H, VW, TOP_H + vpH, 0xFF07070F);
 
@@ -556,24 +582,29 @@ public final class PhantasiaTutorials {
             int cpY = VH - BOT_H - cpH - 4;
             g.fill(cpX - 2, cpY - 2, cpX + cpW + 2, cpY + cpH + 2, 0xDD070712);
             g.fill(cpX - 2, cpY - 2, cpX + cpW + 2, cpY - 1, C_ACCENT());
-            g.drawString(f, "🎥  Camera — step " + (selectedStep + 1), cpX + 4, cpY + 3, C_ACCENT(), false);
+            g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.camera_step", (selectedStep + 1)),
+                    cpX + 4, cpY + 3, C_ACCENT(), false);
 
             int r1Y = cpY + 14;
             int bxc = cpX + 4;
             int capBtnW = f.width("📷 Capture Cam") + 12;
             g.fill(bxc, r1Y, bxc + capBtnW, r1Y + 14, C_BTN_ACT());
             g.fill(bxc, r1Y, bxc + capBtnW, r1Y + 1, C_ACCENT());
-            g.drawString(f, "📷 Capture Cam", bxc + 6, r1Y + 3, C_ACCENT(), false);
+            g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.capture_cam"), bxc + 6, r1Y + 3,
+                    C_ACCENT(), false);
             bxc += capBtnW + 6;
             int clrW = f.width("✕ Clear") + 10;
             g.fill(bxc, r1Y, bxc + clrW, r1Y + 14, C_BTN());
-            g.drawString(f, "✕ Clear", bxc + 5, r1Y + 3, C_DIM(), false);
+            g.drawString(f, PhantasiaText.str("screen.phantasia.scene_editor.btn_clear_cam"), bxc + 5, r1Y + 3, C_DIM(),
+                    false);
             bxc += clrW + 10;
-            g.drawString(f, "Yaw -135.0°  Pitch -30.0°  Zoom 40.0", bxc, r1Y + 3, C_DIM(), false);
+            g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.yaw_135_0_pitch_30"), bxc, r1Y + 3,
+                    C_DIM(), false);
 
             int r2Y = cpY + 32;
             bxc = cpX + 4;
-            g.drawString(f, "Zoom:", bxc, r2Y + 2, C_DIM(), false);
+            g.drawString(f, PhantasiaText.str("screen.phantasia.scene_editor.label_zoom"), bxc, r2Y + 2, C_DIM(),
+                    false);
             bxc += f.width("Zoom:") + 3;
             g.fill(bxc, r2Y, bxc + 40, r2Y + 12, 0xFF0A0A14);
             g.fill(bxc, r2Y, bxc + 40, r2Y + 1, 0xFF333355);
@@ -582,15 +613,16 @@ public final class PhantasiaTutorials {
             int ltW = f.width("SPRING") + 16;
             g.fill(bxc, r2Y, bxc + ltW, r2Y + 13, C_BTN());
             g.fill(bxc, r2Y, bxc + ltW, r2Y + 1, C_ACCENT());
-            g.drawString(f, "SPRING", bxc + 8, r2Y + 2, C_ACCENT(), false);
+            g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.spring"), bxc + 8, r2Y + 2, C_ACCENT(),
+                    false);
             bxc += ltW + 6;
-            g.drawString(f, "over", bxc, r2Y + 2, C_DIM(), false);
+            g.drawString(f, PhantasiaText.str("screen.phantasia.scene_editor.val_over"), bxc, r2Y + 2, C_DIM(), false);
             bxc += f.width("over") + 3;
             g.fill(bxc, r2Y, bxc + 34, r2Y + 12, 0xFF0A0A14);
             g.fill(bxc, r2Y, bxc + 34, r2Y + 1, 0xFF333355);
             g.drawString(f, "25", bxc + 3, r2Y + 2, C_TEXT(), false);
             bxc += 38;
-            g.drawString(f, "ticks", bxc, r2Y + 2, C_DIM(), false);
+            g.drawString(f, PhantasiaText.str("screen.phantasia.scene_editor.val_ticks"), bxc, r2Y + 2, C_DIM(), false);
         }
 
         int botY = VH - BOT_H;
@@ -601,7 +633,7 @@ public final class PhantasiaTutorials {
         int bx3 = 8;
 
         String stepLbl = (selectedStep + 1) + "/" + stepCaptions.size();
-        g.drawString(f, "Step", bx3, y1 - 2, 0xFF334455, false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.step"), bx3, y1 - 2, 0xFF334455, false);
         g.drawString(f, stepLbl, bx3, y1 + 6, C_ACCENT(), false);
         bx3 += f.width(stepLbl) + 10;
 
@@ -613,7 +645,7 @@ public final class PhantasiaTutorials {
         }
         bx3 += 4;
 
-        g.drawString(f, "Tick", bx3, y1 + 3, C_DIM(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.tick"), bx3, y1 + 3, C_DIM(), false);
         bx3 += f.width("Tick") + 3;
         g.fill(bx3, y1, bx3 + 38, y1 + 13, 0xFF0A0A14);
         g.fill(bx3, y1, bx3 + 38, y1 + 1, 0xFF333355);
@@ -630,11 +662,11 @@ public final class PhantasiaTutorials {
         bx3 += capW + 8;
 
         g.fill(bx3, y1, bx3 + 82, y1 + 14, C_BTN());
-        g.drawString(f, "○ Running", bx3 + 5, y1 + 3, C_DIM(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.running"), bx3 + 5, y1 + 3, C_DIM(), false);
 
         int y2 = botY + STEP_H / 2 + 5;
         int bx4 = 8;
-        g.drawString(f, "Show:", bx4, y2 + 2, C_DIM(), false);
+        g.drawString(f, PhantasiaText.str("screen.phantasia.scene_editor.label_show"), bx4, y2 + 2, C_DIM(), false);
         bx4 += f.width("Show:") + 4;
         String[] showTabs = { "All", "Layer", "Range", "Parts…" };
         for (int si = 0; si < showTabs.length; si++) {
@@ -733,7 +765,7 @@ public final class PhantasiaTutorials {
             g.fill(vpW + 4, py, VW - 4, py + 1, 0x33FFFFFF);
             py += 6;
 
-            g.drawString(f, "Show:", vpW + 8, py, C_DIM(), false);
+            g.drawString(f, PhantasiaText.str("screen.phantasia.scene_editor.label_show"), vpW + 8, py, C_DIM(), false);
             py += 12;
             int fw = (PANEL_W - 25) / 2;
             String[] vfs = { "All", "Layer", "Range", "Parts" };
@@ -747,10 +779,12 @@ public final class PhantasiaTutorials {
             }
             py += 8;
 
-            g.drawString(f, "Layer:", vpW + 8, py + 4, C_DIM(), false);
+            g.drawString(f, PhantasiaText.str("screen.phantasia.scene_editor.label_layer"), vpW + 8, py + 4, C_DIM(),
+                    false);
             g.fill(vpW + 10, py + 14, vpW + 10 + bW, py + 28, C_BTN());
             g.drawCenteredString(f, "◀", vpW + 10 + bW / 2, py + 17, C_TEXT());
-            g.drawCenteredString(f, "All", lX + lW / 2, py + 17, C_ACCENT());
+            g.drawCenteredString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.all"), lX + lW / 2, py + 17,
+                    C_ACCENT());
             g.fill(lX + lW + 2, py + 14, lX + lW + 2 + bW, py + 28, C_BTN());
             g.drawCenteredString(f, "▶", lX + lW + 2 + bW / 2, py + 17, C_TEXT());
             py += 32;
@@ -815,46 +849,55 @@ public final class PhantasiaTutorials {
         int ppW = f.width("⊞ Placements") + 12;
         g.fill(x, 3, x + ppW, TOP_H - 3, showPlacements ? C_BTN_ACT() : C_BTN());
         if (showPlacements) g.fill(x, TOP_H - 3, x + ppW, TOP_H - 2, C_ACCENT());
-        g.drawString(f, "⊞ Placements", x + 5, (TOP_H - 8) / 2, showPlacements ? C_ACCENT() : C_DIM(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.placements"), x + 5, (TOP_H - 8) / 2,
+                showPlacements ? C_ACCENT() : C_DIM(), false);
         x += ppW + 4;
         int pvW2 = f.width("► Preview") + 10;
         g.fill(x, 3, x + pvW2, TOP_H - 3, C_BTN());
-        g.drawString(f, "► Preview", x + 5, (TOP_H - 8) / 2, C_DIM(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.preview"), x + 5, (TOP_H - 8) / 2, C_DIM(),
+                false);
         x += pvW2 + 4;
         int camTabW2 = 76;
         g.fill(x, 3, x + camTabW2, TOP_H - 3, showCamPanel ? C_BTN_ACT() : C_BTN());
         if (showCamPanel) g.fill(x, TOP_H - 3, x + camTabW2, TOP_H - 2, C_ACCENT());
-        g.drawString(f, "🎥 Camera", x + 5, (TOP_H - 8) / 2, showCamPanel ? C_ACCENT() : C_DIM(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.camera"), x + 5, (TOP_H - 8) / 2,
+                showCamPanel ? C_ACCENT() : C_DIM(), false);
         x += camTabW2 + 4;
         int wiW = f.width("▦ World") + 10;
         g.fill(x, 3, x + wiW, TOP_H - 3, C_BTN());
-        g.drawString(f, "▦ World", x + 5, (TOP_H - 8) / 2, C_DIM(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_scene_editor.world"), x + 5, (TOP_H - 8) / 2, C_DIM(),
+                false);
         int rx = VW - 4;
         int bkW2 = f.width("✕ Back") + 10;
         rx -= bkW2;
         g.fill(rx, 3, rx + bkW2, TOP_H - 3, C_BTN());
-        g.drawString(f, "✕ Back", rx + 5, (TOP_H - 8) / 2, C_TEXT(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.back"), rx + 5, (TOP_H - 8) / 2, C_TEXT(),
+                false);
         rx -= 4;
         int svW2 = f.width("💾 Save") + 10;
         rx -= svW2;
         g.fill(rx, 3, rx + svW2, TOP_H - 3, C_BTN());
         g.fill(rx, TOP_H - 3, rx + svW2, TOP_H - 2, C_GREEN());
-        g.drawString(f, "💾 Save", rx + 5, (TOP_H - 8) / 2, C_GREEN(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.save"), rx + 5, (TOP_H - 8) / 2, C_GREEN(),
+                false);
         g.drawCenteredString(f, sceneName, VW / 2, (TOP_H - 8) / 2, C_DIM());
 
         if (showPlacements) {
             g.fill(0, TOP_H, PNL_W, VH - BOT_H, C_PANEL());
             g.fill(PNL_W - 1, TOP_H, PNL_W, VH - BOT_H, 0x44FFFFFF);
             g.fill(0, TOP_H, PNL_W, TOP_H + 14, C_BAR());
-            g.drawString(f, "Placements", 6, TOP_H + 3, C_ACCENT(), false);
-            g.drawString(f, "Name:", 6, TOP_H + 18, C_DIM(), false);
+            g.drawString(f, PhantasiaText.str("screen.phantasia.scene_editor.section_placements"), 6, TOP_H + 3,
+                    C_ACCENT(), false);
+            g.drawString(f, PhantasiaText.str("screen.phantasia.scene_create.label_name"), 6, TOP_H + 18, C_DIM(),
+                    false);
             int nfW2 = PNL_W - 44;
             g.fill(40, TOP_H + 16, 40 + nfW2, TOP_H + 28, 0xFF0A0A14);
             g.fill(40, TOP_H + 16, 40 + nfW2, TOP_H + 17, 0xFF333355);
             String sn = sceneName.length() > 18 ? sceneName.substring(0, 15) + "..." : sceneName;
             g.drawString(f, sn, 43, TOP_H + 18, C_TEXT(), false);
             g.fill(4, TOP_H + 32, PNL_W - 4, TOP_H + 33, 0x22FFFFFF);
-            g.drawString(f, "Machines (" + 3 + "):", 6, TOP_H + 37, C_DIM(), false);
+            g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.machines_2", 3), 6, TOP_H + 37, C_DIM(),
+                    false);
             String[] mNames2 = { firstMachineName(), "Chemical Reactor", "Macerator" };
             String[] offsets = { "0, 0, 0", "14, 0, 0", "28, 0, 0" };
             for (int i = 0; i < 3; i++) {
@@ -864,11 +907,13 @@ public final class PhantasiaTutorials {
                 if (sel) g.fill(4, my, 5, my + 22, C_ACCENT());
                 String mn = mNames2[i].length() > 18 ? mNames2[i].substring(0, 15) + "..." : mNames2[i];
                 g.drawString(f, mn, 8, my + 3, sel ? C_ACCENT() : C_TEXT(), false);
-                g.drawString(f, "offset: " + offsets[i], 8, my + 13, C_DIM(), false);
+                g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.offset", offsets[i]), 8, my + 13,
+                        C_DIM(), false);
             }
             int addBtnY = TOP_H + 50 + 3 * 28 + 4;
             g.fill(4, addBtnY, PNL_W - 4, addBtnY + 14, C_BTN());
-            g.drawCenteredString(f, "+ Add Machine", PNL_W / 2, addBtnY + 3, C_ACCENT());
+            g.drawCenteredString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.add_machine"), PNL_W / 2,
+                    addBtnY + 3, C_ACCENT());
         }
 
         int vpX = PNL_W;
@@ -900,17 +945,21 @@ public final class PhantasiaTutorials {
             int cpY2 = VH - BOT_H - cpH2 - 4;
             g.fill(cpX2 - 2, cpY2 - 2, cpX2 + cpW2 + 2, cpY2 + cpH2 + 2, 0xDD070712);
             g.fill(cpX2 - 2, cpY2 - 2, cpX2 + cpW2 + 2, cpY2 - 1, C_ACCENT());
-            g.drawString(f, "🎥  Camera — step " + (activeStep + 1), cpX2 + 4, cpY2 + 3, C_ACCENT(), false);
+            g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.camera_step", (activeStep + 1)),
+                    cpX2 + 4, cpY2 + 3, C_ACCENT(), false);
             int r1Y2 = cpY2 + 14, bxc2 = cpX2 + 4;
             int capBtnW2 = f.width("📷 Capture Cam") + 12;
             g.fill(bxc2, r1Y2, bxc2 + capBtnW2, r1Y2 + 14, C_BTN_ACT());
             g.fill(bxc2, r1Y2, bxc2 + capBtnW2, r1Y2 + 1, C_ACCENT());
-            g.drawString(f, "📷 Capture Cam", bxc2 + 6, r1Y2 + 3, C_ACCENT(), false);
+            g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.capture_cam"), bxc2 + 6, r1Y2 + 3,
+                    C_ACCENT(), false);
             bxc2 += capBtnW2 + 10;
-            g.drawString(f, "Yaw -90.0°  Pitch -20.0°  Zoom 60.0", bxc2, r1Y2 + 3, C_DIM(), false);
+            g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.yaw_90_0_pitch_20"), bxc2, r1Y2 + 3,
+                    C_DIM(), false);
             int r2Y2 = cpY2 + 32;
             bxc2 = cpX2 + 4;
-            g.drawString(f, "Zoom:", bxc2, r2Y2 + 2, C_DIM(), false);
+            g.drawString(f, PhantasiaText.str("screen.phantasia.scene_editor.label_zoom"), bxc2, r2Y2 + 2, C_DIM(),
+                    false);
             bxc2 += f.width("Zoom:") + 3;
             g.fill(bxc2, r2Y2, bxc2 + 40, r2Y2 + 12, 0xFF0A0A14);
             g.fill(bxc2, r2Y2, bxc2 + 40, r2Y2 + 1, 0xFF333355);
@@ -919,9 +968,11 @@ public final class PhantasiaTutorials {
             int ltW2 = f.width("SPRING") + 16;
             g.fill(bxc2, r2Y2, bxc2 + ltW2, r2Y2 + 13, C_BTN());
             g.fill(bxc2, r2Y2, bxc2 + ltW2, r2Y2 + 1, C_ACCENT());
-            g.drawString(f, "SPRING", bxc2 + 8, r2Y2 + 2, C_ACCENT(), false);
+            g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.spring"), bxc2 + 8, r2Y2 + 2,
+                    C_ACCENT(), false);
             bxc2 += ltW2 + 6;
-            g.drawString(f, "over 30 ticks", bxc2, r2Y2 + 2, C_DIM(), false);
+            g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.over_30_ticks"), bxc2, r2Y2 + 2,
+                    C_DIM(), false);
         }
 
         int rowY = VH - BOT_H;
@@ -929,7 +980,7 @@ public final class PhantasiaTutorials {
         g.fill(0, rowY, VW, rowY + 1, C_ACCENT());
         int y1 = rowY + 4, bx3 = 8;
         String sLabel = (activeStep + 1) + "/" + (steps != null ? steps.size() : 3);
-        g.drawString(f, "Step", bx3, y1 - 2, 0xFF334455, false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.step"), bx3, y1 - 2, 0xFF334455, false);
         g.drawString(f, sLabel, bx3, y1 + 6, C_ACCENT(), false);
         bx3 += f.width(sLabel) + 10;
         for (String nav : new String[] { "+", "−", "Dup", "◄", "►" }) {
@@ -947,7 +998,7 @@ public final class PhantasiaTutorials {
 
         int y2 = rowY + STEP_H / 2 + 5;
         bx3 = 8;
-        g.drawString(f, "Visible:", bx3, y2 + 2, C_DIM(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.visible"), bx3, y2 + 2, C_DIM(), false);
         bx3 += f.width("Visible:") + 4;
         String[] vis = { firstMachineShortLabel(), "CR", "MAC" };
         for (int m = 0; m < 3; m++) {
@@ -959,7 +1010,7 @@ public final class PhantasiaTutorials {
             bx3 += mw2 + 4;
         }
         bx3 += 8;
-        g.drawString(f, "Running: all", bx3, y2 + 2, C_DIM(), false);
+        g.drawString(f, PhantasiaText.str("ui.phantasia.phantasia_tutorials.running_all"), bx3, y2 + 2, C_DIM(), false);
 
         int tlY2 = VH - TL_H;
         g.fill(0, tlY2, VW, VH, C_PANEL());
@@ -1027,8 +1078,9 @@ public final class PhantasiaTutorials {
                                     g.fill(barX, barY, barX + barW, barY + barH, 0xCC0A0A14);
                                     g.fill(barX, barY, barX + barW, barY + 1, C_ACCENT());
                                     g.drawString(f,
-                                            net.phoenixvine.phantasia.client.keybind.PhoenixKeybinds.keyDisplay() +
-                                                    " Hold to Phantasize",
+                                            PhantasiaText.str("ui.phantasia.phantasia_tutorials.hold_to_phantasize",
+                                                    net.phoenixvine.phantasia.client.keybind.PhoenixKeybinds
+                                                            .keyDisplay()),
                                             barX + 8, barY + 5, C_TEXT(), false);
 
                                     g.fill(barX + 8, barY + 18, barX + barW - 8, barY + 24, 0x33FFFFFF);
@@ -1100,7 +1152,9 @@ public final class PhantasiaTutorials {
                                     int bW = f.width("Mode: " + modeLabel) + 8;
                                     g.fill(VW - bW - 6, VH - 28, VW - 6, VH - 14, 0xCC0A0A14);
                                     g.fill(VW - bW - 6, VH - 28, VW - 6, VH - 27, C_ACCENT());
-                                    g.drawString(f, "Mode: " + modeLabel, VW - bW - 2, VH - 24, C_DIM(), false);
+                                    g.drawString(f,
+                                            PhantasiaText.str("ui.phantasia.phantasia_tutorials.mode", modeLabel),
+                                            VW - bW - 2, VH - 24, C_DIM(), false);
                                 }))
                                 .highlight(0.0f, 0.0f, 0.33f, 0.12f, "JADE position")
                                 .highlight(0.29f, 0.40f, 0.42f, 0.10f, "TOOLTIP position")

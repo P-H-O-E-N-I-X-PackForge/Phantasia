@@ -5,6 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.phoenixvine.phantasia.client.PhantasiaText;
 import net.phoenixvine.phantasia.common.data.guides.PhantasiaGuideData;
 import net.phoenixvine.phantasia.common.data.scene.PhantasiaSceneData;
 import net.phoenixvine.phantasia.common.multiblock.IPhantasiaMultiblockDefinition;
@@ -120,7 +121,7 @@ public class PhantasiaContextualSelectionScreen extends PhantasiaScreen {
             case SCRIPT -> {
                 g.renderItem(definition.getIcon(), 0, 0);
                 cardTitle = "Structure Script";
-                badgeLabel = "§aReady";
+                badgeLabel = PhantasiaText.str("ui.phantasia.phantasia_contextual_selection.ready");
             }
             case SCENE -> {
                 PhantasiaSceneData scene = (PhantasiaSceneData) item.data();
