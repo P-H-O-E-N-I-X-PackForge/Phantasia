@@ -6,6 +6,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.phoenixvine.phantasia.client.PhantasiaText;
 import net.phoenixvine.phantasia.client.screens.PhantasiaScreen;
 import net.phoenixvine.phantasia.common.data.scene.PhantasiaSceneData;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScriptData;
@@ -111,7 +112,8 @@ public class PhantasiaScriptStepItemEditorScreen extends PhantasiaScreen {
         g.fill(0, 0, width, TOP_BAR_H, 0xEE0A0A14);
         g.fill(0, TOP_BAR_H - 1, width, TOP_BAR_H, C_ACCENT());
         g.drawCenteredString(font,
-                "Items — Step " + (stepIndex + 1) + " of " + scriptData.getSteps().size(),
+                PhantasiaText.str("ui.phantasia.phantasia_script_step_item_editor.items_step_of", (stepIndex + 1),
+                        scriptData.getSteps().size()),
                 width / 2, (TOP_BAR_H - 8) / 2, C_DIM());
 
         int rx = width - 4;
@@ -123,7 +125,9 @@ public class PhantasiaScriptStepItemEditorScreen extends PhantasiaScreen {
         boolean siHov = isOver(mx, my, siX, 3, siW, TOP_BAR_H - 6);
         g.fill(siX, 3, siX + siW, TOP_BAR_H - 3, si ? C_BTN_ACT() : (siHov ? C_BTN_HOV() : C_BTN()));
         if (si) g.fill(siX, 3, siX + siW, 4, C_ACCENT());
-        g.drawString(font, si ? "Items: Visible" : "Items: Hidden",
+        g.drawString(font,
+                si ? PhantasiaText.str("ui.phantasia.phantasia_script_step_item_editor.items_visible") :
+                        PhantasiaText.str("ui.phantasia.phantasia_script_step_item_editor.items_hidden"),
                 siX + 6, (TOP_BAR_H - 8) / 2, si ? C_ACCENT() : C_DIM(), false);
         btns.add(new Btn(siX, 3, siW, TOP_BAR_H - 6, () -> {
             parent.checkpoint();

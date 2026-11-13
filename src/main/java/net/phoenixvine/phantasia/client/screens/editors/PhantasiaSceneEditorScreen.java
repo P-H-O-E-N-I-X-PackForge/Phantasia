@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.phoenixvine.phantasia.client.PhantasiaText;
 import net.phoenixvine.phantasia.client.camera.CameraView;
 import net.phoenixvine.phantasia.client.camera.LerpType;
 import net.phoenixvine.phantasia.client.camera.PhantasiaCamera;
@@ -600,7 +601,8 @@ public class PhantasiaSceneEditorScreen extends PhantasiaScreen {
         boolean wiHov = isOver(mx, my, x, 3, wiTabW, TOP_BAR_H - 6);
         g.fill(x, 3, x + wiTabW, TOP_BAR_H - 3, showWorldItemPanel ? C_BTN_ACT() : (wiHov ? C_BTN_HOV() : C_BTN()));
         if (showWorldItemPanel) g.fill(x, TOP_BAR_H - 3, x + wiTabW, TOP_BAR_H - 2, C_ACCENT());
-        g.drawString(font, "▦ World", x + 5, (TOP_BAR_H - 8) / 2, showWorldItemPanel ? C_ACCENT() : C_DIM(), false);
+        g.drawString(font, PhantasiaText.str("ui.phantasia.phantasia_scene_editor.world"), x + 5, (TOP_BAR_H - 8) / 2,
+                showWorldItemPanel ? C_ACCENT() : C_DIM(), false);
         if (wiHov) pendingTooltip = "Place items in block entities per placement per step";
         btns.add(new Btn(x, 3, wiTabW, TOP_BAR_H - 6, () -> {
             showWorldItemPanel = !showWorldItemPanel;
@@ -753,7 +755,8 @@ public class PhantasiaSceneEditorScreen extends PhantasiaScreen {
         boolean hasSC = data.startCamera != null;
         int row1 = py + 6;
         int x = px + 6;
-        g.drawString(font, "Start Camera", x, row1 + 1, C_ACCENT(), false);
+        g.drawString(font, PhantasiaText.str("ui.phantasia.phantasia_scene_editor.start_camera"), x, row1 + 1,
+                C_ACCENT(), false);
         x += font.width("Start Camera") + 10;
 
         x = scField(g, mx, my, x, row1, "Yaw", scYawBox, "Yaw angle (degrees)", hasSC);
@@ -766,7 +769,8 @@ public class PhantasiaSceneEditorScreen extends PhantasiaScreen {
         int capW = font.width("⊙ Capture View") + 12;
         boolean capHov = isOver(mx, my, x, row2, capW, 14);
         g.fill(x, row2, x + capW, row2 + 14, capHov ? C_BTN_HOV() : C_BTN());
-        g.drawString(font, "⊙ Capture View", x + 6, row2 + 3, capHov ? C_ACCENT() : C_DIM(), false);
+        g.drawString(font, PhantasiaText.str("ui.phantasia.phantasia_scene_editor.capture_view"), x + 6, row2 + 3,
+                capHov ? C_ACCENT() : C_DIM(), false);
         if (capHov) pendingTooltip = "Snapshot the current viewport as the scene opening camera";
         btns.add(new Btn(x, row2, capW, 14, this::captureStartCam));
         x += capW + 6;
@@ -776,7 +780,8 @@ public class PhantasiaSceneEditorScreen extends PhantasiaScreen {
             int clrW = font.width("✕ Clear") + 10;
             boolean clrHov = isOver(mx, my, x, row2, clrW, 14);
             g.fill(x, row2, x + clrW, row2 + 14, clrHov ? C_BTN_HOV() : C_BTN());
-            g.drawString(font, "✕ Clear", x + 5, row2 + 3, clrHov ? C_RED() : C_DIM(), false);
+            g.drawString(font, PhantasiaText.str("screen.phantasia.scene_editor.btn_clear_cam"), x + 5, row2 + 3,
+                    clrHov ? C_RED() : C_DIM(), false);
             if (clrHov) pendingTooltip = "Remove start camera override";
             btns.add(new Btn(x, row2, clrW, 14, this::clearStartCam));
             x += clrW + 8;
@@ -1306,7 +1311,8 @@ public class PhantasiaSceneEditorScreen extends PhantasiaScreen {
             if (ovY + 10 > clipMaxY) return;
 
             g.fill(px + 2, ovY - 2, px + pw - 2, Math.min(ovY + 160, clipMaxY), 0x220A0A20);
-            g.drawString(font, "#" + selectedPlacement + " override", px + 6, ovY, C_ACCENT(), false);
+            g.drawString(font, PhantasiaText.str("ui.phantasia.phantasia_scene_editor.override", selectedPlacement),
+                    px + 6, ovY, C_ACCENT(), false);
             ovY += 10;
 
             String curShow = ov != null && ov.show != null ? ov.show : "(global)";
@@ -1622,7 +1628,9 @@ public class PhantasiaSceneEditorScreen extends PhantasiaScreen {
         boolean wHov = isOver(mx, my, x, y1, wW, 14);
         g.fill(x, y1, x + wW, y1 + 14, isWorking ? 0xFF0D3A20 : (wHov ? C_BTN_HOV() : C_BTN()));
         if (isWorking) g.fill(x, y1, x + wW, y1 + 1, C_GREEN());
-        g.drawString(font, isWorking ? "● Working" : "○ Idle",
+        g.drawString(font,
+                isWorking ? PhantasiaText.str("ui.phantasia.phantasia_scene_editor.working") :
+                        PhantasiaText.str("ui.phantasia.phantasia_scene_editor.idle"),
                 x + 5, y1 + 3, isWorking ? C_GREEN() : C_DIM(), false);
         if (wHov)
             pendingTooltip = "Toggle global working/idle state for all machines in this step (per-placement overrides in the placements panel)";
@@ -1639,7 +1647,8 @@ public class PhantasiaSceneEditorScreen extends PhantasiaScreen {
         boolean siHov = isOver(mx, my, x, y1, siW, 14);
         g.fill(x, y1, x + siW, y1 + 14, showIt ? C_BTN_ACT() : (siHov ? C_BTN_HOV() : C_BTN()));
         if (showIt) g.fill(x, y1, x + siW, y1 + 1, C_ACCENT());
-        g.drawString(font, "Items", x + 5, y1 + 3, showIt ? C_ACCENT() : C_DIM(), false);
+        g.drawString(font, PhantasiaText.str("screen.phantasia.guide.label_items"), x + 5, y1 + 3,
+                showIt ? C_ACCENT() : C_DIM(), false);
         if (siHov) pendingTooltip = showIt ? "Items panel is visible — click to hide" :
                 "Items panel is hidden — click to show";
         btns.add(new Btn(x, y1, siW, 14, () -> {

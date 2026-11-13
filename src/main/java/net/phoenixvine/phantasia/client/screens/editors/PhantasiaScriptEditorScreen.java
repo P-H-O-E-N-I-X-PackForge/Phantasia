@@ -16,6 +16,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.phoenixvine.phantasia.client.PhantasiaText;
 import net.phoenixvine.phantasia.client.camera.CameraView;
 import net.phoenixvine.phantasia.client.camera.LerpType;
 import net.phoenixvine.phantasia.client.camera.PhantasiaCamera;
@@ -1085,7 +1086,10 @@ public class PhantasiaScriptEditorScreen extends PhantasiaScreen implements Phan
             int btnY = py + 36;
             btn(g, mx, my, px + pw - 120, btnY, 54, 12, "\u2713 Add", C_GREEN(), this::confirmAnnotation);
             btn(g, mx, my, px + pw - 62, btnY, 54, 12, "\u2715 Cancel", C_BTN(), this::cancelAnnotation);
-            g.drawString(font, "Marking: " + pendingAnnotationLocalPos.toShortString(), px + 6, btnY + 1, C_DIM(),
+            g.drawString(font,
+                    PhantasiaText.str("ui.phantasia.phantasia_script_editor.marking",
+                            pendingAnnotationLocalPos.toShortString()),
+                    px + 6, btnY + 1, C_DIM(),
                     false);
             return;
         }
@@ -1635,7 +1639,9 @@ public class PhantasiaScriptEditorScreen extends PhantasiaScreen implements Phan
         boolean wh = isOver(mx, my, x, y1, 82, 14);
         g.fill(x, y1, x + 82, y1 + 14, s.working ? C_BTN_ACT() : (wh ? C_BTN_HOV() : C_BTN()));
         if (s.working) g.fill(x, y1, x + 82, y1 + 1, C_GREEN());
-        g.drawString(font, (s.working ? "\u2713" : "\u25CB") + " Running", x + 5, y1 + 3,
+        g.drawString(font,
+                PhantasiaText.str("ui.phantasia.phantasia_script_editor.running", (s.working ? "\u2713" : "\u25CB")),
+                x + 5, y1 + 3,
                 s.working ? C_GREEN() : C_DIM(), false);
         if (wh) pendingTooltip = "Toggle: show this machine as running/active in this step";
         btns.add(new Btn(x, y1, 82, 14, () -> {
@@ -2225,7 +2231,7 @@ public class PhantasiaScriptEditorScreen extends PhantasiaScreen implements Phan
             pendingTooltip = "Filter syntax: () brackets, | (OR), & (AND), ! (NOT), @ (Ability) — e.g. (@hatch | high_temperature) & !muffler";
         cy += 17;
         g.drawString(font,
-                "| for OR   •   & for AND   •   ! to negate   •   @ for PartAbility",
+                PhantasiaText.str("ui.phantasia.phantasia_script_editor.for_or_for_and_to"),
                 mdx + 12, cy, C_DIM(), false);
         cy += 12;
 

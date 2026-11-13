@@ -20,6 +20,7 @@ import net.phoenixvine.phantasia.common.PhantasiaKeybind;
 import net.phoenixvine.phantasia.common.data.guides.PhantasiaGuideLoader;
 import net.phoenixvine.phantasia.common.data.scene.PhantasiaSceneLoader;
 import net.phoenixvine.phantasia.common.data.script.PhantasiaScriptLoader;
+import net.phoenixvine.phantasia.utils.PhantasiaLang;
 import net.phoenixvine.wiki.client.suite.SuiteHudBar;
 import net.phoenixvine.wiki.theme.PhoenixTheme;
 
@@ -77,18 +78,18 @@ public class PhantasiaClient {
                                             try {
                                                 var docsDir = FMLPaths.GAMEDIR.get().getParent().resolve("docs");
                                                 var result = PhantasiaWebExport.export(docsDir);
-                                                player.sendSystemMessage(Component.literal(
-                                                        "[Phantasia] Export complete: " + result.scenes() +
-                                                                " scenes, " +
-                                                                result.scripts() + " scripts, " + result.guides() +
-                                                                " guides, " +
-                                                                result.blocks() + " blocks → " + docsDir));
+                                                player.sendSystemMessage(PhantasiaLang.tr(
+                                                        "ui.phantasia.phantasia_client.phantasia_export_complete_scenes_scripts",
+                                                        result.scenes(), result.scripts(), result.guides(),
+                                                        result.blocks(), docsDir));
                                                 if (result.hasErrors())
-                                                    player.sendSystemMessage(Component
-                                                            .literal("[Phantasia] Warnings: " + result.errors()));
+                                                    player.sendSystemMessage(PhantasiaLang.tr(
+                                                            "ui.phantasia.phantasia_client.phantasia_warnings",
+                                                            result.errors()));
                                             } catch (Exception e) {
-                                                player.sendSystemMessage(Component
-                                                        .literal("[Phantasia] Export failed: " + e.getMessage()));
+                                                player.sendSystemMessage(PhantasiaLang.tr(
+                                                        "ui.phantasia.phantasia_client.phantasia_export_failed",
+                                                        e.getMessage()));
                                                 Phantasia.LOGGER.error("[Phantasia] webexport failed", e);
                                             }
                                         });
@@ -119,7 +120,7 @@ public class PhantasiaClient {
                     Phantasia.MOD_ID,
                     SuiteHudBar.PRIORITY_PHANTASIA,
                     PHANTASIA_ICON,
-                    Component.literal("Phantasia"),
+                    PhantasiaLang.tr("key.categories.phantasia"),
                     () -> Minecraft.getInstance().setScreen(
                             new PhantasiaSceneSelectionScreen(Minecraft.getInstance().screen)));
 

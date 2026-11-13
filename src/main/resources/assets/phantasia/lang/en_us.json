@@ -1,10 +1,8 @@
 {
   "item.phantasia.phantasia_manual": "Phantasia Manual",
   "item.phantasia.capture_wand": "Phantasia Capture Wand",
-
   "key.categories.phantasia": "Phantasia",
   "key.phantasia.phantasia_menu": "Open Phantasia Menu",
-
   "screen.phantasia.block_inspector.title": "Block Inspector",
   "screen.phantasia.block_inspector.header": "TECHNICAL BLOCK INSPECTOR",
   "screen.phantasia.block_inspector.designation": "DESIGNATION",
@@ -13,7 +11,6 @@
   "screen.phantasia.block_inspector.properties": "BLOCKSTATE PROPERTIES",
   "screen.phantasia.block_inspector.btn_emi": "EMI RECIPES",
   "screen.phantasia.block_inspector.btn_close": "CLOSE DATA",
-
   "role.phantasia.standard": "Standard Component",
   "role.phantasia.controller": "MULTIBLOCK CONTROLLER",
   "role.phantasia.lamp": "INDICATOR LAMP",
@@ -23,7 +20,6 @@
   "role.phantasia.thermal_coolant": "THERMAL COOLANT MODULE",
   "role.phantasia.neutron_moderator": "NEUTRON MODERATOR",
   "role.phantasia.breeder_blanket": "BREEDER BLANKET",
-
   "spec.phantasia.tech_specs": "TECHNICAL SPECIFICATIONS:",
   "spec.phantasia.max_heat": " - Max Heat: %s",
   "spec.phantasia.material": " - Material: %s",
@@ -49,7 +45,6 @@
   "spec.phantasia.unit.seconds": "%ss",
   "spec.phantasia.unit.pellets_cycle": "%s pellets / %ss",
   "spec.phantasia.unit.weight_suffix": " (W:%s)",
-
   "tooltip.phantasia.hold_to_phantasize": "§6§l» §b[%s§b] §7Hold to Phantasize",
   "ui.phantasia.color_code_display": "§%s (§%s)",
   "ui.phantasia.raw_value": "%s",
@@ -60,7 +55,6 @@
   "ui.phantasia.welcome.installed": "Phantasia is installed!",
   "ui.phantasia.welcome.instruction": "Press [P] near a machine, or /phantasia to browse.",
   "ui.phantasia.welcome.open_guide": "Use /phantasia → Tutorials to get started.",
-
   "screen.phantasia.scene_selection.title": "Phantasia",
   "screen.phantasia.scene_selection.header": "✶ Phantasia",
   "screen.phantasia.scene_selection.subtitle": "Select a Multiblock or Scene to Explore",
@@ -84,12 +78,10 @@
   "screen.phantasia.scene_selection.label_scene_streaming": "Scene streaming",
   "screen.phantasia.scene_selection.section_appearance": "Appearance",
   "screen.phantasia.scene_selection.hint_scroll": "▲ ▼  scroll to see more",
-
   "screen.phantasia.editor.close_confirm_title": "Unsaved changes, discard and close?",
   "screen.phantasia.editor.close_confirm_body": "All edits since your last save will be lost.",
   "screen.phantasia.editor.close_confirm_discard": "✕ Discard & Close",
   "screen.phantasia.editor.close_confirm_keep": "↩ Keep Editing",
-
   "screen.phantasia.scene_create.title": "New Scene",
   "screen.phantasia.scene_create.label_id": "Scene ID:",
   "screen.phantasia.scene_create.label_name": "Name:",
@@ -102,7 +94,6 @@
   "screen.phantasia.scene_create.err_blank_id": "Scene ID cannot be blank.",
   "screen.phantasia.scene_create.err_no_namespace": "ID must be namespace:name (e.g. mod:my_line)",
   "screen.phantasia.scene_create.err_duplicate": "A scene with that ID already exists.",
-
   "screen.phantasia.guide_editor.title": "Guide Editor",
   "screen.phantasia.guide_editor.label_title": "Title:",
   "screen.phantasia.guide_editor.label_icon": "Icon:",
@@ -130,7 +121,6 @@
   "screen.phantasia.guide_editor.picker_guide": "Select Guide Link",
   "screen.phantasia.guide_editor.picker_scene": "Select Scene Link",
   "screen.phantasia.guide_editor.picker_script": "Select Script Link",
-
   "screen.phantasia.hide_pos.title": "Hide Positions",
   "screen.phantasia.hide_pos.hint": "x, y, z",
   "screen.phantasia.hide_pos_editor.title": "Hide Positions",
@@ -148,7 +138,6 @@
   "screen.phantasia.hide_pos_editor.err_already_hidden": "Already hidden.",
   "screen.phantasia.hide_pos_editor.err_enter_xyz": "Enter x, y, z first.",
   "screen.phantasia.hide_pos_editor.hint_xyz": "x, y, z",
-
   "screen.phantasia.placement_editor.title": "Edit Placement",
   "screen.phantasia.placement_editor.label_offset": "Offset:",
   "screen.phantasia.placement_editor.label_item": "Item:",
@@ -177,7 +166,6 @@
   "screen.phantasia.placement_editor.section_recipe_items_hint": "(displayed in scene viewer alongside this machine)",
   "screen.phantasia.placement_editor.no_items": "No items yet.",
   "screen.phantasia.placement_editor.section_add_item": "+ Add Item",
-
   "screen.phantasia.scene_mistakes_editor.title": "Layout Mistakes",
   "screen.phantasia.scene_mistakes_editor.btn_done": "✓ Done",
   "screen.phantasia.scene_mistakes_editor.label_severity": "Severity:",
@@ -195,7 +183,6 @@
   "screen.phantasia.scene_mistakes_editor.err_duplicate_id": "ID already used: ",
   "screen.phantasia.scene_mistakes_editor.header": "⚠ Layout Mistakes -  %d defined",
   "screen.phantasia.scene_mistakes_editor.bottom_hint": "Mistakes flag incorrect machine placements in the scene viewer,  %d placement(s) available",
-
   "screen.phantasia.scene_editor.title": "Scene Editor",
   "screen.phantasia.scene_editor.section_placements": "Placements",
   "screen.phantasia.scene_editor.label_name": "Name:",
@@ -231,7 +218,6 @@
   "screen.phantasia.scene_editor.label_item": "Item:",
   "screen.phantasia.scene_editor.label_source": "Source:",
   "screen.phantasia.scene_editor.hint_item_blank": "Leave Item blank to only set source. Leave Source blank to only set item. [Esc] deselects.",
-
   "screen.phantasia.script_step_item.title": "Step Items, Step %s",
   "screen.phantasia.script_step_item_editor.label_count": "Count:",
   "screen.phantasia.script_step_item_editor.label_label": "Label:",
@@ -248,7 +234,6 @@
   "screen.phantasia.script_step_item_editor.hint_desc": "Description shown in item popup...",
   "screen.phantasia.script_step_item_editor.hint_scene": "phantasia:scene_id (optional)",
   "screen.phantasia.script_step_item_editor.hint_guide_id": "namespace:guide_id (optional)",
-
   "screen.phantasia.script_editor.title": "Editor",
   "screen.phantasia.script_editor.label_colour": "Colour:",
   "screen.phantasia.script_editor.label_recipe": "Recipe:",
@@ -288,28 +273,22 @@
   "screen.phantasia.script_editor.warn_recipe_override": "⚠ recipeId is set, this entry overrides recipe-placed items at this position",
   "screen.phantasia.script_editor.btn_add_global_mistake": "+ Add Global Mistake",
   "screen.phantasia.script_editor.section_global_mistakes": "⚠ Global Mistakes",
-
   "screen.phantasia.scene.label_show": "Show:",
   "screen.phantasia.scene.label_layer": "Layer:",
   "screen.phantasia.scene.label_build_step": "Build Step:",
   "screen.phantasia.scene.label_size": "Size:",
-
   "screen.phantasia.theme_editor.title": "Phantasia Theme Workspace",
   "screen.phantasia.theme_editor.label_theme_id": "Theme ID",
   "screen.phantasia.theme_editor.btn_save": "Save Theme File",
   "screen.phantasia.theme_editor.btn_exit": "← Exit Workspace",
-
   "screen.phantasia.guide.label_items": "Items",
   "screen.phantasia.guide.btn_close": "Close",
-
   "screen.phantasia.item_microscene.no_description": "No description.",
   "screen.phantasia.item_microscene.btn_back": "← Back",
-
   "screen.phantasia.scene_viewer.btn_back": "← Back",
   "screen.phantasia.scene_viewer.btn_edit": "✏ Edit",
   "screen.phantasia.scene_viewer.btn_guide": "📖 Guide",
   "screen.phantasia.scene_viewer.btn_center": "⊕ Center",
-
   "screen.phantasia.placement_step_editor.label_show": "Show:",
   "screen.phantasia.placement_step_editor.btn_global": "Global",
   "screen.phantasia.placement_step_editor.label_min": "min:",
@@ -322,7 +301,6 @@
   "screen.phantasia.placement_step_editor.btn_clear_override": "✕ Clear override",
   "screen.phantasia.placement_step_editor.label_layer": "Layer",
   "screen.phantasia.placement_step_editor.label_filter": "filter",
-
   "screen.phantasia.block_filter.title": "Block Filter",
   "screen.phantasia.block_filter.title_count": "Block Filter, %d block types",
   "screen.phantasia.block_filter.hint_select": "Select which blocks to highlight",
@@ -336,7 +314,6 @@
   "screen.phantasia.block_filter.feat_hatch": "🔗 Component: Hatch / Bus",
   "screen.phantasia.block_filter.feat_energy": "⚡ System: Energy I/O",
   "screen.phantasia.block_filter.header_blockstate": "BLOCKSTATE PROPERTIES",
-
   "screen.phantasia.footprint.title": "Footprint",
   "screen.phantasia.footprint.label_layer": "Layer (Y):",
   "screen.phantasia.footprint.label_jump_to": "Jump to:",
@@ -344,7 +321,6 @@
   "screen.phantasia.footprint.feat_block_entity": "⚡ Block Entity",
   "screen.phantasia.footprint.feat_controller": "★ Controller",
   "screen.phantasia.footprint.label_layer_blocks": "Layer blocks:",
-
   "screen.phantasia.material_cost.title": "Material Cost",
   "screen.phantasia.material_cost.hint_search": "Search recipe type... (e.g. blast)",
   "screen.phantasia.material_cost.title_count": "Material Cost,  %d block types",
@@ -356,20 +332,15 @@
   "screen.phantasia.material_cost.msg_copied": "✔ Copied to clipboard!",
   "screen.phantasia.material_cost.hint_controls": "▶ expand  •  ▼ right-click collapse • right-click recipe entry to get a dropdown of available recipes",
   "screen.phantasia.material_cost.btn_copy_list": "Copy List",
-
   "screen.phantasia.variants.title": "Variants",
   "screen.phantasia.variants.label_variants": "§bVariants",
   "screen.phantasia.variants.msg_no_variants": "§7No variants available for this machine.",
-
   "screen.phantasia.text_input.label_colors": "Colors: ",
-
   "screen.phantasia.context_selection.title": "Phantasia",
   "screen.phantasia.context_selection.subtitle": "Select content to open",
-
   "ui.phantasia.btn_confirm": "Confirm",
   "ui.phantasia.btn_remove": "Remove",
   "ui.phantasia.web_export_starting": "[Phantasia] Starting web export...",
-
   "item.phantasia.phantasia_manual.tooltip_rightclick": "Right-click to open Phantasia.",
   "item.phantasia.phantasia_manual.tooltip_hold": "Hold near any machine to open its guide.",
   "item.phantasia.phantasia_manual.tooltip_browse": "Browse all content.",
@@ -377,30 +348,22 @@
   "item.phantasia.phantasia_manual.tooltip_tutorials_desc": "- interactive walkthroughs.",
   "item.phantasia.phantasia_manual.tooltip_settings": "⚙ Settings tab",
   "item.phantasia.phantasia_manual.tooltip_settings_desc": "- camera behaviour, display mode, theme editor.",
-
   "screen.phantasia.placement_step_editor.title": "Per-Step Config",
   "screen.phantasia.placement_step_editor.hint_recipe": "gtceu:ebf_iron_ingot",
   "screen.phantasia.placement_step_editor.hint_particles": "particle1;particle2",
-
   "screen.phantasia.scene_editor.hint_world_item": "namespace:item  (blank = clear slot)",
   "screen.phantasia.scene_editor.hint_source_amount": "1-10k",
   "screen.phantasia.scene_editor.hint_tooltip_item": "e.g. minecraft:iron_ore",
-
   "screen.phantasia.script_editor.hint_layer_count": "-",
   "screen.phantasia.script_editor.hint_world_item": "namespace:item  (blank = clear slot)",
   "screen.phantasia.script_editor.hint_source_amount": "source (0-10000)",
-
   "screen.phantasia.guide_editor.hint_tooltip_item": "e.g. minecraft:iron_ore",
-
   "screen.phantasia.theme_editor.label_baseplate": "Baseplate",
   "screen.phantasia.theme_editor.hint_baseplate": "e.g. minecraft:stone_bricks",
-
   "screen.phantasia.ars_recipe_picker.title": "Pick Recipe / Ritual",
   "screen.phantasia.ars_recipe_picker.hint_search": "Search…",
-
   "screen.phantasia.gt_recipe_picker.title": "Pick GT Recipe",
   "screen.phantasia.gt_recipe_picker.hint_search": "Search by ID…",
-
   "tutorial.phantasia.getting_started.title": "Getting Started",
   "tutorial.phantasia.getting_started.desc": "A quick overview of what Phantasia is and how to use it.",
   "tutorial.phantasia.getting_started.s0.title": "Welcome to Phantasia",
@@ -413,7 +376,6 @@
   "tutorial.phantasia.getting_started.s3.body": "Type /phantasia to open a searchable list of every multiblock,\nscene layout, and guide.\n\nUse it any time, you don't need to be near a machine.\nThe Tutorials tab is also right here.",
   "tutorial.phantasia.getting_started.s4.title": "You're Ready!",
   "tutorial.phantasia.getting_started.s4.body": "That's all you need to know as a player.\n\nOpen the other tabs in Tutorials for deeper dives into\nguides, scripts, and scenes.\nPack authors can check the dev tutorials for more.",
-
   "tutorial.phantasia.guides.title": "Understanding Guides",
   "tutorial.phantasia.guides.desc": "Learn what guides are and how to read them.",
   "tutorial.phantasia.guides.s0.title": "What is a Guide?",
@@ -424,7 +386,6 @@
   "tutorial.phantasia.guides.s2.body": "Use the Next/Prev buttons at the bottom of the guide or press\nthe arrow keys to navigate between pages.\n\nPress ESC to close and return to the selection screen.",
   "tutorial.phantasia.guides.s3.title": "Cross-Links",
   "tutorial.phantasia.guides.s3.body": "Guide pages can link to other guides, to scene layouts, or to\nmachine scripts. Clicking a link opens that content directly.\n\nThis lets pack authors build a flowing documentation flow\nfrom overview to details to assembly.",
-
   "tutorial.phantasia.scripts.title": "Understanding Scripts",
   "tutorial.phantasia.scripts.desc": "Learn how step-by-step machine walkthroughs work.",
   "tutorial.phantasia.scripts.s0.title": "What is a Script?",
@@ -433,7 +394,6 @@
   "tutorial.phantasia.scripts.s1.body": "Each step focuses the camera on a specific part of the machine.\n\nThe caption strip above the timeline shows the current instruction.\nUse the scrubber or play/pause to move through the walkthrough.\nThe 3D preview updates to show only the relevant blocks.",
   "tutorial.phantasia.scripts.s2.title": "Variants",
   "tutorial.phantasia.scripts.s2.body": "The right panel holds machine-specific options.\n\nClick to expand it, you'll find Show/Layer/Build controls\nand extra tools. Your layer and build-order state persists.",
-
   "tutorial.phantasia.scenes.title": "Understanding Scenes",
   "tutorial.phantasia.scenes.desc": "Learn how multi-machine scene layouts work.",
   "tutorial.phantasia.scenes.s0.title": "What is a Scene?",
@@ -442,7 +402,6 @@
   "tutorial.phantasia.scenes.s1.body": "Scene steps walk you through the full multi-machine layout.\n\nEach step can show specific machines and hide others so you\nfocus on one part of the production chain at a time.",
   "tutorial.phantasia.scenes.s2.title": "Mistakes",
   "tutorial.phantasia.scenes.s2.body": "Scenes can include layout validation hints called Mistakes.\n\nEach mistake has a severity (Info / Warning / Error) and appears\nin the guide view for the scene, helping players avoid common\nassembly errors before they make them.",
-
   "tutorial.phantasia.dev_guides.title": "Creating Guides",
   "tutorial.phantasia.dev_guides.desc": "How to write and publish your own guides.",
   "tutorial.phantasia.dev_guides.s0.title": "Opening the Guide Editor",
@@ -453,7 +412,6 @@
   "tutorial.phantasia.dev_guides.s2.body": "Click a page in the right panel list to select and edit it.\nClick '+ Add Page' to create a new blank page.\n\nUse Ctrl+S or the Save button to write the guide to disk.\nIt immediately appears in /phantasia.",
   "tutorial.phantasia.dev_guides.s3.title": "Preview and Save",
   "tutorial.phantasia.dev_guides.s3.body": "Click 'Preview' to open the guide reader and see exactly\nwhat players will see, including cross-links and item cards.\n\nClick 'Save' to write to disk immediately.\nThe guide reloads without a restart.",
-
   "tutorial.phantasia.dev_scripts.title": "Writing Scripts",
   "tutorial.phantasia.dev_scripts.desc": "How to create step-by-step machine walkthroughs.",
   "tutorial.phantasia.dev_scripts.s0.title": "Opening the Script Editor",
@@ -474,7 +432,6 @@
   "tutorial.phantasia.dev_scripts.s7.body": "Switch to World mode (top-left of editor) to place floating\nitem markers directly inside the 3D viewport (currently only supports ars nouveau).\n\nThese markers are visible only during the step you place them\non, and show the player exactly what block or item goes where.\n\nClick a position in the viewport, then pick an item from the\nitem picker that opens. Markers move with the camera.",
   "tutorial.phantasia.dev_scripts.s8.title": "Save and Test",
   "tutorial.phantasia.dev_scripts.s8.body": "Click 'Save' (top-right) to write your script to disk.\n\nThen press %s while looking at the real machine in the world\nto run the script live.\n\nIterate fast: save, test in world, tweak, repeat.\nCtrl+S works too. If a step feels rushed, increase its tick count.",
-
   "tutorial.phantasia.dev_scenes.title": "Writing Scenes",
   "tutorial.phantasia.dev_scenes.desc": "How to create multi-machine Scene files.",
   "tutorial.phantasia.dev_scenes.s0.title": "What is a Scene File?",
@@ -484,5 +441,91 @@
   "tutorial.phantasia.dev_scenes.s2.title": "Scene Steps and Visibility",
   "tutorial.phantasia.dev_scenes.s2.body": "Like scripts, scenes have steps but each step controls which\nmachines are visible, not which layer of one machine.\n\nRow 2 of the step row shows a toggle button for every machine\nin the scene. Turn machines on/off per-step to guide players\nthrough assembling a multi-machine setup in order.\n\nUse the Caption field to tell players what to build next.",
   "tutorial.phantasia.dev_scenes.s3.title": "Camera and Save",
-  "tutorial.phantasia.dev_scenes.s3.body": "Click Camera in the top bar to open the per-step camera panel.\nWorks exactly like the script editor: capture yaw, pitch,\nzoom, and lerp type for each step.\n\nClick 'Save' when done. The scene appears immediately in\n/phantasia under Scenes, no restart needed.\n\nUse World mode to place item markers inside the viewport."
+  "tutorial.phantasia.dev_scenes.s3.body": "Click Camera in the top bar to open the per-step camera panel.\nWorks exactly like the script editor: capture yaw, pitch,\nzoom, and lerp type for each step.\n\nClick 'Save' when done. The scene appears immediately in\n/phantasia under Scenes, no restart needed.\n\nUse World mode to place item markers inside the viewport.",
+  "ui.phantasia.phantasia_client.phantasia_export_failed": "[Phantasia] Export failed: %s",
+  "ui.phantasia.phantasia_client.phantasia_warnings": "[Phantasia] Warnings: %s",
+  "ui.phantasia.phantasia_client.phantasia_export_complete_scenes_scripts": "[Phantasia] Export complete: %s scenes, %s scripts, %s guides, %s blocks → %s",
+  "ui.phantasia.phantasia_custom_editor_screen.phantasia_saved_it_will_appear": "§a[Phantasia] Saved '%s' — it will appear in the scene list as §bphantasia:%s§a and can be scripted like any other multiblock.",
+  "ui.phantasia.phantasia_custom_editor_screen.icon_block": "Icon block",
+  "ui.phantasia.phantasia_custom_editor_screen.name": "Name",
+  "ui.phantasia.phantasia_custom_editor_screen.multiblock_editor": "Multiblock Editor",
+  "ui.phantasia.phantasia_manual_item.phantasia": "/phantasia ",
+  "ui.phantasia.phantasia_wand_item.corner_2_not_set": "§8Corner 2: not set",
+  "ui.phantasia.phantasia_wand_item.corner_2": "§4Corner 2: §c%s",
+  "ui.phantasia.phantasia_wand_item.corner_1_not_set": "§8Corner 1: not set",
+  "ui.phantasia.phantasia_wand_item.corner_1": "§2Corner 1: §a%s",
+  "ui.phantasia.phantasia_wand_item.right_click_air_import_selection": "§7Right-click air §8— import selection",
+  "ui.phantasia.phantasia_wand_item.shift_right_click_set_corner": "§7Shift + right-click §8— set corner 2",
+  "ui.phantasia.phantasia_wand_item.right_click_block_set_corner": "§7Right-click block §8— set corner 1",
+  "ui.phantasia.phantasia_wand_item.phantasia_captured_blocks_opening_editor": "§a[Phantasia] Captured §f%s §ablocks — opening editor.",
+  "ui.phantasia.phantasia_wand_item.phantasia_selection_contains_no_non": "§c[Phantasia] Selection contains no non-air blocks.",
+  "ui.phantasia.phantasia_wand_item.phantasia_selection_too_large_blocks": "§c[Phantasia] Selection too large (%s blocks, max %s).",
+  "ui.phantasia.phantasia_wand_item.phantasia_set_both_corners_first": "§c[Phantasia] Set both corners first. Right-click blocks to select.",
+  "ui.phantasia.phantasia_wand_item.selection_blocks_right_click_air": "§7Selection: §f%s × %s × %s §7(%s blocks) — §eRight-click air to import",
+  "ui.phantasia.phantasia_wand_item.phantasia_corner_1_set_to": "§a[Phantasia] Corner 1 set to §f%s",
+  "ui.phantasia.phantasia_wand_item.phantasia_corner_2_set_to": "§a[Phantasia] Corner 2 set to §f%s",
+  "ui.phantasia.phantasia_contextual_selection.ready": "§aReady",
+  "ui.phantasia.phantasia_scene.blocks": "%s / %s blocks",
+  "ui.phantasia.phantasia_scene.next_layer_y_block_s": "Next: Layer Y=%s — %s block(s)",
+  "ui.phantasia.phantasia_scene_selection.read": "📖 Read",
+  "ui.phantasia.phantasia_scene_selection.slides": "%s slides",
+  "ui.phantasia.phantasia_tutorial.click_or_space_to_skip": "Click or [Space] to skip...",
+  "ui.phantasia.phantasia_tutorial.previous": "← Previous",
+  "ui.phantasia.phantasia_custom_editor.multiblock_editor": "§bMultiblock Editor",
+  "ui.phantasia.phantasia_custom_editor.layer_y": "§7Layer Y=%s",
+  "ui.phantasia.phantasia_custom_editor.held": "Held:",
+  "ui.phantasia.phantasia_custom_editor.empty": "§8(empty)",
+  "ui.phantasia.phantasia_custom_editor.l_click_place_r_click": "§8L-click: place  R-click: erase",
+  "ui.phantasia.phantasia_custom_editor.save": "§aSave",
+  "ui.phantasia.phantasia_custom_editor.close": "§cClose",
+  "ui.phantasia.phantasia_scene_editor.world": "▦ World",
+  "ui.phantasia.phantasia_scene_editor.start_camera": "Start Camera",
+  "ui.phantasia.phantasia_scene_editor.capture_view": "⊙ Capture View",
+  "ui.phantasia.phantasia_scene_editor.override": "#%s override",
+  "ui.phantasia.phantasia_scene_editor.working": "● Working",
+  "ui.phantasia.phantasia_scene_editor.idle": "○ Idle",
+  "ui.phantasia.phantasia_scene_placement_step_editor.per_step_config_placement": "Per-Step Config  —  Placement #%s  %s",
+  "ui.phantasia.phantasia_scene_placement_step_editor.step_override": "Step %s / %s override",
+  "ui.phantasia.phantasia_script_editor.marking": "Marking: %s",
+  "ui.phantasia.phantasia_script_editor.running": "%s Running",
+  "ui.phantasia.phantasia_script_editor.for_or_for_and_to": "| for OR   •   & for AND   •   ! to negate   •   @ for PartAbility",
+  "ui.phantasia.phantasia_script_step_item_editor.items_step_of": "Items — Step %s of %s",
+  "ui.phantasia.phantasia_script_step_item_editor.items_visible": "Items: Visible",
+  "ui.phantasia.phantasia_script_step_item_editor.items_hidden": "Items: Hidden",
+  "ui.phantasia.phantasia_variants.off": "OFF",
+  "ui.phantasia.phantasia_tutorials.multiblock_machines_scenes_and_guides": "Multiblock machines, scenes, and guides",
+  "ui.phantasia.phantasia_tutorials.esc_to_close_near_a": "ESC to close  •  %s near a machine to open directly",
+  "ui.phantasia.phantasia_tutorials.new_guide": "+ New Guide",
+  "ui.phantasia.phantasia_tutorials.page": "%s page%s",
+  "ui.phantasia.phantasia_tutorials.machines": "%s machines",
+  "ui.phantasia.phantasia_tutorials.for_players": "For Players",
+  "ui.phantasia.phantasia_tutorials.for_pack_authors": "For Pack Authors",
+  "ui.phantasia.phantasia_tutorials.page_of": "Page %s of %s",
+  "ui.phantasia.phantasia_tutorials.prev": "◄  Prev",
+  "ui.phantasia.phantasia_tutorials.next": "Next  ►",
+  "ui.phantasia.phantasia_tutorials.save": "💾 Save",
+  "ui.phantasia.phantasia_tutorials.preview": "► Preview",
+  "ui.phantasia.phantasia_tutorials.headline": "Headline",
+  "ui.phantasia.phantasia_tutorials.text": "Text",
+  "ui.phantasia.phantasia_tutorials.add_page": "+ Add Page",
+  "ui.phantasia.phantasia_tutorials.camera": "🎥 Camera",
+  "ui.phantasia.phantasia_tutorials.back": "✕ Back",
+  "ui.phantasia.phantasia_tutorials.camera_step": "🎥  Camera — step %s",
+  "ui.phantasia.phantasia_tutorials.capture_cam": "📷 Capture Cam",
+  "ui.phantasia.phantasia_tutorials.yaw_135_0_pitch_30": "Yaw -135.0°  Pitch -30.0°  Zoom 40.0",
+  "ui.phantasia.phantasia_tutorials.spring": "SPRING",
+  "ui.phantasia.phantasia_tutorials.step": "Step",
+  "ui.phantasia.phantasia_tutorials.tick": "Tick",
+  "ui.phantasia.phantasia_tutorials.running": "○ Running",
+  "ui.phantasia.phantasia_tutorials.all": "All",
+  "ui.phantasia.phantasia_tutorials.placements": "⊞ Placements",
+  "ui.phantasia.phantasia_tutorials.machines_2": "Machines (%s):",
+  "ui.phantasia.phantasia_tutorials.offset": "offset: %s",
+  "ui.phantasia.phantasia_tutorials.add_machine": "+ Add Machine",
+  "ui.phantasia.phantasia_tutorials.yaw_90_0_pitch_20": "Yaw -90.0°  Pitch -20.0°  Zoom 60.0",
+  "ui.phantasia.phantasia_tutorials.over_30_ticks": "over 30 ticks",
+  "ui.phantasia.phantasia_tutorials.visible": "Visible:",
+  "ui.phantasia.phantasia_tutorials.running_all": "Running: all",
+  "ui.phantasia.phantasia_tutorials.hold_to_phantasize": "%s Hold to Phantasize",
+  "ui.phantasia.phantasia_tutorials.mode": "Mode: %s"
 }

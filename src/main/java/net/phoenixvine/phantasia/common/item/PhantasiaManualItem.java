@@ -13,6 +13,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.phoenixvine.phantasia.client.screens.PhantasiaSceneSelectionScreen;
+import net.phoenixvine.phantasia.utils.PhantasiaLang;
 
 import java.util.List;
 
@@ -48,7 +49,7 @@ public class PhantasiaManualItem extends Item {
                 .withStyle(ChatFormatting.AQUA)
                 .append(Component.translatable("item.phantasia.phantasia_manual.tooltip_hold")
                         .withStyle(ChatFormatting.GRAY)));
-        lines.add(Component.literal("/phantasia ")
+        lines.add(PhantasiaLang.tr("ui.phantasia.phantasia_manual_item.phantasia")
                 .withStyle(ChatFormatting.AQUA)
                 .append(Component.translatable("item.phantasia.phantasia_manual.tooltip_browse")
                         .withStyle(ChatFormatting.GRAY)));

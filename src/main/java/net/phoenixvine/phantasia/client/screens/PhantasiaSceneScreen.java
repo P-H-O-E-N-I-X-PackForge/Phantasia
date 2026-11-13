@@ -17,6 +17,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.phoenixvine.phantasia.Phantasia;
+import net.phoenixvine.phantasia.client.PhantasiaText;
 import net.phoenixvine.phantasia.client.camera.CameraView;
 import net.phoenixvine.phantasia.client.camera.LerpType;
 import net.phoenixvine.phantasia.client.camera.PhantasiaCamera;
@@ -1110,7 +1111,8 @@ public class PhantasiaSceneScreen extends Screen {
                 g.fill(barX - 1, barY - 1, barX + barW + 1, barY + barH + 1, 0xFF222222);
                 g.fill(barX, barY, barX + barW, barY + barH, 0xFF333333);
                 g.fill(barX, barY, barX + (int) (barW * pct), barY + barH, C_ACCENT());
-                g.drawCenteredString(font, placed + " / " + total + " blocks", cx, cy + 12, C_DIM());
+                g.drawCenteredString(font, PhantasiaText.str("ui.phantasia.phantasia_scene.blocks", placed, total), cx,
+                        cy + 12, C_DIM());
             }
         }
 
@@ -1396,7 +1398,7 @@ public class PhantasiaSceneScreen extends Screen {
         g.fill(0, by + 17, sceneW, by + 18, col);
         List<BlockPos> grp = pattern.buildOrder.get(buildOrderGroup);
         g.drawCenteredString(font,
-                "Next: Layer Y=" + grp.get(0).getY() + " — " + grp.size() + " block(s)",
+                PhantasiaText.str("ui.phantasia.phantasia_scene.next_layer_y_block_s", grp.get(0).getY(), grp.size()),
                 sceneW / 2, by + 5, col);
     }
 

@@ -4,6 +4,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.phoenixvine.phantasia.client.PhantasiaText;
 import net.phoenixvine.phantasia.client.tutorial.TutorialSequence;
 import net.phoenixvine.phantasia.client.tutorial.TutorialSlide;
 import net.phoenixvine.wiki.theme.PhoenixTheme;
@@ -155,7 +156,8 @@ public class PhantasiaTutorialScreen extends PhantasiaScreen {
         renderNavButtons(g, theme);
 
         if (!textDone) {
-            g.drawString(font, "Click or [Space] to skip...", this.width - 130, this.height - 36, C_DIM(), false);
+            g.drawString(font, PhantasiaText.str("ui.phantasia.phantasia_tutorial.click_or_space_to_skip"),
+                    this.width - 130, this.height - 36, C_DIM(), false);
         }
 
         super.render(g, mx, my, partial);
@@ -371,7 +373,8 @@ public class PhantasiaTutorialScreen extends PhantasiaScreen {
             boolean hov = isOver(imx, imy, nav[0], nav[1], 70, 18);
             g.fill(nav[0], nav[1], nav[0] + 70, nav[1] + 18, hov ? C_BTN_HOV() : C_BTN());
             if (hov) g.fill(nav[0], nav[1], nav[0] + 70, nav[1] + 1, C_ACCENT());
-            g.drawCenteredString(font, "← Previous", nav[0] + 35, nav[1] + 5, hov ? C_ACCENT() : C_TEXT());
+            g.drawCenteredString(font, PhantasiaText.str("ui.phantasia.phantasia_tutorial.previous"), nav[0] + 35,
+                    nav[1] + 5, hov ? C_ACCENT() : C_TEXT());
         }
 
         if (nav[2] > 0) {

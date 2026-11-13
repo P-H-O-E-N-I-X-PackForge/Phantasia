@@ -5,7 +5,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -13,6 +12,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.phoenixvine.phantasia.client.PhantasiaText;
 import net.phoenixvine.phantasia.client.camera.CameraView;
 import net.phoenixvine.phantasia.client.camera.PhantasiaCamera;
 import net.phoenixvine.phantasia.client.render.PhantasiaTrackedDummyWorld;
@@ -21,6 +21,7 @@ import net.phoenixvine.phantasia.client.screens.PhantasiaSceneScreen;
 import net.phoenixvine.phantasia.compat.custom.PhantasiaCustomLayout;
 import net.phoenixvine.phantasia.compat.custom.PhantasiaCustomMultiblockDefinition;
 import net.phoenixvine.phantasia.compat.custom.PhantasiaCustomProvider;
+import net.phoenixvine.phantasia.utils.PhantasiaLang;
 
 import org.joml.Vector3f;
 
@@ -59,7 +60,7 @@ public class PhantasiaCustomEditorScreen extends Screen {
     private boolean dirty = false;
 
     public PhantasiaCustomEditorScreen(PhantasiaCustomProvider provider, PhantasiaCustomLayout existing) {
-        super(Component.literal("Multiblock Editor"));
+        super(PhantasiaLang.tr("ui.phantasia.phantasia_custom_editor_screen.multiblock_editor"));
         this.provider = provider;
         this.layout = existing != null ? existing : defaultLayout();
         rebuildDefinition();
@@ -77,7 +78,7 @@ public class PhantasiaCustomEditorScreen extends Screen {
         int panelX = this.width - PANEL_W - 4;
 
         nameField = new EditBox(font, panelX, 24, PANEL_W - 4, 16,
-                Component.literal("Name"));
+                PhantasiaLang.tr("ui.phantasia.phantasia_custom_editor_screen.name"));
         nameField.setMaxLength(64);
         nameField.setValue(layout.displayName != null ? layout.displayName : "");
         nameField.setResponder(val -> {
@@ -87,7 +88,7 @@ public class PhantasiaCustomEditorScreen extends Screen {
         addRenderableWidget(nameField);
 
         iconField = new EditBox(font, panelX, 52, PANEL_W - 4, 16,
-                Component.literal("Icon block"));
+                PhantasiaLang.tr("ui.phantasia.phantasia_custom_editor_screen.icon_block"));
         iconField.setMaxLength(128);
         iconField.setValue(layout.iconBlock != null ? layout.iconBlock : "");
         iconField.setResponder(val -> {
@@ -161,13 +162,17 @@ public class PhantasiaCustomEditorScreen extends Screen {
         g.fill(panelX - 2, 0, this.width, this.height, 0xCC0D0D18);
         g.fill(panelX - 2, 0, panelX - 1, this.height, C_ACCENT());
 
-        g.drawString(font, "§bMultiblock Editor", panelX, 8, C_HILIGHT(), false);
+        g.drawString(font, PhantasiaText.str("ui.phantasia.phantasia_custom_editor.multiblock_editor"), panelX, 8,
+                C_HILIGHT(), false);
 
-        g.drawString(font, "Name", panelX, 15, C_DIM(), false);
-        g.drawString(font, "Icon block", panelX, 43, C_DIM(), false);
+        g.drawString(font, PhantasiaText.str("ui.phantasia.phantasia_custom_editor_screen.name"), panelX, 15, C_DIM(),
+                false);
+        g.drawString(font, PhantasiaText.str("ui.phantasia.phantasia_custom_editor_screen.icon_block"), panelX, 43,
+                C_DIM(), false);
 
         int gridTop = 80;
-        g.drawString(font, "§7Layer Y=" + editLayer, panelX, gridTop - 12, C_DIM(), false);
+        g.drawString(font, PhantasiaText.str("ui.phantasia.phantasia_custom_editor.layer_y", editLayer), panelX,
+                gridTop - 12, C_DIM(), false);
         renderGrid(g, panelX, gridTop, mx, my);
 
         int ctrlY = gridTop + CELL_SIZE * Math.min(gridSizeZ, GRID_MAX) + 8;
@@ -178,25 +183,31 @@ public class PhantasiaCustomEditorScreen extends Screen {
         drawSmallButton(g, panelX + 112, ctrlY - 1, "+Z", mx, my);
 
         int layerY = ctrlY + 14;
-        g.drawString(font, "Layer", panelX, layerY, C_DIM(), false);
+        g.drawString(font, PhantasiaText.str("screen.phantasia.script_editor.label_layer_filter"), panelX, layerY,
+                C_DIM(), false);
         drawSmallButton(g, panelX + 40, layerY - 1, "▼", mx, my);
         drawSmallButton(g, panelX + 56, layerY - 1, "▲", mx, my);
 
         ItemStack held = Minecraft.getInstance().player != null ? Minecraft.getInstance().player.getMainHandItem() :
                 ItemStack.EMPTY;
         int heldY = layerY + 18;
-        g.drawString(font, "Held:", panelX, heldY, C_DIM(), false);
+        g.drawString(font, PhantasiaText.str("ui.phantasia.phantasia_custom_editor.held"), panelX, heldY, C_DIM(),
+                false);
         if (!held.isEmpty()) {
             g.renderItem(held, panelX + 32, heldY - 4);
             g.drawString(font, held.getHoverName().getString(), panelX + 52, heldY, C_TEXT(), false);
         } else {
-            g.drawString(font, "§8(empty)", panelX + 32, heldY, C_DIM(), false);
+            g.drawString(font, PhantasiaText.str("ui.phantasia.phantasia_custom_editor.empty"), panelX + 32, heldY,
+                    C_DIM(), false);
         }
-        g.drawString(font, "§8L-click: place  R-click: erase", panelX, heldY + 12, C_DIM(), false);
+        g.drawString(font, PhantasiaText.str("ui.phantasia.phantasia_custom_editor.l_click_place_r_click"), panelX,
+                heldY + 12, C_DIM(), false);
 
         int btnY = this.height - 28;
-        drawButton(g, panelX, btnY, PANEL_W - 4, 12, "§aSave", mx, my);
-        drawButton(g, panelX, btnY + 15, PANEL_W - 4, 12, "§cClose", mx, my);
+        drawButton(g, panelX, btnY, PANEL_W - 4, 12, PhantasiaText.str("ui.phantasia.phantasia_custom_editor.save"), mx,
+                my);
+        drawButton(g, panelX, btnY + 15, PANEL_W - 4, 12,
+                PhantasiaText.str("ui.phantasia.phantasia_custom_editor.close"), mx, my);
 
         super.render(g, mx, my, partialTick);
     }
@@ -396,9 +407,8 @@ public class PhantasiaCustomEditorScreen extends Screen {
         dirty = false;
         if (Minecraft.getInstance().player != null) {
             Minecraft.getInstance().player.sendSystemMessage(
-                    Component.literal("§a[Phantasia] Saved '" + layout.displayName +
-                            "' — it will appear in the scene list as §bphantasia:" + safePath +
-                            "§a and can be scripted like any other multiblock."));
+                    PhantasiaLang.tr("ui.phantasia.phantasia_custom_editor_screen.phantasia_saved_it_will_appear",
+                            layout.displayName, safePath));
         }
     }
 
