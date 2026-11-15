@@ -41,10 +41,6 @@ public class PhantasiaTrackedDummyWorld extends PhantasiaDummyWorld {
 
     private volatile boolean modelsChanged;
 
-    /**
-     * Machines ask for a re-render (formed, painted, working) by sending a block update on the client; nothing in a
-     * scene listens to the level for that, so it is noted here and the renderer rebakes when it sees it.
-     */
     @Override
     public void sendBlockUpdated(BlockPos pos, BlockState old, BlockState now, int flags) {
         modelsChanged = true;

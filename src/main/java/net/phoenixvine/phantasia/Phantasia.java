@@ -41,7 +41,6 @@ public class Phantasia {
             CUSTOM_PROVIDER = new net.phoenixvine.phantasia.compat.custom.PhantasiaCustomProvider();
             net.phoenixvine.phantasia.common.multiblock.PhantasiaMultiblockRegistry.register(CUSTOM_PROVIDER);
 
-            // Scenes that mods and resource packs ship, and every multiblock registered with Patchouli
             net.phoenixvine.phantasia.compat.pack.PhantasiaPackProvider packs = new net.phoenixvine.phantasia.compat.pack.PhantasiaPackProvider();
             net.phoenixvine.phantasia.common.multiblock.PhantasiaMultiblockRegistry.register(packs);
             modEventBus.addListener(

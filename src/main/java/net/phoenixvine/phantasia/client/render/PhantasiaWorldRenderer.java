@@ -1706,10 +1706,6 @@ public final class PhantasiaWorldRenderer {
         }
     }
 
-    /**
-     * The model data a chunk compile would hand the model: the model gets to add its own (GregTech connected-texture
-     * models put the level and position in it, which is how they look at neighbouring blocks).
-     */
     private static net.neoforged.neoforge.client.model.data.ModelData modelData(BlockRenderDispatcher brd,
                                                                                 net.minecraft.world.level.BlockAndTintGetter world,
                                                                                 BlockPos pos, BlockState state) {

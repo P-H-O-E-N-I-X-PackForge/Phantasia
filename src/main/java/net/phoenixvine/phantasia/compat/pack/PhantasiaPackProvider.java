@@ -22,16 +22,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-/**
- * Scenes that mods and resource packs ship themselves, with no code on Phantasia's side. Drop either of these under
- * {@code assets/<namespace>/phantasia/multiblocks/}:
- * <ul>
- * <li>a {@code .json} in the same format the in-game editor saves (id, displayName, iconBlock, blocks), or</li>
- * <li>a vanilla structure {@code .nbt}, such as the ones the structure block saves.</li>
- * </ul>
- * A file with no id of its own is named after its path: {@code assets/mymod/phantasia/multiblocks/forge.nbt} becomes
- * {@code mymod:forge}. They are read on the client, so a resource pack works on a server that has neither.
- */
 public class PhantasiaPackProvider implements IPhantasiaMultiblockProvider, ResourceManagerReloadListener {
 
     public static final String FOLDER = "phantasia/multiblocks";
@@ -68,7 +58,6 @@ public class PhantasiaPackProvider implements IPhantasiaMultiblockProvider, Reso
         return layout;
     }
 
-    /** A vanilla structure template: a palette of block states and a list of positions that point into it. */
     static PhantasiaCustomLayout fromStructure(CompoundTag root, String id, String name) {
         ListTag palette = root.getList("palette", Tag.TAG_COMPOUND);
         if (palette.isEmpty() && root.contains("palettes", Tag.TAG_LIST)) {

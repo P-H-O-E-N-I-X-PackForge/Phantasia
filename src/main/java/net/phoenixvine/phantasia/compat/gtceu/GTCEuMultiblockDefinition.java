@@ -32,7 +32,6 @@ import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,11 +134,6 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
         });
     }
 
-    /**
-     * Forms the controller in the scene. GregTech 8's own {@code checkAndFormStructure()} returns at once unless the
-     * level is a server level, and the scene's level is a client one, so this runs the same check and form steps it
-     * is made of (minus the saved-data bookkeeping, which a scene has no use for).
-     */
     private static void formStructure(MultiblockControllerMachine ctrl) {
         for (String name : ctrl.getStructureNames()) {
             var state = ctrl.checkStructurePattern(name);
@@ -150,7 +144,7 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
                 if (state != null) {
                     for (var err : state.getErrors()) {
                         why.append(" | ").append(err.getClass().getSimpleName()).append(" at ")
-                                .append(err.getPos());
+                                .append(err.pos());
                         if (err instanceof com.gregtechceu.gtceu.api.multiblock.error.SinglePredicateError single) {
                             why.append(" [").append(single.type).append(", found ").append(single.actualCount)
                                     .append(", wants ").append(single.predMinCount).append("..")
@@ -249,7 +243,6 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
         return preview == null ? Map.of() : preview.substructures();
     }
 
-    /** One on/off switch per named structure pattern, when the machine has more than one. */
     private List<PhantasiaVariantGroup> substructureToggles(String machinePrefix, PhantasiaLoadedPattern pattern) {
         Map<String, Set<BlockPos>> subs = getSubstructures();
         if (subs.size() < 2) return List.of();
@@ -442,7 +435,6 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
         Direction up = rotation == RotationState.Y_AXIS ? Direction.NORTH : Direction.UP;
         if (front.getAxis().isVertical() && up.getAxis().isVertical()) up = Direction.NORTH;
 
-        // Use "default" as the primary pattern for the Preview record's metadata fields
         Supplier<IBlockPattern> primarySupplier = patterns.getOrDefault("default",
                 patterns.values().iterator().next());
         IBlockPattern primaryPattern = primarySupplier.get();
@@ -458,7 +450,6 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
             return null;
         }
 
-        // Merge blocks from all patterns (default + all substructures)
         Map<BlockPos, BlockInfo> allBlocks = new HashMap<>();
         Map<String, Set<BlockPos>> placedBy = new LinkedHashMap<>();
         for (Map.Entry<String, Supplier<IBlockPattern>> named : patterns.entrySet()) {
@@ -467,7 +458,8 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
             AbstractStructureHelper h = makeHelper(pat);
             if (h == null) continue;
             Map<BlockPos, BlockInfo> own = new HashMap<>();
-            h.populate(own, pat, new Long2ObjectOpenHashMap<>(), front, up, false);
+            h.populate(new com.gregtechceu.gtceu.api.mui.MultiblockSchemaInfo(definition), own, pat,
+                    new it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap<>(), front, up, false);
             try {
                 enforceLimits(h, pat, own, front, up);
             } catch (Exception e) {
@@ -519,12 +511,6 @@ public class GTCEuMultiblockDefinition implements IPhantasiaMultiblockDefinition
         return new Preview(out, allBlocks, min, primaryHelper, primaryPattern, front, up, localBySub);
     }
 
-    /**
-     * GregTech's preview filler can place a limited hatch (one with a maximum count) far more often than its limit
-     * allows, which makes the scene fail its own structure check and render unformed. This walks the placed blocks
-     * in order and swaps any that are over their predicate's maximum for the first unlimited option of the same
-     * position, normally the casing.
-     */
     private static void enforceLimits(AbstractStructureHelper helper, IBlockPattern pattern,
                                       Map<BlockPos, BlockInfo> blocks, Direction front, Direction up) {
         Map<Object, Integer> counts = new java.util.IdentityHashMap<>();

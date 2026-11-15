@@ -47,7 +47,6 @@ public final class PhantasiaVariantState {
     @Nullable
     private Runnable onToggleCallback = null;
 
-    /** Positions of every switchable substructure, with the switches that cover them. */
     private final Map<BlockPos, List<PhantasiaVariantGroup>> toggleCover = new HashMap<>();
 
     private void loadSelections() {
@@ -148,10 +147,6 @@ public final class PhantasiaVariantState {
         return selections.getOrDefault(group.getId(), group.defaultIndex()) == 0;
     }
 
-    /**
-     * True when every substructure that contains this position has been switched off. A block two substructures share
-     * stays while either is on.
-     */
     public boolean isToggleHidden(BlockPos worldPos) {
         List<PhantasiaVariantGroup> cover = toggleCover.get(worldPos);
         if (cover == null) return false;
