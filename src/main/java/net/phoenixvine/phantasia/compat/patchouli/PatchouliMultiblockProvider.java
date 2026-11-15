@@ -17,10 +17,6 @@ import vazkii.patchouli.common.multiblock.MultiblockRegistry;
 
 import java.util.*;
 
-/**
- * Every multiblock a mod has registered with Patchouli, shown without any code for that mod. Patchouli keeps them in
- * one registry, and each can be simulated into a list of positions and displayed states, which is all a scene needs.
- */
 public class PatchouliMultiblockProvider implements IPhantasiaMultiblockProvider {
 
     private final Map<ResourceLocation, Definition> cache = new HashMap<>();
@@ -136,7 +132,6 @@ public class PatchouliMultiblockProvider implements IPhantasiaMultiblockProvider
                 return g;
             }
 
-            /** Null while there is no level to simulate in (the list of scenes can be built from the title screen). */
             private PhantasiaBlockInfo[][][] build() {
                 var level = Minecraft.getInstance().level;
                 if (level == null) return null;

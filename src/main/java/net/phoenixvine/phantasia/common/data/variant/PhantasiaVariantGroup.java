@@ -22,7 +22,6 @@ public final class PhantasiaVariantGroup {
 
     private final int forcedDefaultIndex;
 
-    /** A plain on/off switch for a set of positions (a substructure), not a choice between blocks. */
     private final boolean toggle;
 
     public enum Category {
@@ -99,10 +98,6 @@ public final class PhantasiaVariantGroup {
                 options, optionLabels, positionBaseIndex, forcedDefaultIndex);
     }
 
-    /**
-     * A switch that shows or hides the given positions. Option 0 is shown and 1 is hidden, so the selection stored for
-     * it reads like any other group's.
-     */
     public static PhantasiaVariantGroup createToggle(String id, String label, Set<BlockPos> worldPositions) {
         Map<BlockPos, Integer> pos = new HashMap<>();
         for (BlockPos p : worldPositions) pos.put(p, 0);

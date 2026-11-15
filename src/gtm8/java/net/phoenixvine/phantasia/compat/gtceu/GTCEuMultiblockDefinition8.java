@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** {@link IPhantasiaMultiblockDefinition} for the reworked GregTech 8.x API. */
 public class GTCEuMultiblockDefinition8 implements IPhantasiaMultiblockDefinition {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GTCEuMultiblockDefinition8.class);
@@ -160,10 +159,6 @@ public class GTCEuMultiblockDefinition8 implements IPhantasiaMultiblockDefinitio
         }
     }
 
-    /**
-     * Variant detection reads the 7.x predicate grid, which 8.x replaced with character-keyed slices; it is not
-     * ported yet, so 8.x machines show no variant groups.
-     */
     @Override
     public List<PhantasiaVariantGroup> detectProviderVariants(PhantasiaScriptData data, PhantasiaLoadedPattern pattern,
                                                               String machinePrefix, Set<String> explicitIds) {

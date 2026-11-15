@@ -1,10 +1,5 @@
 package net.phoenixvine.phantasia.compat.gtceu;
 
-/**
- * Picks the {@link GtmBackend} for the installed GregTech. Decided by a class only the reworked 8.x development API
- * has, not by the version number - the 8.0.0 release still has the classic API. The implementations are created by
- * name so the unused one is never loaded.
- */
 public final class GtmBackends {
 
     private static final String MARKER = "com.gregtechceu.gtceu.api.multiblock.MultiblockWorldSavedData";

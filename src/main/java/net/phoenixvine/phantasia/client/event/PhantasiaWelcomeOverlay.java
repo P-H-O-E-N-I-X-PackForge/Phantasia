@@ -30,7 +30,7 @@ public final class PhantasiaWelcomeOverlay {
     private static boolean wasClicking = false;
 
     private static int toastX, toastY;
-    /** How much bigger or smaller than its design size the toast is drawn, from the window's GUI width. */
+
     private static float toastScale = 1f;
     private static final int TOAST_W = 248;
     private static int TOAST_H = 46;

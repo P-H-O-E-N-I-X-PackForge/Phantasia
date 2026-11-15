@@ -19,7 +19,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import java.util.List;
 import java.util.Set;
 
-/** GregTech 7.x and the 8.0.0 release. Created by {@link GtmBackends}. */
 public class GtmBackend7 implements GtmBackend {
 
     @Override

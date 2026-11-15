@@ -32,15 +32,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
-/**
- * The reworked GregTech 8.x development API. Compiled in the {@code gtm8} source set and created by
- * {@link GtmBackends} only when that API is installed.
- */
 public class GtmBackend8 implements GtmBackend {
 
     @Override
     public void bootstrap(IEventBus modEventBus) {
-        // GTRegistrate.create(...) already hooks itself up in 8.x, and there is no per-mod material registry to add.
+        
     }
 
     @Override
@@ -53,11 +49,6 @@ public class GtmBackend8 implements GtmBackend {
         return buildPreview(definition);
     }
 
-    /**
-     * Lays all of the machine's patterns (default + substructures) out and merges them into one preview: minimum
-     * repetitions for repeatable slices, smallest bounds for expandable patterns, controller facing its default
-     * direction.
-     */
     static PhantasiaBlockInfo[][][] buildPreview(MultiblockMachineDefinition definition) {
         Map<String, Supplier<IBlockPattern>> patterns = definition.getStructurePatterns();
         if (patterns.isEmpty()) return null;
@@ -69,7 +60,6 @@ public class GtmBackend8 implements GtmBackend {
 
         MultiblockSchemaInfo schema = new MultiblockSchemaInfo(definition);
 
-        // Merge blocks from all patterns (default + all substructures)
         Map<BlockPos, BlockInfo> allBlocks = new HashMap<>();
         for (Supplier<IBlockPattern> supplier : patterns.values()) {
             IBlockPattern pattern = supplier.get();
@@ -126,7 +116,7 @@ public class GtmBackend8 implements GtmBackend {
     public void drawDynamicRenderers(PhantasiaTrackedDummyWorld world, Set<BlockPos> frontTileEntities,
                                      BlockPos slotOrigin, PoseStack poseStack, MultiBufferSource.BufferSource buffers,
                                      float partial, float camX, float camY, float camZ) {
-        // 8.x machines render through their block entities, which Phantasia already draws, so nothing extra here.
+        
     }
 
     static boolean isController(BlockEntity be) {

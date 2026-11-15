@@ -14,22 +14,14 @@ import com.mojang.blaze3d.vertex.PoseStack;
 
 import java.util.Set;
 
-/**
- * Everything Phantasia needs from GregTech whose API differs between the 7.x line (and the 8.0.0 release) and the
- * reworked 8.x development API. Implementations are picked by {@link GtmBackends}; the rest of Phantasia only talks
- * to this interface and never names a GregTech type that changed.
- */
 public interface GtmBackend {
 
-    /** Registers Phantasia's registrate and GregTech event hooks. */
     void bootstrap(IEventBus modEventBus);
 
     IPhantasiaMultiblockDefinition createDefinition(MultiblockMachineDefinition definition);
 
-    /** The machine's default fully-built shape as {@code [x][y][z]}, or null when it has none. */
     PhantasiaBlockInfo[][][] previewBlocks(MultiblockMachineDefinition definition);
 
-    /** Whether this block entity is a GregTech machine that needs its level set before use. */
     boolean isMachineEntity(BlockEntity be);
 
     void drawDynamicRenderers(PhantasiaTrackedDummyWorld world, Set<BlockPos> frontTileEntities, BlockPos slotOrigin,
