@@ -6,7 +6,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.phoenixvine.phantasia.Phantasia;
-import net.phoenixvine.wiki.theme.PhoenixTheme;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -18,7 +17,6 @@ import java.io.FileWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 
 public final class PhantasiaBaseplateConfig {
@@ -26,6 +24,7 @@ public final class PhantasiaBaseplateConfig {
     private PhantasiaBaseplateConfig() {}
 
     private static final String DEFAULT_BLOCK = "minecraft:deepslate_bricks";
+    private static final String KEY = "block";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final File FILE = new File("phantasia/baseplate_blocks.json");
     private static final Map<String, String> BLOCKS = new LinkedHashMap<>();
@@ -46,12 +45,12 @@ public final class PhantasiaBaseplateConfig {
 
     public static String currentBaseplateBlockId() {
         ensureLoaded();
-        return BLOCKS.getOrDefault(PhoenixTheme.getActiveName().toUpperCase(Locale.ROOT), DEFAULT_BLOCK);
+        return BLOCKS.getOrDefault(KEY, DEFAULT_BLOCK);
     }
 
     public static void setCurrentBaseplateBlockId(String blockId) {
         ensureLoaded();
-        BLOCKS.put(PhoenixTheme.getActiveName().toUpperCase(Locale.ROOT), blockId);
+        BLOCKS.put(KEY, blockId);
         try {
             if (!FILE.getParentFile().exists()) FILE.getParentFile().mkdirs();
             try (Writer w = new FileWriter(FILE)) {
