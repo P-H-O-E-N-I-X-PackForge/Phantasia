@@ -110,7 +110,8 @@ public class PhantasiaTextInputScreen extends Screen {
             if (hov) {
                 g.renderTooltip(font,
                         Component.translatable("ui.phantasia.color_code_display",
-                                String.valueOf(COLOR_CODES[i]), String.valueOf(COLOR_CODES[i])), mx, my);
+                                String.valueOf(COLOR_CODES[i]), String.valueOf(COLOR_CODES[i])),
+                        mx, my);
             }
         }
     }
