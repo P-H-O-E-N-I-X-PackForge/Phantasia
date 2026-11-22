@@ -198,6 +198,7 @@ public final class PhantasiaWorldRenderer {
     private final Map<BlockPos, List<RenderType>> animatedLayers = new HashMap<>();
     private volatile Set<BlockPos> backTileEntities = null;
     private Set<BlockPos> frontTileEntities = Collections.emptySet();
+    private boolean warnedEmptyTileEntities = false;
 
     private final Map<BlockPos, Float> blockAlpha = new HashMap<>();
     private final Map<BlockPos, List<RenderType>> blockLayers = new HashMap<>();
@@ -684,7 +685,8 @@ public final class PhantasiaWorldRenderer {
             back[i] = tmp;
         }
         frontTileEntities = backTileEntities != null ? backTileEntities : Collections.emptySet();
-        LOGGER.info("[Phantasia] swapFullBuffers: frontTileEntities.size={}", frontTileEntities.size());
+        warnedEmptyTileEntities = false;
+        LOGGER.debug("[Phantasia] swapFullBuffers: frontTileEntities.size={}", frontTileEntities.size());
         animatedPositions = backAnimatedPositions != null ? backAnimatedPositions : Collections.emptySet();
         PhantasiaSpriteMarker.invalidateCache();
         frontHasContent = true;
@@ -1005,8 +1007,9 @@ public final class PhantasiaWorldRenderer {
         var dispatcher = mc.getBlockEntityRenderDispatcher();
         int count = 0;
 
-        if (frontHasContent && frontTileEntities.isEmpty()) {
-            LOGGER.warn("[Phantasia] drawTileEntities: frontTileEntities is empty after bake (targetVisible.size={})",
+        if (frontHasContent && frontTileEntities.isEmpty() && !warnedEmptyTileEntities) {
+            warnedEmptyTileEntities = true;
+            LOGGER.debug("[Phantasia] drawTileEntities: no block-entity renderers in this bake (targetVisible.size={})",
                     targetVisible.size());
         }
 
@@ -1252,6 +1255,22 @@ public final class PhantasiaWorldRenderer {
                     }
                 }
 
+                // Publish the BER / animated sets BEFORE queuing the GPU uploads. The upload callbacks
+                // flip backReady, after which swapFullBuffers() may run at any time on the render thread
+                // and would otherwise read these as null (-> permanently empty frontTileEntities).
+                Set<BlockPos> tes = new HashSet<>();
+                for (BlockPos pos : snapshot) {
+                    if (Thread.interrupted()) {
+                        for (BakedLayer bl : baked) if (bl != null) bl.release();
+                        return;
+                    }
+                    BlockEntity be = world.getBlockEntity(pos);
+                    if (be != null && mc.getBlockEntityRenderDispatcher().getRenderer(be) != null)
+                        tes.add(pos);
+                }
+                backAnimatedPositions = animatedBack;
+                backTileEntities = tes;
+
                 pendingUploads.set(LAYER_COUNT);
                 for (int i = 0; i < LAYER_COUNT; i++) {
                     final int fi = i;
@@ -1266,15 +1285,6 @@ public final class PhantasiaWorldRenderer {
                         if (pendingUploads.decrementAndGet() == 0) backReady = true;
                     });
                 }
-                backAnimatedPositions = animatedBack;
-                Set<BlockPos> tes = new HashSet<>();
-                for (BlockPos pos : snapshot) {
-                    if (Thread.interrupted()) return;
-                    BlockEntity be = world.getBlockEntity(pos);
-                    if (be != null && mc.getBlockEntityRenderDispatcher().getRenderer(be) != null)
-                        tes.add(pos);
-                }
-                backTileEntities = tes;
             } catch (Throwable bakeError) {
                 LOGGER.error("[Phantasia] Baking the scene failed", bakeError);
             }
@@ -1417,6 +1427,8 @@ public final class PhantasiaWorldRenderer {
                     }
                 }
 
+                backAnimatedPositions = animatedBack2;
+
                 pendingUploads.set(LAYER_COUNT);
                 for (int i = 0; i < LAYER_COUNT; i++) {
                     final int fi = i;
@@ -1434,7 +1446,6 @@ public final class PhantasiaWorldRenderer {
                         }
                     });
                 }
-                backAnimatedPositions = animatedBack2;
             } catch (Throwable bakeError) {
                 LOGGER.error("[Phantasia] Baking the scene failed", bakeError);
             }
